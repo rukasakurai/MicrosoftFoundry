@@ -25,7 +25,7 @@ var tags = {
 }
 
 // Cognitive Services - AIServices
-resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
+resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
   name: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
   location: location
   tags: tags
