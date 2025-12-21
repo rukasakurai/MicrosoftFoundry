@@ -188,4 +188,4 @@ accounts
 - [Azure AI Services Documentation](https://learn.microsoft.com/en-us/azure/ai-services/)
 - [Microsoft.CognitiveServices/accounts Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts)
 - [Microsoft.CognitiveServices/accounts/projects/applications Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications)
-- [Microsoft.CognitiveServices/accounts/projects/applications/agentdeployments Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications/agentdeployments)
+- [Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications/agentdeployments)
