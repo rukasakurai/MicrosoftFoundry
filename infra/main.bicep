@@ -1,4 +1,4 @@
-targetScope = 'subscription'
+targetScope = 'resourceGroup'
 
 @minLength(1)
 @maxLength(64)
@@ -8,9 +8,6 @@ param environmentName string
 @minLength(1)
 @description('Primary location for all resources')
 param location string
-
-@description('Name of the resource group')
-param resourceGroupName string = ''
 
 @description('Name of the Cognitive Services account')
 param cognitiveServicesName string = ''
@@ -27,27 +24,22 @@ var tags = {
   'azd-env-name': environmentName
 }
 
-// Resource group
-resource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
-  name: !empty(resourceGroupName) ? resourceGroupName : '${abbrs.resourcesResourceGroups}${environmentName}'
+// Cognitive Services - AIServices
+resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
+  name: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
   location: location
   tags: tags
-}
-
-// Cognitive Services - AIServices
-module cognitiveServices './modules/cognitive-services.bicep' = {
-  name: 'cognitive-services'
-  scope: rg
-  params: {
-    name: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-    location: location
-    tags: tags
-    sku: cognitiveServicesSku
+  kind: 'AIServices'
+  sku: {
+    name: cognitiveServicesSku
+  }
+  properties: {
+    customSubDomainName: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    publicNetworkAccess: 'Enabled'
   }
 }
 
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
-output AZURE_RESOURCE_GROUP string = rg.name
-output COGNITIVE_SERVICES_NAME string = cognitiveServices.outputs.name
-output COGNITIVE_SERVICES_ENDPOINT string = cognitiveServices.outputs.endpoint
+output COGNITIVE_SERVICES_NAME string = cognitiveServices.name
+output COGNITIVE_SERVICES_ENDPOINT string = cognitiveServices.properties.endpoint

@@ -74,7 +74,6 @@ After deployment, the following outputs are available as environment variables:
 
 - `AZURE_LOCATION`: Deployment region
 - `AZURE_TENANT_ID`: Azure AD tenant ID
-- `AZURE_RESOURCE_GROUP`: Resource group name
 - `COGNITIVE_SERVICES_NAME`: AI Services account name
 - `COGNITIVE_SERVICES_ENDPOINT`: AI Services endpoint URL
 
@@ -102,43 +101,6 @@ azd env get-values
 # Clean up resources
 azd down
 ```
-
-## Folder Structure
-
-```
-.
-├── azure.yaml              # azd configuration
-├── infra/
-│   ├── main.bicep          # Main Bicep entry point
-│   ├── main.parameters.json # Parameters file
-│   ├── abbreviations.json  # Resource naming abbreviations
-│   └── modules/
-│       └── cognitive-services.bicep  # AI Services module
-```
-
-## Troubleshooting
-
-### Authentication Issues
-
-If you encounter authentication errors:
-
-```bash
-# Re-authenticate
-azd auth logout
-azd auth login
-```
-
-### Deployment Failures
-
-Check the deployment logs:
-
-```bash
-azd provision --debug
-```
-
-### Resource Name Conflicts
-
-If a resource name already exists, you can specify a custom name in the parameters file or use a different environment name.
 
 ## Additional Resources
 
