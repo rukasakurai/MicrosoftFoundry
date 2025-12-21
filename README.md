@@ -7,6 +7,7 @@ Infrastructure-as-Code (IaC) for deploying and managing Microsoft Foundry resour
 This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which currently includes:
 - Bicep templates for provisioning Azure AI Services (Cognitive Services)
 - Foundry project configuration
+- Application and agent deployment resources for operationalizing AI agents
 - Azure Developer CLI (azd) integration for streamlined deployment
 - Human and AI collaboration guidance (AGENTS.md)
 
@@ -35,6 +36,11 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 3. **Deploy the infrastructure:**
    ```bash
    azd up
+   ```
+
+4. **Enable agent deployments (optional):**
+   ```bash
+   azd up --parameter enableAgentDeployments=true
    ```
 
 For detailed deployment instructions and configuration options, see [docs/azd-deployment.md](docs/azd-deployment.md).

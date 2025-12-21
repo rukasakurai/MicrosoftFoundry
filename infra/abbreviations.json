@@ -1,4 +1,6 @@
 {
   "resourcesResourceGroups": "rg-",
-  "cognitiveServicesAccounts": "cog-"
+  "cognitiveServicesAccounts": "cog-",
+  "cognitiveServicesApplications": "app-",
+  "cognitiveServicesAgentDeployments": "agentdep-"
 }

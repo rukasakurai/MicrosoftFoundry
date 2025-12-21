@@ -19,6 +19,9 @@ The deployment provisions:
 
 - **Resource Group**: Container for all resources
 - **Azure AI Services (Cognitive Services)**: Multi-service resource of kind `AIServices`
+- **Cognitive Services Project**: Project for organizing AI solutions
+- **Cognitive Services Application** (optional): Application container for agent deployments
+- **Agent Deployment** (optional): Agent deployment resource for operationalizing AI agents
 
 ## Quick Start
 
@@ -48,6 +51,7 @@ azd up
 This command will:
 1. Create a resource group
 2. Provision the Azure AI Services account
+3. Provision the Cognitive Services Project
 
 ## Configuration
 
@@ -57,6 +61,24 @@ This command will:
 |-----------|---------------|-------------|
 | `location` | `japaneast` | Azure region for deployment |
 | `cognitiveServicesSku` | `S0` | SKU for Azure AI Services |
+| `projectDisplayName` | `AI Foundry Project` | Display name for the project |
+| `enableAgentDeployments` | `false` | Enable application and agent deployment resources |
+
+### Agent Deployment Parameters
+
+When `enableAgentDeployments` is set to `true`, the following additional parameters are available:
+
+| Parameter | Default Value | Description |
+|-----------|---------------|-------------|
+| `applicationName` | Auto-generated | Name of the Cognitive Services application |
+| `applicationDisplayName` | `AI Foundry Application` | Display name for the application |
+| `applicationDescription` | Empty | Description for the application |
+| `agentDeploymentName` | Auto-generated | Name of the agent deployment |
+| `agentDeploymentDisplayName` | `Agent Deployment` | Display name for the agent deployment |
+| `agentDeploymentDescription` | Empty | Description for the agent deployment |
+| `agentDeploymentType` | `Managed` | Deployment type (`Managed` or `Hosted`) |
+| `agentDeploymentMinReplicas` | `1` | Minimum replicas (only for `Hosted` type) |
+| `agentDeploymentMaxReplicas` | `3` | Maximum replicas (only for `Hosted` type) |
 
 ### Customizing Parameters
 
@@ -68,6 +90,22 @@ azd up --parameter location=eastus
 
 Or edit the `infra/main.parameters.json` file before deployment.
 
+#### Enabling Agent Deployments
+
+To enable the application and agent deployment resources:
+
+```bash
+azd up --parameter enableAgentDeployments=true
+```
+
+#### Using Hosted Deployment Type
+
+For hosted deployments with custom scaling:
+
+```bash
+azd up --parameter enableAgentDeployments=true --parameter agentDeploymentType=Hosted --parameter agentDeploymentMinReplicas=2 --parameter agentDeploymentMaxReplicas=5
+```
+
 ### Environment Variables
 
 After deployment, the following outputs are available as environment variables:
@@ -76,6 +114,9 @@ After deployment, the following outputs are available as environment variables:
 - `AZURE_TENANT_ID`: Azure AD tenant ID
 - `COGNITIVE_SERVICES_NAME`: AI Services account name
 - `COGNITIVE_SERVICES_ENDPOINT`: AI Services endpoint URL
+- `PROJECT_NAME`: Project name
+- `APPLICATION_NAME`: Application name (when `enableAgentDeployments` is true)
+- `AGENT_DEPLOYMENT_NAME`: Agent deployment name (when `enableAgentDeployments` is true)
 
 Access these values with:
 
@@ -102,9 +143,49 @@ azd env get-values
 azd down
 ```
 
+## Agent Deployments
+
+### Overview
+
+Agent deployments (`Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments`) enable you to operationalize AI agents within your applications. This resource type is part of the Azure AI Services hierarchy:
+
+```
+accounts
+  └── projects
+        └── applications
+              └── agentDeployments
+```
+
+### Deployment Types
+
+- **Managed**: Azure manages the deployment infrastructure automatically
+- **Hosted**: You control scaling with `minReplicas` and `maxReplicas` parameters
+
+### Limitations
+
+- Agent deployments require the `enableAgentDeployments` parameter to be set to `true`
+- The resource type is in preview (`2025-10-01-preview` API version)
+- Bicep type validation may not be available for this resource type until it reaches general availability
+
+### Example Usage
+
+1. **Basic deployment with agent deployments enabled:**
+   ```bash
+   azd up --parameter enableAgentDeployments=true
+   ```
+
+2. **Custom application and deployment names:**
+   ```bash
+   azd up --parameter enableAgentDeployments=true \
+          --parameter applicationName=my-ai-app \
+          --parameter agentDeploymentName=my-agent-deployment
+   ```
+
 ## Additional Resources
 
 - [Azure Developer CLI Documentation](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/)
 - [Bicep Documentation](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/)
 - [Azure AI Services Documentation](https://learn.microsoft.com/en-us/azure/ai-services/)
 - [Microsoft.CognitiveServices/accounts Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts)
+- [Microsoft.CognitiveServices/accounts/projects/applications Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications)
+- [Microsoft.CognitiveServices/accounts/projects/applications/agentdeployments Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications/agentdeployments)
