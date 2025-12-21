@@ -2,16 +2,9 @@
 
 ## Repository Purpose
 
-This repository provides **Infrastructure-as-Code (IaC) for Microsoft Foundry**, focusing on deploying and managing Azure AI Services and AI Foundry projects using Bicep templates and Azure Developer CLI (azd).
+This repository provides **Infrastructure-as-Code (IaC) for Microsoft Foundry**, using Bicep templates and Azure Developer CLI (azd).
 
-**Current State:** The repository is actively used for provisioning Microsoft Foundry infrastructure on Azure, including Cognitive Services accounts and AI Foundry projects.
-
-**Future Evolution:** While currently focused on IaC, this repository may expand to include:
-- Application code that utilizes the provisioned infrastructure
-- CI/CD pipelines and automation workflows
-- Additional Azure services and integrations
-- Monitoring, logging, and observability components
-- Development tools and utilities
+**Current State:** The repository is actively used for provisioning Microsoft Foundry infrastructure on Azure.
 
 ## Collaboration & Decision-Making Style
 
@@ -61,9 +54,3 @@ When working on this repository, AI agents should:
    - Keep deployment guides synchronized with infrastructure changes
    - Update configuration examples when parameters change
    - Maintain accuracy of resource descriptions and capabilities
-
-3. **For Future Expansion:**
-   - Consider how additions integrate with existing IaC
-   - Maintain separation between infrastructure and application concerns
-   - Document new components and their relationships
-   - Follow established patterns for naming, tagging, and organization
