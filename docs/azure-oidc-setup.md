@@ -270,12 +270,12 @@ The service principal needs appropriate permissions to access Azure resources.
 
 2. **Verify role assignment**:
    ```bash
-   az role assignment list --assignee-object-id $SP_OBJECT_ID --output table
+   az role assignment list --assignee $SP_OBJECT_ID --output table
    ```
 
    PowerShell:
    ```powershell
-   az role assignment list --assignee-object-id $env:SP_OBJECT_ID --output table
+   az role assignment list --assignee $env:SP_OBJECT_ID --output table
    ```
 
 ## Step 4: Configure GitHub Repository Variables and Secrets
@@ -404,4 +404,12 @@ The workflow performs the following checks:
 - Shell: PowerShell 7.5.4 (Core)
 - Tester: Automated Documentation Tester (with human intervention)
 - Notes: Completed Entra app + service principal creation, federated credential creation (required using application object id in `az ad app federated-credential`), Reader RBAC assignment, and successfully ran the "Azure OIDC Connectivity Check" workflow. Human steps: authenticated `az login`, configured GitHub Actions variable/secret values in the repo settings UI, and clicked "Run workflow".
+
+### 2025-12-21
+- Result: PASS with fixes
+- Platform/Context: Local machine
+- OS: Microsoft Windows 11 Enterprise (Build 26200)
+- Shell: PowerShell 7.5.4 (Core)
+- Tester: Automated Documentation Tester (with human intervention)
+- Notes: Successfully completed all steps. Fix applied: changed `--assignee-object-id` to `--assignee` in `az role assignment list` command (Step 3 verification). Human steps: authenticated `az login`, configured GitHub Actions variable/secrets in repo settings UI, and clicked "Run workflow".
 
