@@ -207,6 +207,6 @@ Publishing an agent to an application enables:
 - Tester: Automated Documentation Tester (with human intervention)
 - Notes:
   - Human intervention required for: `azd auth login` (browser-based authentication), `azd init` (environment setup - used existing `doctest` environment), confirmation before `azd up` (resource creation)
-  - **Fix applied**: Added `allowProjectManagement: true` property to the Cognitive Services account in [infra/main.bicep](../infra/main.bicep). This property is required for projects to be created as child resources under AIServices kind accounts. Without this property, deployment fails with error: "Project can only created under AIServices Kind account with allowProjectManagement set to true."
+  - **Fix applied**: Added `allowProjectManagement: true` property to the Cognitive Services account in [infra/main.bicep](../infra/main.bicep). This property is required for projects to be created as child resources under AIServices kind accounts. Without this property, deployment fails with error: "Project can only be created under AIServices kind account with allowProjectManagement set to true."
   - All deployment steps completed successfully after fix
   - Environment variables verified: `AZURE_LOCATION`, `AZURE_TENANT_ID`, `COGNITIVE_SERVICES_NAME`, `COGNITIVE_SERVICES_ENDPOINT`, `PROJECT_NAME` all returned correct values
