@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Create an AI agent in Azure AI Foundry using REST API and Azure CLI.
+# Create an AI agent in Microsoft Foundry using REST API and Azure CLI.
 #
 # This script demonstrates how to programmatically create an agent in a Microsoft Foundry
 # project that has been provisioned with Bicep templates.
@@ -28,7 +28,7 @@ MODEL_ID="gpt-4o"
 AGENT_NAME="foundry-agent"
 AGENT_INSTRUCTIONS="You are a helpful AI assistant."
 AGENT_DESCRIPTION="Agent created programmatically via REST API"
-API_VERSION="2025-10-01-preview"
+API_VERSION="2025-05-01"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -60,7 +60,7 @@ while [[ $# -gt 0 ]]; do
     --help)
       echo "Usage: $0 [OPTIONS]"
       echo ""
-      echo "Create an AI agent in Azure AI Foundry using REST API."
+      echo "Create an AI agent in Microsoft Foundry using REST API."
       echo ""
       echo "Options:"
       echo "  --endpoint <url>        Azure AI Services endpoint (default: from COGNITIVE_SERVICES_ENDPOINT env var)"
@@ -97,27 +97,32 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Get endpoint from environment if not provided
+# Try PROJECT_ENDPOINT first (new pattern), fall back to COGNITIVE_SERVICES_ENDPOINT (legacy)
 if [ -z "$ENDPOINT" ]; then
-  ENDPOINT="${COGNITIVE_SERVICES_ENDPOINT}"
+  ENDPOINT="${PROJECT_ENDPOINT:-${COGNITIVE_SERVICES_ENDPOINT}}"
   if [ -z "$ENDPOINT" ]; then
-    echo "Error: COGNITIVE_SERVICES_ENDPOINT environment variable not found."
-    echo "Run 'azd env get-values' or provide --endpoint parameter."
+    echo "Error: PROJECT_ENDPOINT or COGNITIVE_SERVICES_ENDPOINT environment variable not found."
+    echo "Run 'eval \$(azd env get-values)' or provide --endpoint parameter."
     exit 1
   fi
 fi
 
-# Check project name is available
-if [ -z "$PROJECT_NAME" ]; then
+# Check project name is available (only needed if endpoint doesn't include project path)
+if [[ "$ENDPOINT" != */api/projects/* ]] && [ -z "$PROJECT_NAME" ]; then
   echo "Error: PROJECT_NAME environment variable not found."
-  echo "Run 'azd env get-values' or provide --project parameter."
+  echo "Run 'eval \$(azd env get-values)' or provide --project parameter."
   exit 1
 fi
 
 # Remove trailing slash from endpoint if present
 ENDPOINT="${ENDPOINT%/}"
 
-# Construct API URL
-API_URL="${ENDPOINT}/api/projects/${PROJECT_NAME}/assistants?api-version=${API_VERSION}"
+# Construct API URL (handle both full project endpoint and legacy endpoint+project format)
+if [[ "$ENDPOINT" == */api/projects/* ]]; then
+  API_URL="${ENDPOINT}/assistants?api-version=${API_VERSION}"
+else
+  API_URL="${ENDPOINT}/api/projects/${PROJECT_NAME}/assistants?api-version=${API_VERSION}"
+fi
 
 echo "Creating agent '${AGENT_NAME}' in project..."
 echo "  Endpoint: ${ENDPOINT}"
@@ -125,9 +130,9 @@ echo "  Project: ${PROJECT_NAME}"
 echo "  Model: ${MODEL_ID}"
 echo ""
 
-# Get Azure AD access token
+# Get Azure AD access token (use https://ai.azure.com for Foundry Agent Service)
 echo "Obtaining Azure AD access token..."
-ACCESS_TOKEN=$(az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv)
+ACCESS_TOKEN=$(az account get-access-token --resource https://ai.azure.com --query accessToken -o tsv)
 
 if [ -z "$ACCESS_TOKEN" ]; then
   echo "Error: Failed to obtain access token. Please run 'az login' first."
@@ -187,7 +192,7 @@ if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
   echo "================================================================"
   echo ""
   echo "Next steps:"
-  echo "  1. View your agent in Azure AI Foundry portal"
+  echo "  1. View your agent in Microsoft Foundry portal"
   echo "  2. Test the agent with a conversation thread"
   echo "  3. Publish the agent to an application for external access"
   echo ""

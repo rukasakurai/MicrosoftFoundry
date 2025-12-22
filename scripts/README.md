@@ -1,6 +1,6 @@
 # Agent Creation Scripts
 
-This directory contains scripts for programmatically creating AI agents in Azure AI Foundry.
+This directory contains scripts for programmatically creating AI agents in Microsoft Foundry.
 
 ## Available Scripts
 

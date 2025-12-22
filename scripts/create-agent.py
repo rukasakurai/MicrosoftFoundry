@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Create an AI agent in Azure AI Foundry using the Azure AI Agent Service SDK.
+Create an AI agent in Microsoft Foundry using the Azure AI Agent Service SDK.
 
 This script demonstrates how to programmatically create an agent in a Microsoft Foundry
 project that has been provisioned with Bicep templates.
@@ -18,8 +18,9 @@ Usage:
     python create-agent.py --project-endpoint <endpoint> --model-id <model>
 
 Environment Variables (from 'azd env get-values'):
-    COGNITIVE_SERVICES_ENDPOINT: Azure AI Services endpoint URL
-    PROJECT_NAME: Name of the Foundry project
+    PROJECT_ENDPOINT: Microsoft Foundry project endpoint URL
+        Format: https://<foundry-resource>.services.ai.azure.com/api/projects/<project-name>
+    MODEL_DEPLOYMENT_NAME: Name of the model deployment to use (e.g., 'gpt-4o')
 """
 
 import argparse
@@ -30,7 +31,6 @@ from typing import Optional
 try:
     from azure.identity import DefaultAzureCredential
     from azure.ai.projects import AIProjectClient
-    from azure.ai.projects.models import Agent
 except ImportError:
     print("Error: Required Azure SDK packages not found.")
     print("Please install them with: pip install azure-ai-projects azure-identity")
@@ -38,14 +38,36 @@ except ImportError:
 
 
 def get_project_endpoint() -> str:
-    """Get the project endpoint from environment or construct it."""
-    endpoint = os.getenv("COGNITIVE_SERVICES_ENDPOINT")
+    """Get the project endpoint from environment.
+    
+    The endpoint should be in format:
+    https://<foundry-resource>.services.ai.azure.com/api/projects/<project-name>
+    """
+    # Try new environment variable first, fall back to legacy
+    endpoint = os.getenv("PROJECT_ENDPOINT") or os.getenv("COGNITIVE_SERVICES_ENDPOINT")
+    project_name = os.getenv("PROJECT_NAME")
+    
     if not endpoint:
         raise ValueError(
-            "COGNITIVE_SERVICES_ENDPOINT environment variable not found. "
-            "Run 'azd env get-values' or set it manually."
+            "PROJECT_ENDPOINT environment variable not found. "
+            "Run 'eval $(azd env get-values)' or set it manually. "
+            "Format: https://<resource>.services.ai.azure.com/api/projects/<project>"
         )
+    
+    # If endpoint doesn't include /api/projects/, construct full endpoint
+    if "/api/projects/" not in endpoint and project_name:
+        endpoint = f"{endpoint.rstrip('/')}/api/projects/{project_name}"
+    
     return endpoint
+
+
+def get_model_deployment_name() -> str:
+    """Get model deployment name from environment."""
+    model = os.getenv("MODEL_DEPLOYMENT_NAME")
+    if not model:
+        # Default to gpt-4o if not specified
+        return "gpt-4o"
+    return model
 
 
 def create_agent(
@@ -53,20 +75,18 @@ def create_agent(
     model_id: str = "gpt-4o",
     agent_name: str = "foundry-agent",
     agent_instructions: str = "You are a helpful AI assistant.",
-    agent_description: str = "Agent created programmatically via SDK",
-) -> Agent:
+):
     """
-    Create an AI agent in Azure AI Foundry.
+    Create an AI agent in Microsoft Foundry.
 
     Args:
-        project_endpoint: Azure AI Services endpoint URL
+        project_endpoint: Microsoft Foundry project endpoint URL
         model_id: Model deployment ID (e.g., 'gpt-4o', 'gpt-4-turbo')
         agent_name: Name for the agent
         agent_instructions: System instructions for the agent
-        agent_description: Description of the agent
 
     Returns:
-        Agent: The created agent object
+        The created agent object
 
     Raises:
         Exception: If agent creation fails
@@ -84,31 +104,30 @@ def create_agent(
     # - Interactive browser
     credential = DefaultAzureCredential()
 
-    # Create project client
-    project_client = AIProjectClient.from_connection_string(
-        conn_str=project_endpoint,
+    # Create project client with the new SDK pattern
+    project_client = AIProjectClient(
+        endpoint=project_endpoint,
         credential=credential
     )
 
-    # Create agent
-    agent = project_client.agents.create_agent(
-        model=model_id,
-        name=agent_name,
-        instructions=agent_instructions,
-        description=agent_description,
-    )
+    # Create agent using context manager
+    with project_client:
+        agent = project_client.agents.create_agent(
+            model=model_id,
+            name=agent_name,
+            instructions=agent_instructions,
+        )
 
-    print(f"✓ Agent created successfully!")
-    print(f"  Agent ID: {agent.id}")
-    print(f"  Agent Name: {agent.name}")
-    print(f"  Model: {agent.model}")
+        print(f"✓ Agent created successfully!")
+        print(f"  Agent ID: {agent.id}")
+        print(f"  Agent Name: {agent.name}")
 
-    return agent
+        return agent
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Create an AI agent in Azure AI Foundry",
+        description="Create an AI agent in Microsoft Foundry",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -120,22 +139,21 @@ Examples:
 
   # Full customization
   python create-agent.py \\
-    --project-endpoint https://cog-abc123.services.ai.azure.com \\
+    --project-endpoint https://<resource>.services.ai.azure.com/api/projects/<project> \\
     --model-id gpt-4o \\
     --agent-name custom-agent \\
-    --agent-instructions "You are a specialized customer service agent" \\
-    --agent-description "Customer service automation agent"
+    --agent-instructions "You are a specialized customer service agent"
         """,
     )
 
     parser.add_argument(
         "--project-endpoint",
-        help="Azure AI Services endpoint (default: from COGNITIVE_SERVICES_ENDPOINT env var)",
+        help="Microsoft Foundry project endpoint (default: from PROJECT_ENDPOINT env var)",
     )
     parser.add_argument(
         "--model-id",
-        default="gpt-4o",
-        help="Model deployment ID (default: gpt-4o)",
+        default=None,
+        help="Model deployment ID (default: from MODEL_DEPLOYMENT_NAME env var or 'gpt-4o')",
     )
     parser.add_argument(
         "--agent-name",
@@ -147,32 +165,29 @@ Examples:
         default="You are a helpful AI assistant.",
         help="System instructions for the agent",
     )
-    parser.add_argument(
-        "--agent-description",
-        default="Agent created programmatically via SDK",
-        help="Description of the agent",
-    )
 
     args = parser.parse_args()
 
     try:
         # Get project endpoint
         project_endpoint = args.project_endpoint or get_project_endpoint()
+        
+        # Get model deployment name
+        model_id = args.model_id or get_model_deployment_name()
 
         # Create agent
         agent = create_agent(
             project_endpoint=project_endpoint,
-            model_id=args.model_id,
+            model_id=model_id,
             agent_name=args.agent_name,
             agent_instructions=args.agent_instructions,
-            agent_description=args.agent_description,
         )
 
         print("\n" + "=" * 60)
         print("Agent creation completed successfully!")
         print("=" * 60)
         print("\nNext steps:")
-        print("  1. View your agent in Azure AI Foundry portal")
+        print("  1. View your agent in Microsoft Foundry portal")
         print("  2. Test the agent with a conversation thread")
         print("  3. Publish the agent to an application for external access")
         print("\nFor more information, see docs/agent-creation.md")

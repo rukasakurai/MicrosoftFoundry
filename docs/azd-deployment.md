@@ -61,7 +61,7 @@ This command will:
 |-----------|---------------|-------------|
 | `location` | `japaneast` | Azure region for deployment |
 | `cognitiveServicesSku` | `S0` | SKU for Azure AI Services |
-| `projectDisplayName` | `AI Foundry Project` | Display name for the project |
+| `projectDisplayName` | `Microsoft Foundry Project` | Display name for the project |
 | `enableAgentDeployments` | `false` | Enable application and agent deployment resources |
 
 ### Customizing Parameters

@@ -1,10 +1,10 @@
-# Programmatically Creating Agents in Azure AI Foundry
+# Programmatically Creating Agents in Microsoft Foundry
 
 This guide explains how to programmatically create AI agents in your Microsoft Foundry project after provisioning infrastructure with Bicep templates.
 
 ## Overview
 
-Azure AI Foundry agents are intelligent assistants powered by large language models (LLMs) that can be configured with custom instructions, tools, and capabilities. While the Bicep templates provision the infrastructure (AI Services, Projects, Applications, and Deployments), the actual agent logic must be created separately.
+Microsoft Foundry agents are intelligent assistants powered by large language models (LLMs) that can be configured with custom instructions, tools, and capabilities. While the Bicep templates provision the infrastructure (AI Services, Projects, Applications, and Deployments), the actual agent logic must be created separately.
 
 This repository provides multiple approaches for programmatic agent creation:
 
@@ -14,7 +14,7 @@ This repository provides multiple approaches for programmatic agent creation:
 
 ## Prerequisites
 
-- Azure AI Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
+- Microsoft Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
 - Azure CLI installed and authenticated: `az login`
 - Model deployments available in your Azure OpenAI service or Azure AI Services
 
@@ -58,27 +58,29 @@ python scripts/create-agent.py \
 **Using in your Python application:**
 
 ```python
+import os
 from azure.identity import DefaultAzureCredential
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import Agent
 
 # Authenticate and create client
 credential = DefaultAzureCredential()
-project_client = AIProjectClient.from_connection_string(
-    conn_str=os.getenv("COGNITIVE_SERVICES_ENDPOINT"),
+project_client = AIProjectClient(
+    endpoint=os.environ["PROJECT_ENDPOINT"],
     credential=credential
 )
 
 # Create agent
-agent = project_client.agents.create_agent(
-    model="gpt-4o",
-    name="my-agent",
-    instructions="You are a helpful assistant.",
-    description="My custom agent"
-)
-
-print(f"Created agent: {agent.id}")
+with project_client:
+    agent = project_client.agents.create_agent(
+        model=os.environ["MODEL_DEPLOYMENT_NAME"],
+        name="my-agent",
+        instructions="You are a helpful assistant.",
+    )
+    print(f"Created agent: {agent.id}")
 ```
+
+> **Note:** The environment variable `PROJECT_ENDPOINT` should be in the format:
+> `https://<foundry-resource-name>.services.ai.azure.com/api/projects/<project-name>`
 
 ### Option 2: Bash Script with REST API
 
@@ -109,22 +111,24 @@ You can call the REST API directly from any programming language or tool.
 **Endpoint Format:**
 
 ```
-POST https://{cognitive-services-name}.services.ai.azure.com/api/projects/{project-name}/assistants?api-version=2025-10-01-preview
+POST https://{foundry-resource-name}.services.ai.azure.com/api/projects/{project-name}/assistants?api-version=2025-05-01
 ```
+
+> **Note:** The GA API version is `2025-05-01`. For preview features, use `2025-05-15-preview`.
 
 **Authentication:**
 
 ```bash
-# Get access token
+# Get access token (use https://ai.azure.com as the resource)
 ACCESS_TOKEN=$(az account get-access-token \
-  --resource https://cognitiveservices.azure.com \
+  --resource https://ai.azure.com \
   --query accessToken -o tsv)
 ```
 
 **Request:**
 
 ```bash
-curl -X POST "https://${COGNITIVE_SERVICES_NAME}.services.ai.azure.com/api/projects/${PROJECT_NAME}/assistants?api-version=2025-10-01-preview" \
+curl -X POST "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/assistants?api-version=2025-05-01" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -156,7 +160,7 @@ When creating an agent, you can configure various properties:
 
 ### Available Tools
 
-Azure AI Foundry agents support several built-in tools:
+Microsoft Foundry agents support several built-in tools:
 
 - **Code Interpreter**: Execute Python code
 - **File Search**: Search through uploaded documents
@@ -247,32 +251,30 @@ After creating an agent, you can test it by creating a conversation thread:
 
 ```python
 # Create a thread
-thread = project_client.agents.create_thread()
+thread = project_client.agents.threads.create()
 
 # Add a message
-message = project_client.agents.create_message(
+message = project_client.agents.messages.create(
     thread_id=thread.id,
     role="user",
     content="Hello! Can you help me?"
 )
 
-# Run the agent
-run = project_client.agents.create_run(
+# Create and process the run (waits for completion)
+run = project_client.agents.runs.create_and_process(
     thread_id=thread.id,
-    assistant_id=agent.id
+    agent_id=agent.id
 )
 
-# Wait for completion
-while run.status in ["queued", "in_progress"]:
-    time.sleep(1)
-    run = project_client.agents.get_run(
-        thread_id=thread.id,
-        run_id=run.id
-    )
+# Check run status
+if run.status == "failed":
+    print(f"Run failed: {run.last_error}")
 
-# Get response
-messages = project_client.agents.list_messages(thread_id=thread.id)
-print(messages.data[0].content[0].text.value)
+# Get messages from the thread
+messages = project_client.agents.messages.list(thread_id=thread.id)
+for message in messages:
+    if message.text_messages:
+        print(f"{message.role}: {message.text_messages[-1].text.value}")
 ```
 
 **REST API:**
@@ -280,21 +282,28 @@ print(messages.data[0].content[0].text.value)
 ```bash
 # Create thread
 THREAD_RESPONSE=$(curl -X POST \
-  "${ENDPOINT}/api/projects/${PROJECT_NAME}/threads?api-version=2025-10-01-preview" \
+  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads?api-version=2025-05-01" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json")
 
 THREAD_ID=$(echo "$THREAD_RESPONSE" | jq -r '.id')
 
-# Add message and run agent
+# Add message
 curl -X POST \
-  "${ENDPOINT}/api/projects/${PROJECT_NAME}/threads/${THREAD_ID}/messages?api-version=2025-10-01-preview" \
+  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads/${THREAD_ID}/messages?api-version=2025-05-01" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
     "role": "user",
     "content": "Hello! Can you help me?"
   }'
+
+# Run the agent
+curl -X POST \
+  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads/${THREAD_ID}/runs?api-version=2025-05-01" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"assistant_id": "'${AGENT_ID}'"}'
 ```
 
 ## Publishing Agents to Applications
@@ -387,12 +396,33 @@ az config set logging.enable_log_file=true
 
 ## Limitations and Considerations
 
-- The Azure AI Agent Service API is currently in preview (2025-10-01-preview)
-- API schemas and endpoints may change before general availability
+- The Azure AI Agent Service GA API version is `2025-05-01`; preview version is `2025-05-15-preview`
+- Use the preview API for tools that are in preview
 - Some features may have regional availability restrictions
 - Rate limits apply based on your Azure AI Services SKU
 - Agent deployments require the infrastructure provisioned via Bicep (see main.bicep)
+- Model deployments must be created separately (either via Azure Portal or additional Bicep configuration)
 
 ## Support and Contributing
 
 For issues, questions, or contributions, please refer to the main repository README.
+
+## Documentation Test History
+
+### 2025-12-22
+- Result: PASS with fixes
+- Platform/Context: Microsoft Surface Laptop, Windows local development
+- OS: Windows 11 Enterprise (build 10.0.26200)
+- Shell: PowerShell 7.5.4 (Core)
+- Tester: Automated Documentation Tester
+- Notes:
+  - **Critical fixes applied:**
+    1. Updated Python SDK code to use `AIProjectClient(endpoint=..., credential=...)` instead of deprecated `from_connection_string()` method
+    2. Removed invalid import `from azure.ai.projects.models import Agent` (class no longer exists in SDK v2.0.0b2)
+    3. Updated REST API version from `2025-10-01-preview` to GA version `2025-05-01`
+    4. Changed token resource from `https://cognitiveservices.azure.com` to `https://ai.azure.com`
+    5. Updated environment variable names to match current SDK (`PROJECT_ENDPOINT` instead of `COGNITIVE_SERVICES_ENDPOINT`)
+    6. Updated agent testing code to use current SDK patterns (`threads.create()`, `messages.create()`, `runs.create_and_process()`)
+  - **Prerequisites verified:** Azure CLI 2.63.0, Python 3.12.10, azd 1.22.5, azure-ai-projects 2.0.0b2
+  - **Blocking issue:** No model deployments exist in the test environment (Bicep `enableAgentDeployments` defaults to `false`)
+  - **Manual intervention required:** Actual agent creation could not be tested end-to-end without deploying a model
