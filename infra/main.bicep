@@ -84,6 +84,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-10-01-prev
   properties: {
     customSubDomainName: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
     publicNetworkAccess: 'Enabled'
+    allowProjectManagement: true
   }
 }
 
@@ -103,6 +104,13 @@ resource cognitiveServicesProject 'Microsoft.CognitiveServices/accounts/projects
 }
 
 // Cognitive Services Application (conditional)
+// NOTE: This resource creates the infrastructure to PUBLISH agents, not to create them.
+// An application provides:
+// - A stable endpoint URL for external consumers
+// - A unique identity (separate from project identity) with its own RBAC and audit trail
+// - User data isolation between consumers
+// - SaaS-like behavior for sharing agents externally
+// You must first create an agent in the Foundry portal or via SDK, then publish it to this application.
 resource cognitiveServicesApplication 'Microsoft.CognitiveServices/accounts/projects/applications@2025-10-01-preview' = if (enableAgentDeployments) {
   parent: cognitiveServicesProject
   name: !empty(applicationName) ? applicationName : '${abbrs.cognitiveServicesApplications}${resourceToken}'
@@ -113,6 +121,16 @@ resource cognitiveServicesApplication 'Microsoft.CognitiveServices/accounts/proj
 }
 
 // Agent Deployment (conditional)
+// NOTE: This resource creates a RUNNING INSTANCE to host a published agent, not the agent itself.
+// A deployment:
+// - Routes traffic from the application endpoint to a specific agent version
+// - Requires an agent to be created first (via portal or SDK) and then referenced in the 'agents' property
+// - Supports 'Managed' (Azure manages infrastructure) or 'Hosted' (custom scaling with replicas)
+// 
+// IMPORTANT: This deployment is created WITHOUT an agent reference. To make it functional:
+// 1. Create an agent in the Foundry portal (Agents > Create agent) or via SDK
+// 2. Update this deployment via REST API to include: agents: [{ agentName: '...', agentVersion: '...' }]
+// Or publish the agent directly from the Foundry portal which creates the application and deployment automatically.
 resource agentDeployment 'Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments@2025-10-01-preview' = if (enableAgentDeployments) {
   parent: cognitiveServicesApplication
   name: !empty(agentDeploymentName) ? agentDeploymentName : '${abbrs.cognitiveServicesAgentDeployments}${resourceToken}'

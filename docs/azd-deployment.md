@@ -147,14 +147,36 @@ azd down
 
 ### Overview
 
-Agent deployments (`Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments`) enable you to operationalize AI agents within your applications. This resource type is part of the Azure AI Services hierarchy:
+Agent deployments (`Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments`) provide infrastructure to **publish and host** AI agents you've already built. This resource type is part of the Azure AI Services hierarchy:
 
 ```
 accounts
   └── projects
-        └── applications
-              └── agentDeployments
+        └── applications          ← Provides stable endpoint, identity, and governance
+              └── agentDeployments ← Running instance that routes traffic to an agent version
 ```
+
+> **Important**: These resources do NOT create AI agents. They create the infrastructure to publish/host agents you've built in the Foundry portal or via SDK.
+
+### Understanding the Workflow
+
+| Step | Action | How |
+|------|--------|-----|
+| 1 | Provision infrastructure | `azd up` (this template) |
+| 2 | Create an agent | Foundry portal → Agents → Create agent, or via SDK |
+| 3 | Publish the agent | Foundry portal → Publish Agent, or via REST API |
+
+When you publish an agent from the Foundry portal, it automatically creates an application and deployment. The `enableAgentDeployments` parameter in this template pre-provisions empty application/deployment resources that can be updated later.
+
+### When to Use Agent Applications
+
+Publishing an agent to an application enables:
+
+- **External sharing**: Share with teammates or customers without granting project access
+- **Stable endpoint**: Update agent versions without changing the endpoint URL
+- **Distinct identity**: Separate RBAC rules and audit trail from the project
+- **User data isolation**: Each user's interactions are isolated from others
+- **Azure Policy integration**: Govern the application as an ARM resource
 
 ### Deployment Types
 
@@ -166,6 +188,7 @@ accounts
 - Agent deployments require the `enableAgentDeployments` parameter to be set to `true`
 - The resource type is in preview (`2025-10-01-preview` API version)
 - Bicep type validation may not be available for this resource type until it reaches general availability
+- **Agents cannot be created via Bicep** - only the hosting infrastructure can be provisioned
 
 ### Example Usage
 
@@ -189,3 +212,17 @@ accounts
 - [Microsoft.CognitiveServices/accounts Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts)
 - [Microsoft.CognitiveServices/accounts/projects/applications Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications)
 - [Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications/agentdeployments)
+
+## Documentation Test History
+
+### 2024-12-22
+- Result: PASS with fixes
+- Platform/Context: Microsoft Surface Laptop, Windows local environment
+- OS: Microsoft Windows 11 Enterprise Build 26200
+- Shell: PowerShell 7.5.4 (Core)
+- Tester: Automated Documentation Tester (with human intervention)
+- Notes:
+  - Human intervention required for: `azd auth login` (browser-based authentication), `azd init` (environment setup - used existing `doctest` environment), confirmation before `azd up` (resource creation)
+  - **Fix applied**: Added `allowProjectManagement: true` property to the Cognitive Services account in [infra/main.bicep](../infra/main.bicep). This property is required for projects to be created as child resources under AIServices kind accounts. Without this property, deployment fails with error: "Project can only created under AIServices Kind account with allowProjectManagement set to true."
+  - All deployment steps completed successfully after fix
+  - Environment variables verified: `AZURE_LOCATION`, `AZURE_TENANT_ID`, `COGNITIVE_SERVICES_NAME`, `COGNITIVE_SERVICES_ENDPOINT`, `PROJECT_NAME` all returned correct values
