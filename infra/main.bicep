@@ -55,11 +55,11 @@ param agentDeploymentDescription string = ''
 ])
 param agentDeploymentType string = 'Managed'
 
-@description('Minimum replicas for Hosted deployment type')
+@description('Minimum replicas for Hosted deployment type. Must be less than or equal to agentDeploymentMaxReplicas.')
 @minValue(1)
 param agentDeploymentMinReplicas int = 1
 
-@description('Maximum replicas for Hosted deployment type')
+@description('Maximum replicas for Hosted deployment type. Must be greater than or equal to agentDeploymentMinReplicas.')
 @minValue(1)
 param agentDeploymentMaxReplicas int = 3
 
