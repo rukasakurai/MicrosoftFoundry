@@ -106,14 +106,11 @@ if [ -z "$ENDPOINT" ]; then
   fi
 fi
 
-# Get project name from environment if not provided
+# Check project name is available
 if [ -z "$PROJECT_NAME" ]; then
-  PROJECT_NAME="${PROJECT_NAME}"
-  if [ -z "$PROJECT_NAME" ]; then
-    echo "Error: PROJECT_NAME environment variable not found."
-    echo "Run 'azd env get-values' or provide --project parameter."
-    exit 1
-  fi
+  echo "Error: PROJECT_NAME environment variable not found."
+  echo "Run 'azd env get-values' or provide --project parameter."
+  exit 1
 fi
 
 # Remove trailing slash from endpoint if present
