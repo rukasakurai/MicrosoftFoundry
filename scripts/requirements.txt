@@ -1,0 +1,3 @@
+# Azure AI Projects SDK for creating and managing agents
+azure-ai-projects>=1.0.0b1
+azure-identity>=1.12.0

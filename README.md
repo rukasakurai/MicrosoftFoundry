@@ -44,3 +44,12 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
    ```
 
 For detailed deployment instructions and configuration options, see [docs/azd-deployment.md](docs/azd-deployment.md).
+
+## Creating AI Agents
+
+After deploying the infrastructure, you can programmatically create AI agents using:
+- **Python SDK** - Best for application integration
+- **Bash/Azure CLI** - Best for CI/CD and automation
+- **REST API** - For custom implementations
+
+See [docs/agent-creation.md](docs/agent-creation.md) for detailed instructions and examples.
