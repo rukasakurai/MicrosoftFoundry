@@ -20,7 +20,7 @@ While various approaches exist, this repository focuses on programmatic agent cr
   - **Windows**: Use [Git Bash](https://git-scm.com/downloads) (included with Git for Windows)
 - `jq` (optional, for better JSON formatting)
 
-> **API Version**: The new agents API requires preview API version `2025-05-15-preview`. The GA version `2025-05-01` only supports the classic assistants API.
+> **API Version (as of December 2024)**: The new agents API requires preview API version `2025-05-15-preview`. The GA version `2025-05-01` only supports the classic assistants API. This may change as the API evolves.
 
 ## Quick Start
 
@@ -172,75 +172,6 @@ steps:
     scriptPath: 'scripts/create-agent.sh'
     arguments: '--model gpt-4o --name production-agent'
 ```
-
-## Troubleshooting
-
-### API Version Errors
-
-If you encounter "UnsupportedApiVersion" errors:
-
-- **New Agents API**: Uses `/agents/{name}/versions` endpoint with API version `2025-05-15-preview`
-- **Classic API**: Uses `/assistants` endpoint with API version `2025-05-01` (GA)
-- **Required for new API**: Definition must include `"kind": "prompt"` property
-
-The scripts in this repository use the **new agents API** for versioned agent management.
-
-### Model Deployment Errors
-
-If you get errors about model not found:
-
-```bash
-# List available models in your deployment
-azd env get-values | grep -E "MODEL|DEPLOYMENT"
-
-# Or check via Azure CLI
-az cognitiveservices account deployment list \
-  --name <your-cog-services-name> \
-  --resource-group <your-rg-name> \
-  --output table
-```
-
-Use the exact model deployment name (e.g., `gpt-4.1`) in the `--model` parameter.
-
-### Authentication Errors
-
-If you encounter authorization errors:
-
-1. Ensure you're logged in: `az login`
-2. Check you have the correct subscription: `az account show`
-3. Verify you have **Azure AI User** role on the project
-
-### Environment Variable Issues
-
-If environment variables aren't persisting:
-
-```bash
-# Don't use eval in separate command
-# ❌ Wrong:
-eval $(azd env get-values)
-./scripts/create-agent.sh
-
-# ✅ Correct:
-bash -c 'export $(azd env get-values | xargs) && ./scripts/create-agent.sh'
-```
-
-### Missing "kind" Property Error
-
-If you see `required: Required properties ["kind"] are not present`:
-
-- The new agents API requires `"kind": "prompt"` in the definition
-- Make sure you're using API version `2025-05-15-preview` or later
-- Check your request body matches the format:
-  ```json
-  {
-    "description": "...",
-    "definition": {
-      "kind": "prompt",
-      "model": "gpt-4.1",
-      "instructions": "..."
-    }
-  }
-  ```
 
 ## Testing Your Agent
 
