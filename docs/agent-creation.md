@@ -1,4 +1,4 @@
-# Programmatically Creating Agents in Azure AI Foundry
+# Programmatically Creating Agents in Microsoft Foundry
 
 This guide explains how to programmatically create AI agents in your Microsoft Foundry project after provisioning infrastructure with Bicep templates.
 
@@ -10,7 +10,7 @@ While various approaches exist, this repository focuses on programmatic agent cr
 
 ## Prerequisites
 
-- Azure AI Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
+- Microsoft Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
 - Azure CLI installed and authenticated: `az login`
 - Model deployments available in your Azure OpenAI service or Azure AI Services
 - Bash shell:

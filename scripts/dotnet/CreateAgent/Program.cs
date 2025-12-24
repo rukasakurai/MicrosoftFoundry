@@ -2,7 +2,7 @@
 using Azure.Identity;
 
 /// <summary>
-/// Create an AI agent in Azure AI Foundry using the .NET SDK.
+/// Create an AI agent in Microsoft Foundry using the .NET SDK.
 /// 
 /// This program demonstrates how to programmatically create an agent in a Microsoft Foundry
 /// project that has been provisioned with Bicep templates.
@@ -20,7 +20,7 @@ using Azure.Identity;
 ///   dotnet run -- --project-endpoint <endpoint> --model-id <model>
 /// 
 /// Environment Variables (from 'azd env get-values'):
-///   PROJECT_ENDPOINT: Azure AI Foundry project endpoint URL (primary)
+///   PROJECT_ENDPOINT: Microsoft Foundry project endpoint URL (primary)
 ///   COGNITIVE_SERVICES_ENDPOINT: Azure AI Services endpoint URL (fallback)
 ///   PROJECT_NAME: Name of the Foundry project (not used in SDK, but available)
 /// </summary>
@@ -112,7 +112,7 @@ class Program
             Console.WriteLine("".PadRight(60, '='));
             Console.WriteLine();
             Console.WriteLine("Next steps:");
-            Console.WriteLine("  1. View your agent in Azure AI Foundry portal");
+            Console.WriteLine("  1. View your agent in Microsoft Foundry portal");
             Console.WriteLine("  2. Test the agent with a conversation thread");
             Console.WriteLine("  3. Publish the agent to an application for external access");
             Console.WriteLine();
@@ -135,10 +135,10 @@ class Program
     {
         Console.WriteLine("Usage: CreateAgent [OPTIONS]");
         Console.WriteLine();
-        Console.WriteLine("Create an AI agent in Azure AI Foundry using the .NET SDK.");
+        Console.WriteLine("Create an AI agent in Microsoft Foundry using the .NET SDK.");
         Console.WriteLine();
         Console.WriteLine("Options:");
-        Console.WriteLine("  --project-endpoint, -e <url>    Azure AI Foundry project endpoint (default: from PROJECT_ENDPOINT env var)");
+        Console.WriteLine("  --project-endpoint, -e <url>    Microsoft Foundry project endpoint (default: from PROJECT_ENDPOINT env var)");
         Console.WriteLine("  --model-id, -m <id>             Model deployment ID (default: gpt-4o)");
         Console.WriteLine("  --agent-name, -n <name>         Agent name (default: foundry-agent)");
         Console.WriteLine("  --agent-instructions, -i <text> Agent instructions (default: 'You are a helpful AI assistant.')");

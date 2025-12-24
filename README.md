@@ -2,6 +2,8 @@
 
 Infrastructure-as-Code (IaC) for deploying and managing Microsoft Foundry resources on Azure.
 
+> ⚠️ **Technology Clarification:** Microsoft Foundry and Azure AI Foundry are **not interchangeable**—they use different ARM resource providers (`Microsoft.CognitiveServices` vs `Microsoft.MachineLearningServices`). See the [Technology Reference](AGENTS.md#technology-reference) for details.
+
 ## What This Is
 
 This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which currently includes:
