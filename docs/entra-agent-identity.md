@@ -240,12 +240,33 @@ curl -s -X POST \
 
 ### Step 6: Verify Agent Identity
 
-After creating the agent identity:
+After creating the agent identity, verify it was created successfully:
+
+#### Option A: Verify via API
+
+```bash
+# List all agent identities in your tenant
+curl -s -X GET \
+  "https://graph.microsoft.com/beta/serviceprincipals?\$filter=servicePrincipalType eq 'ServiceIdentity'" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq '.value[] | {displayName, id, agentIdentityBlueprintId}'
+```
+
+#### Option B: Verify in Entra Admin Center
 
 1. Go to [Microsoft Entra admin center](https://entra.microsoft.com)
-2. Navigate to **Agent ID (Preview)** → **All agent identities (Preview)**
-3. Your agent should now appear with its identity details
-4. If you also registered in the Agent Registry, it will show **"Has Agent ID: Yes"**
+2. In the left navigation, expand **Agent ID (Preview)**
+3. Click **All agent identities (Preview)**
+4. Your agent should appear in the list with:
+   - **Display name**: `MyFoundryAgent-Identity`
+   - **Service principal type**: `ServiceIdentity`
+   - **Blueprint ID**: The ID of your Agent Identity Blueprint
+5. Click on your agent to view detailed properties including:
+   - Object ID
+   - Sponsors
+   - Created date
+   - Associated blueprint
+
+> **Tip**: If you also registered the agent in the Agent Registry (see [entra-agent-registry.md](./entra-agent-registry.md)), the agent will show **"Has Agent ID: Yes"** in the registry view.
 
 ## Using the Agent Identity
 
@@ -294,68 +315,149 @@ Connect-MgGraph -Scopes "AgentIdentityBlueprint.Create", "AgentIdentityBlueprint
 
 ```bash
 curl -s -X GET \
-  "https://graph.microsoft.com/beta/serviceprincipals?\$filter=servicePrincipalType eq 'AgentIdentity'" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq '.'
+  "https://graph.microsoft.com/beta/serviceprincipals?\$filter=servicePrincipalType eq 'ServiceIdentity'" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq '.value[] | {displayName, id, agentIdentityBlueprintId}'
 ```
 
-### Delete an Agent Identity
+### List All Agent Identity Blueprints
 
 ```bash
+curl -s -X GET \
+  "https://graph.microsoft.com/beta/applications?\$filter=@odata.type eq 'microsoft.graph.agentIdentityBlueprint'" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "OData-Version: 4.0" | jq '.value[] | {displayName, appId, id}'
+```
+
+## Cleanup: Deleting Created Resources
+
+When you're done testing or want to clean up resources, delete them in the following order to avoid dependency issues:
+
+### Step 1: Delete the Agent Identity
+
+Delete the agent identity first, as it depends on the blueprint:
+
+```bash
+# Set the agent identity object ID (from Step 6 verification)
 AGENT_IDENTITY_ID="<agent-identity-object-id>"
 
+# Delete the agent identity
 curl -s -X DELETE \
   "https://graph.microsoft.com/beta/serviceprincipals/${AGENT_IDENTITY_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "OData-Version: 4.0"
+
+echo "Agent Identity deleted"
 ```
 
-### Delete a Blueprint
+### Step 2: Delete the Blueprint Principal
 
-> ⚠️ **Warning**: Deleting a blueprint will affect all agent identities created from it.
+Delete the service principal associated with the blueprint:
 
 ```bash
+# Get the blueprint principal ID
+BLUEPRINT_PRINCIPAL_ID=$(curl -s -X GET \
+  "https://graph.microsoft.com/beta/serviceprincipals?\$filter=appId eq '${BLUEPRINT_APP_ID}'" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq -r '.value[0].id')
+
+# Delete the blueprint principal
+curl -s -X DELETE \
+  "https://graph.microsoft.com/beta/serviceprincipals/${BLUEPRINT_PRINCIPAL_ID}" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "OData-Version: 4.0"
+
+echo "Blueprint Principal deleted"
+```
+
+### Step 3: Delete the Agent Identity Blueprint
+
+> ⚠️ **Warning**: Deleting a blueprint will affect all agent identities created from it. Ensure all dependent agent identities are deleted first.
+
+```bash
+# Delete the blueprint application
 curl -s -X DELETE \
   "https://graph.microsoft.com/beta/applications/${BLUEPRINT_OBJECT_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}"
+
+echo "Agent Identity Blueprint deleted"
 ```
 
-## Common Issues
+### Step 4: Delete the Automation App Registration
 
-### "Insufficient privileges" or "Authorization_RequestDenied"
+Delete the app registration created in "Setting Up Permissions" (Agent-Identity-Automation):
 
-**Cause**: Missing permissions or role assignments.
+```bash
+# Set the automation app ID (from Step 1 of Setting Up Permissions)
+AUTOMATION_APP_ID="<your-automation-app-id>"
 
-**Solution**:
-1. Verify you have the **Agent ID Administrator** role (not Agent Registry Administrator)
-2. Ensure `AgentIdentityBlueprint.*` permissions are granted
-3. Ensure admin consent has been granted for all permissions
+# Get the object ID of the app registration
+AUTOMATION_OBJECT_ID=$(az ad app show --id $AUTOMATION_APP_ID --query id -o tsv)
 
-### Blueprint creation fails with "Invalid OData type"
+# Delete the service principal first
+az ad sp delete --id $AUTOMATION_APP_ID
 
-**Cause**: Missing or incorrect OData headers.
+# Delete the app registration
+az ad app delete --id $AUTOMATION_APP_ID
 
-**Solution**:
-1. Include `"@odata.type": "Microsoft.Graph.AgentIdentityBlueprint"` in the request body
-2. Include the header `OData-Version: 4.0` in all requests
+echo "Automation App Registration deleted"
+```
 
-### Agent Identity creation fails
+### Step 5: Remove Role Assignments (GUI)
 
-**Cause**: Blueprint not properly configured or missing credentials.
+The role assignments will be automatically cleaned up when the service principal is deleted. However, if you want to verify:
 
-**Solution**:
-1. Verify the blueprint was created successfully
-2. Verify the blueprint principal was created
-3. Verify credentials were added to the blueprint
-4. Use the blueprint's token (not your user token) to create agent identities
+1. Go to [Microsoft Entra admin center](https://entra.microsoft.com)
+2. Navigate to: **Roles and administrators** → **Agent ID Administrator**
+3. Verify the deleted app no longer appears in the assignments
 
-### "sponsors@odata.bind" error
+### Complete Cleanup Script
 
-**Cause**: Invalid user ID or user doesn't exist.
+Here's a complete script to delete all resources created by this guide:
 
-**Solution**:
-1. Verify the user ID is a valid GUID
-2. Verify the user exists in the tenant
-3. If using a service principal, provide a valid user ID manually
+```bash
+#!/bin/bash
+# Cleanup script for Agent Identity resources
+# Run this after completing the guide to remove all created resources
+
+# ===== SET THESE VALUES =====
+AGENT_IDENTITY_ID="<your-agent-identity-id>"      # e.g., 336fcd31-104c-44e9-b630-c6b619b80dc4
+BLUEPRINT_APP_ID="<your-blueprint-app-id>"        # e.g., eca7f06b-3587-422c-862c-31f20a4de4f3
+BLUEPRINT_OBJECT_ID="<your-blueprint-object-id>"  # Same as BLUEPRINT_APP_ID for blueprints
+AUTOMATION_APP_ID="<your-automation-app-id>"      # e.g., df96e70c-5afe-4616-958a-e6bb4ac7f2eb
+# ============================
+
+# Get access token
+ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
+
+echo "1. Deleting Agent Identity..."
+curl -s -X DELETE \
+  "https://graph.microsoft.com/beta/serviceprincipals/${AGENT_IDENTITY_ID}" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "OData-Version: 4.0"
+
+echo "2. Deleting Blueprint Principal..."
+BLUEPRINT_PRINCIPAL_ID=$(curl -s -X GET \
+  "https://graph.microsoft.com/beta/serviceprincipals?\$filter=appId eq '${BLUEPRINT_APP_ID}'" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq -r '.value[0].id')
+curl -s -X DELETE \
+  "https://graph.microsoft.com/beta/serviceprincipals/${BLUEPRINT_PRINCIPAL_ID}" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "OData-Version: 4.0"
+
+echo "3. Deleting Agent Identity Blueprint..."
+curl -s -X DELETE \
+  "https://graph.microsoft.com/beta/applications/${BLUEPRINT_OBJECT_ID}" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}"
+
+echo "4. Deleting Automation App..."
+az ad sp delete --id $AUTOMATION_APP_ID 2>/dev/null
+az ad app delete --id $AUTOMATION_APP_ID
+
+echo "Cleanup complete!"
+```
+
+> **Note**: After deletion, verify in the [Microsoft Entra admin center](https://entra.microsoft.com) that all resources have been removed:
+> - **Agent ID (Preview)** → **All agent identities** - should not show deleted identity
+> - **App registrations** → **All applications** - should not show deleted apps
 
 ## Additional Resources
 
@@ -379,9 +481,13 @@ curl -s -X DELETE \
 ## Documentation Test History
 
 ### 2025-12-24
-- Result: NOT YET TESTED
-- Platform/Context: N/A
-- OS: N/A
-- Shell: N/A
-- Tester: N/A
-- Notes: Documentation created from Microsoft official documentation. Testing pending - requires Agent ID Administrator role and AgentIdentityBlueprint.* permissions.
+- Result: PASS with manual steps
+- Platform/Context: Microsoft Surface Laptop (Windows native)
+- OS: Microsoft Windows 11 Enterprise Build 26200
+- Shell: Bash (Git Bash) with Azure CLI 2.76.0, PowerShell 7.5.4
+- Tester: Automated Documentation Tester (with human intervention)
+- Notes: 
+  - All documented steps executed successfully and produced expected results
+  - Manual intervention required for: (1) Azure Portal login, (2) Adding API permissions via GUI, (3) Granting admin consent, (4) Assigning Agent ID Administrator role
+  - Successfully created: App Registration, Agent Identity Blueprint, Blueprint Principal, Blueprint credentials, and Agent Identity
+  - Initial authentication was as service principal which lacked permissions; required re-login as user with Application Developer role
