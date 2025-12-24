@@ -1,4 +1,4 @@
-﻿using Azure.AI.Agents.Persistent;
+﻿using Azure.AI.Projects.OpenAI;
 using Azure.Identity;
 
 /// <summary>
@@ -9,8 +9,8 @@ using Azure.Identity;
 /// 
 /// Prerequisites:
 /// - Azure CLI installed and authenticated (az login) or appropriate Azure credentials
-/// - .NET 9.0 or higher
-/// - Azure.AI.Agents.Persistent and Azure.Identity NuGet packages
+/// - .NET 10 or higher
+/// - Azure.AI.Projects.OpenAI and Azure.Identity NuGet packages
 /// 
 /// Usage:
 ///   # Using environment variables from azd
@@ -92,20 +92,28 @@ class Program
             // - Interactive browser
             var credential = new DefaultAzureCredential();
 
-            // Create project client with persistent agents
-            var agentsClient = new PersistentAgentsClient(projectEndpoint, credential);
+            // Create project client for new agents API
+            var projectClient = new AIProjectClient(new Uri(projectEndpoint), credential);
 
-            // Create agent
-            var agent = await agentsClient.Administration.CreateAgentAsync(
-                model: modelId,
-                name: agentName,
-                instructions: agentInstructions,
-                description: agentDescription);
+            // Define agent with new PromptAgentDefinition
+            var agentDefinition = new PromptAgentDefinition(modelId)
+            {
+                Instructions = agentInstructions
+            };
+
+            // Create agent version (replaces old create_agent)
+            var agentVersion = await projectClient.Agents.CreateAgentVersionAsync(
+                agentName: agentName,
+                options: new CreateAgentVersionOptions(agentDefinition)
+                {
+                    Description = agentDescription
+                });
 
             Console.WriteLine("✓ Agent created successfully!");
-            Console.WriteLine($"  Agent ID: {agent.Value.Id}");
-            Console.WriteLine($"  Agent Name: {agent.Value.Name}");
-            Console.WriteLine($"  Model: {agent.Value.Model}");
+            Console.WriteLine($"  Agent ID: {agentVersion.Name}:{agentVersion.Version}");
+            Console.WriteLine($"  Agent Name: {agentVersion.Name}");
+            Console.WriteLine($"  Version: {agentVersion.Version}");
+            Console.WriteLine($"  Model: {agentDefinition.Model}");
             Console.WriteLine();
             Console.WriteLine("".PadRight(60, '='));
             Console.WriteLine("Agent creation completed successfully!");

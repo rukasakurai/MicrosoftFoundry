@@ -26,8 +26,6 @@ dotnet run -- --model-id gpt-4o --agent-name my-agent --help
 
 See [dotnet/README.md](dotnet/README.md) for detailed instructions.
 
-**Note:** This implementation uses the **classic Agents API** (`Azure.AI.Agents.Persistent`). Agents created with this SDK appear in the classic agent UI but not in the new Microsoft Foundry agent UI. Migration to the [new Agents API](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) is pending .NET SDK stabilization. See [migration guide](https://aka.ms/agent/migrate/tool) for the API differences.
-
 ### Bash/REST API - `create-agent.sh`
 Bash script using Azure CLI and REST API. Perfect for CI/CD pipelines and shell-based automation.
 
@@ -82,9 +80,6 @@ For comprehensive documentation, examples, and troubleshooting, see [docs/agent-
   - Fixed: Updated bash example to use gpt-4o instead of gpt-4-turbo
   - Fixed: Added working directory clarification
   - Verified: Agents successfully created and retrievable via REST API at project endpoint
-- Design Decision: Classic API vs New Agents API
-  - Observed: SDK-created agents visible in classic agent UI only; new Foundry UI requires different API
-  - Attempted: Migration to new Agents API (`Azure.AI.Projects` v1.0.0-beta.5) per [Microsoft Learn guide](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry)
-  - Issue: SDK beta.5 API surface doesn't match documentation (missing types: `PromptAgentDefinition`, `ConnectionProvider`; missing member: `AIProjectClient.Agents`)
-  - Decision: **Reverted to classic API** (`Azure.AI.Agents.Persistent` v1.2.0-beta.8) which remains stable and functional
-  - Future: Migration to new API pending .NET SDK stabilization - see [migration guide](https://aka.ms/agent/migrate/tool)
+- Migrated to new Agents API (`Azure.AI.Projects.OpenAI` v1.0.0-beta.3) per [Microsoft Learn guide](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry)
+  - Updated SDK package and API calls to use agent versioning
+  - REST API endpoints updated to use conversations and responses
