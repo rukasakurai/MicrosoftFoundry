@@ -55,3 +55,14 @@ After deploying the infrastructure, you can programmatically create AI agents us
 - **REST API** - For custom implementations
 
 See [docs/agent-creation.md](docs/agent-creation.md) for detailed instructions and examples.
+
+## Microsoft Entra Agent ID Integration
+
+Register your agents with [Microsoft Entra Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/identity-platform/what-is-agent-id) to enable centralized identity management, governance, and visibility in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview).
+
+```bash
+# Register an agent with Microsoft Entra Agent ID
+./scripts/register-agent-entra.sh --agent-name "my-agent" --display-name "My AI Agent"
+```
+
+See [docs/entra-agent-id.md](docs/entra-agent-id.md) for detailed setup instructions and prerequisites.

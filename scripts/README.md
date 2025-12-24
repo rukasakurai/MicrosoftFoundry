@@ -1,12 +1,14 @@
-# Agent Creation Scripts
+# Agent Scripts
 
-This directory contains scripts for programmatically creating AI agents in Microsoft Foundry.
+This directory contains scripts for programmatically creating and managing AI agents in Microsoft Foundry.
 
 All commands in this document assume your current working directory is this `scripts/` folder.
 
-## Available Implementations
+## Available Scripts
 
-### .NET (Default/Recommended) - `dotnet/CreateAgent/`
+### Agent Creation
+
+#### .NET (Default/Recommended) - `dotnet/CreateAgent/`
 .NET console application using the Azure AI Agents SDK. Provides strong typing, comprehensive error handling, and native Azure integration. **This is the recommended approach for this repository.**
 
 **Requirements:**
@@ -26,7 +28,7 @@ dotnet run -- --model-id gpt-4o --agent-name my-agent --help
 
 See [dotnet/README.md](dotnet/README.md) for detailed instructions.
 
-### Bash/REST API - `create-agent.sh`
+#### Bash/REST API - `create-agent.sh`
 Bash script using Azure CLI and REST API. Perfect for CI/CD pipelines and shell-based automation.
 
 **Requirements:**
@@ -42,6 +44,31 @@ Bash script using Azure CLI and REST API. Perfect for CI/CD pipelines and shell-
 # Custom parameters
 ./create-agent.sh --model gpt-4o --name my-agent
 ```
+
+### Microsoft Entra Agent ID Registration - `register-agent-entra.sh`
+
+Bash script to register agents with Microsoft Entra Agent ID, making them visible in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview).
+
+**Requirements:**
+- Bash shell
+- Azure CLI (`az login`)
+- Microsoft Entra Agent Registry Administrator role
+- Microsoft Graph API permission: `AgentInstance.ReadWrite.All`
+- `jq` (optional, for JSON formatting)
+
+**Usage:**
+```bash
+# Register an agent with Microsoft Entra Agent ID
+./register-agent-entra.sh --agent-name foundry-agent --display-name "My Foundry Agent"
+
+# Full customization
+./register-agent-entra.sh \
+  --agent-name customer-service-agent \
+  --display-name "Customer Service AI Agent" \
+  --agent-url "https://myproject.services.ai.azure.com/api/agents/customer-service"
+```
+
+See [docs/entra-agent-id.md](../docs/entra-agent-id.md) for detailed setup instructions and prerequisites.
 
 ## Getting Environment Variables
 

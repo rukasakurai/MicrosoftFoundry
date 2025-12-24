@@ -212,6 +212,19 @@ curl -X POST \
   }'
 ```
 
+## Registering Agents with Microsoft Entra Agent ID
+
+After creating an agent, you can register it with Microsoft Entra Agent ID to make it visible and manageable in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview). This provides centralized governance, visibility, and identity management for your AI agents.
+
+```bash
+# Register the agent with Microsoft Entra Agent ID
+./scripts/register-agent-entra.sh \
+  --agent-name foundry-agent \
+  --display-name "My Foundry Agent"
+```
+
+For detailed instructions on setting up permissions and managing registered agents, see [entra-agent-id.md](./entra-agent-id.md).
+
 ## Publishing Agents to Applications
 
 Once you've created and tested an agent, you can publish it to an application for external access:
