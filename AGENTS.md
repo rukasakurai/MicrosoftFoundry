@@ -62,20 +62,24 @@ When working on this repository, AI agents should:
 
 > ⚠️ **Important:** Microsoft Foundry and Azure AI Foundry are **not interchangeable** and use **different ARM resource providers**. This section clarifies the technologies used in this repository.
 
+> ⚠️ **Documentation Confusion Warning:** Microsoft's official documentation states "Azure AI Foundry is now Microsoft Foundry" from a **branding perspective**. However, from an **Azure Resource Manager technical perspective**, these remain **distinct products** with different resource providers. During the documentation transition period, public documentation may use "Azure AI Foundry" and "Microsoft Foundry" interchangeably. **In this repository, we maintain strict technical distinctions** based on ARM resource providers, not branding.
+
 The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. This reference documents the precise technical identifiers for technologies used in this repository.
 
-| Technology Name | Technical Identifier | Status | Purpose | Distinct From | Synonyms/Aliases | Last Verified |
-|-----------------|---------------------|--------|---------|---------------|------------------|---------------|
-| **Microsoft Foundry** | `Microsoft.CognitiveServices/accounts` (kind: `AIServices`) | Preview | Multi-modal AI services platform using Cognitive Services ARM provider | Azure AI Foundry (uses different ARM provider) | Azure AI Services, Cognitive Services AIServices | 2025-12-24 |
-| **Foundry Projects** | `Microsoft.CognitiveServices/accounts/projects` | Preview | Organize AI solutions within a Cognitive Services account | Azure AI Foundry projects (different provider hierarchy) | Cognitive Services Projects | 2025-12-24 |
-| **Foundry Applications** | `Microsoft.CognitiveServices/accounts/projects/applications` | Preview | Stable endpoints for publishing agents externally | — | — | 2025-12-24 |
-| **Agent Deployments** | `Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments` | Preview | Hosting infrastructure for published agents | — | — | 2025-12-24 |
-| **Azure Developer CLI** | `azd` (CLI tool) | GA | Infrastructure deployment orchestration | Azure CLI (`az`), Terraform | azd | 2025-12-24 |
-| **Bicep** | `.bicep` files, ARM templates | GA | Infrastructure-as-Code language for Azure | Terraform, Pulumi, ARM JSON | Azure Bicep | 2025-12-24 |
-| **Azure AI Foundry** | `Microsoft.MachineLearningServices/workspaces` | GA | ML platform for model training and deployment | Microsoft Foundry (this repo uses Cognitive Services) | Azure Machine Learning, AML | 2025-12-24 |
+| Technology Name | Technical Identifier |
+|-----------------|---------------------|
+| **Microsoft Foundry** | `Microsoft.CognitiveServices/accounts` (kind: `AIServices`) |
+| **Foundry Projects** | `Microsoft.CognitiveServices/accounts/projects` |
+| **Foundry Applications** | `Microsoft.CognitiveServices/accounts/projects/applications` |
+| **Agent Deployments** | `Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments` |
+| **Azure AI Foundry (Hub)** | `Microsoft.MachineLearningServices/workspaces` (kind: `Hub`) |
+| **Azure AI Foundry (Project)** | `Microsoft.MachineLearningServices/workspaces` (kind: `Project`) |
+| **Azure Machine Learning** | `Microsoft.MachineLearningServices/workspaces` (kind: `Default`) |
+| **Microsoft Agent SDK (.NET)** | NuGet: `Microsoft.Agents.AI.*` |
 
 ### Key Distinctions
 
 - **Microsoft Foundry** (this repository): Uses `Microsoft.CognitiveServices` ARM resource provider with `AIServices` kind. Focused on AI agents and cognitive services.
-- **Azure AI Foundry**: Uses `Microsoft.MachineLearningServices` ARM resource provider. Focused on machine learning workspaces, model training, and MLOps.
-- These are **separate products** with different ARM providers, APIs, and deployment patterns despite similar branding.
+- **Azure AI Foundry**: Uses `Microsoft.MachineLearningServices` ARM resource provider with Hub/Project architecture (kind: `Hub` or `Project`).
+- **Azure Machine Learning**: Uses `Microsoft.MachineLearningServices` ARM resource provider with kind: `Default`. Traditional ML workspace for model training and MLOps.
+- These are **separate products** with different ARM providers, resource kinds, APIs, and deployment patterns despite similar branding.
