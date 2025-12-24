@@ -223,7 +223,7 @@ After creating an agent, you can register it with Microsoft Entra Agent ID to ma
   --display-name "My Foundry Agent"
 ```
 
-For detailed instructions on setting up permissions and managing registered agents, see [entra-agent-id.md](./entra-agent-id.md).
+For detailed instructions on setting up permissions and managing registered agents, see [entra-agent-registry.md](./entra-agent-registry.md).
 
 ## Publishing Agents to Applications
 

@@ -94,7 +94,7 @@ while [[ $# -gt 0 ]]; do
       echo "  - Microsoft Graph API permission: AgentInstance.ReadWrite.All"
       echo "  - Agent Registry Administrator role in Microsoft Entra"
       echo ""
-      echo "For more information, see docs/entra-agent-id.md"
+      echo "For more information, see docs/entra-agent-registry.md"
       exit 0
       ;;
     *)
@@ -223,7 +223,7 @@ if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
   echo "  2. Configure additional governance policies as needed"
   echo "  3. Assign appropriate permissions and access controls"
   echo ""
-  echo "For more information, see docs/entra-agent-id.md"
+  echo "For more information, see docs/entra-agent-registry.md"
 else
   echo "✗ Error: Failed to register agent (HTTP ${HTTP_CODE})"
   echo ""
@@ -242,7 +242,7 @@ else
     echo "  2. If using an app registration, grant AgentInstance.ReadWrite.All permission"
     echo "  3. Have an admin grant consent for the permissions"
     echo ""
-    echo "See docs/entra-agent-id.md for detailed setup instructions."
+    echo "See docs/entra-agent-registry.md for detailed setup instructions."
   fi
   
   echo "Response:"

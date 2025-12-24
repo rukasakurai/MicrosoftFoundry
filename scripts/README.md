@@ -68,7 +68,7 @@ Bash script to register agents with Microsoft Entra Agent ID, making them visibl
   --agent-url "https://myproject.services.ai.azure.com/api/agents/customer-service"
 ```
 
-See [docs/entra-agent-id.md](../docs/entra-agent-id.md) for detailed setup instructions and prerequisites.
+See [docs/entra-agent-registry.md](../docs/entra-agent-registry.md) for detailed setup instructions and prerequisites.
 
 ## Getting Environment Variables
 

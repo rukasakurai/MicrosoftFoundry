@@ -65,4 +65,4 @@ Register your agents with [Microsoft Entra Agent ID](https://learn.microsoft.com
 ./scripts/register-agent-entra.sh --agent-name "my-agent" --display-name "My AI Agent"
 ```
 
-See [docs/entra-agent-id.md](docs/entra-agent-id.md) for detailed setup instructions and prerequisites.
+See [docs/entra-agent-registry.md](docs/entra-agent-registry.md) for detailed setup instructions and prerequisites.

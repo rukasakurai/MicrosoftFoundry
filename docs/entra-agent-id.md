@@ -1,103 +1,36 @@
 # Microsoft Entra Agent ID Guide
 
-> ⚠️ **This document has been split into two separate guides:**
->
-> - **[entra-agent-registry.md](./entra-agent-registry.md)** - Register agents for visibility and governance in the Entra admin center
-> - **[entra-agent-identity.md](./entra-agent-identity.md)** - Create Agent Identities so agents can authenticate as themselves
->
-> These are **independent features** - choose the one that matches your needs, or use both.
+> ⚠️ **This document has been split into two separate guides. Please use the links below.**
 
 ## Quick Reference
 
-| Feature | Purpose | When to Use |
-|---------|---------|-------------|
-| [Agent Registry](./entra-agent-registry.md) | Visibility, governance, audit trail | You want agents to appear in Entra admin center |
-| [Agent Identity](./entra-agent-identity.md) | Agent authentication, token requests | You want agents to authenticate as themselves |
+| Feature | Guide | Purpose | When to Use |
+|---------|-------|---------|-------------|
+| **Agent Registry** | [entra-agent-registry.md](./entra-agent-registry.md) | Visibility, governance, audit trail | You want agents to appear in Entra admin center |
+| **Agent Identity** | [entra-agent-identity.md](./entra-agent-identity.md) | Agent authentication, token requests | You want agents to authenticate as themselves |
+
+These are **independent features** - choose the one that matches your needs, or use both.
 
 ## Overview
 
-[Microsoft Entra Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/identity-platform/what-is-agent-id) provides a centralized identity management system for AI agents. The system has two main components:
+[Microsoft Entra Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/identity-platform/what-is-agent-id) provides a centralized identity management system for AI agents with two main components:
 
-### Agent Registry (Part 1 of This Guide)
+### Agent Registry
 
-Register your agents for visibility and governance:
+Register your agents for visibility and governance. After registration, your agent will be visible in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview) but will show **"Has Agent ID: No"**.
 
-- **Centralized visibility**: View all agents in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview)
-- **Governance and compliance**: Apply enterprise-wide policies to AI agents
-- **Audit trail**: Track agent activities and ownership
+👉 **See [entra-agent-registry.md](./entra-agent-registry.md) for complete instructions.**
 
-### Agent Identity (Part 2 of This Guide)
+### Agent Identity
 
-Assign verifiable identities so agents can authenticate:
+Create verifiable identities so agents can authenticate as themselves and request tokens. After creating an Agent Identity, your agent will show **"Has Agent ID: Yes"** in the Entra admin center.
 
-- **Identity management**: Assign verifiable identities to agents
-- **Access control**: Configure Conditional Access and Identity Protection for agents
-- **Agent authentication**: Allow agents to request tokens and authenticate as themselves
+👉 **See [entra-agent-identity.md](./entra-agent-identity.md) for complete instructions.**
 
-> **Quick Reference**: After completing Part 1, your agent will show **"Has Agent ID: No"** in Entra admin center. To change this to **"Yes"**, complete [Part 2: Creating an Agent Identity](#part-2-creating-an-agent-identity).
+## Additional Resources
 
----
-
-## Part 1: Agent Registry Registration
-
-## Step 1: Prerequisites
-
-Before registering agents with Microsoft Entra Agent ID, ensure you have:
-
-1. **Azure CLI** installed and authenticated (`az login`)
-2. **Microsoft Entra permissions**:
-   - Agent Registry Administrator role (minimum required)
-   - Or a custom role with equivalent permissions
-3. **Microsoft Graph API permissions** (for programmatic access):
-   - `AgentInstance.ReadWrite.All` (Application or Delegated)
-4. **Admin consent capability** (one of the following):
-   - **Global Administrator** or **Privileged Role Administrator** role to grant admin consent yourself, OR
-   - Access to a tenant admin who can grant consent on your behalf
-5. **A deployed Microsoft Foundry agent** (see [agent-creation.md](./agent-creation.md))
-
-> ⚠️ **Important**: The Azure CLI's built-in Microsoft Graph permissions do **not** include `AgentInstance.ReadWrite.All`. Even with the Agent Registry Administrator role, you cannot register agents using Azure CLI tokens directly. You must create a **custom app registration** with `AgentInstance.ReadWrite.All` permission granted and authenticate as that app. See [Setting Up Permissions](#setting-up-permissions) below.
-
-## Quick Start
-
-### Register an Agent Using the Script
-
-After creating an agent in Microsoft Foundry, register it with Microsoft Entra Agent ID:
-
-```bash
-# Navigate to the scripts directory
-cd scripts
-
-# Register the agent
-./register-agent-entra.sh --agent-name "foundry-agent" --display-name "My Foundry Agent"
-```
-
-### Verify Registration
-
-After registration, verify your agent appears in the Microsoft Entra admin center:
-
-1. Navigate to [Microsoft Entra admin center](https://entra.microsoft.com)
-2. In the left sidebar, click **Agent ID (Preview)** → **Agent registry (Preview)**
-3. Use the "Search by name or ID" box to find your agent:
-   - Search by **Name**: The `--display-name` you provided (e.g., "My Foundry Agent")
-   - Search by **Registry ID**: The ID returned by the API after successful registration
-4. You can also use **Add filters** to filter by originating store or other criteria
-
-> **Tip**: The script outputs the Agent Instance ID (Registry ID) upon successful registration. Save this ID for future API operations (update, delete, etc.).
-
-> **Note**: If you see "0 agents found" / "No data", registration may have failed (check for HTTP 403 permission errors).
-
-## Detailed Setup
-
-### Setting Up Permissions
-
-To register agents programmatically, you need an app registration with the `AgentInstance.ReadWrite.All` Microsoft Graph API permission. Azure CLI user tokens do not include this scope.
-
-#### Create an App Registration with Required Permissions
-
-1. **Create an App Registration** in Microsoft Entra:
-   ```bash
-   az ad app create --display-name "Agent-Registry-Automation"
-   ```
+- [Microsoft Entra Agent ID Documentation](https://learn.microsoft.com/en-us/entra/agent-id/identity-platform/what-is-agent-id)
+- [Agent Creation Guide](./agent-creation.md) - Create agents in Microsoft Foundry first
    Save the `appId` from the output.
 
 2. **Add API Permission** for Microsoft Graph:

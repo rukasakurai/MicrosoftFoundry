@@ -33,42 +33,11 @@ Before registering agents with Microsoft Entra Agent Registry, ensure you have:
 
 > ⚠️ **Important**: The Azure CLI's built-in Microsoft Graph permissions do **not** include `AgentInstance.ReadWrite.All`. Even with the Agent Registry Administrator role, you cannot register agents using Azure CLI tokens directly. You must create a **custom app registration** with `AgentInstance.ReadWrite.All` permission granted and authenticate as that app. See [Setting Up Permissions](#setting-up-permissions) below.
 
-## Quick Start
+## Setting Up Permissions
 
-### Register an Agent Using the Script
+Before registering agents, you need an app registration with the `AgentInstance.ReadWrite.All` Microsoft Graph API permission. Azure CLI user tokens do not include this scope.
 
-After creating an agent in Microsoft Foundry, register it with Microsoft Entra Agent Registry:
-
-```bash
-# Navigate to the scripts directory
-cd scripts
-
-# Register the agent
-./register-agent-entra.sh --agent-name "foundry-agent" --display-name "My Foundry Agent"
-```
-
-### Verify Registration
-
-After registration, verify your agent appears in the Microsoft Entra admin center:
-
-1. Navigate to [Microsoft Entra admin center](https://entra.microsoft.com)
-2. In the left sidebar, click **Agent ID (Preview)** → **Agent registry (Preview)**
-3. Use the "Search by name or ID" box to find your agent:
-   - Search by **Name**: The `--display-name` you provided (e.g., "My Foundry Agent")
-   - Search by **Registry ID**: The ID returned by the API after successful registration
-4. You can also use **Add filters** to filter by originating store or other criteria
-
-> **Tip**: The script outputs the Agent Instance ID (Registry ID) upon successful registration. Save this ID for future API operations (update, delete, etc.).
-
-> **Note**: If you see "0 agents found" / "No data", registration may have failed (check for HTTP 403 permission errors).
-
-## Detailed Setup
-
-### Setting Up Permissions
-
-To register agents programmatically, you need an app registration with the `AgentInstance.ReadWrite.All` Microsoft Graph API permission. Azure CLI user tokens do not include this scope.
-
-#### Create an App Registration with Required Permissions
+### Create an App Registration with Required Permissions
 
 1. **Create an App Registration** in Microsoft Entra:
    ```bash
@@ -102,7 +71,7 @@ To register agents programmatically, you need an app registration with the `Agen
    - Navigate to: **Roles and administrators** → **Agent Registry Administrator** → **Add assignments**
    - Add your app's service principal
 
-#### Authenticate as the App Registration
+### Authenticate as the App Registration
 
 Before running the registration script, authenticate as the app (not your user account):
 
@@ -124,11 +93,11 @@ Now the script will use the app's token which includes `AgentInstance.ReadWrite.
 
 > **Security Note**: For CI/CD, store the client secret in a secure secret store (GitHub Secrets, Azure Key Vault, etc.). Never commit secrets to source control.
 
-### Registering Agents
+## Register Your Agent
 
-#### Using the Bash Script
+After setting up permissions, you can register agents using either the bash script or REST API directly.
 
-The `register-agent-entra.sh` script provides a straightforward way to register agents:
+### Using the Bash Script
 
 ```bash
 # Basic registration
@@ -153,7 +122,7 @@ The `register-agent-entra.sh` script provides a straightforward way to register 
 | `--description` | No | Description of the agent's purpose |
 | `--originating-store` | No | Platform name (defaults to "MicrosoftFoundry") |
 
-#### Using the REST API Directly
+### Using the REST API Directly
 
 You can also register agents directly using the Microsoft Graph API:
 
@@ -176,6 +145,18 @@ curl -X POST \
     "originatingStore": "MicrosoftFoundry"
   }'
 ```
+
+### Verify Registration
+
+After registration, verify your agent appears in the Microsoft Entra admin center:
+
+1. Navigate to [Microsoft Entra admin center](https://entra.microsoft.com)
+2. In the left sidebar, click **Agent ID (Preview)** → **Agent registry (Preview)**
+3. Search by **Display Name** or **Registry ID** (returned by the API)
+
+> **Tip**: The script outputs the Agent Instance ID upon successful registration. Save this ID for future API operations.
+
+> **Note**: If you see "0 agents found", registration may have failed (check for HTTP 403 permission errors).
 
 ## Complete Workflow
 
@@ -211,64 +192,9 @@ eval $(azd env get-values)
 
 ### Step 4: Verify Registration
 
-1. Open [Microsoft Entra admin center](https://entra.microsoft.com)
-2. In the left sidebar, click **Agent ID (Preview)** → **Agent registry (Preview)**
-3. Search for your agent by name or Registry ID
-4. Confirm your agent appears in the list
+See [Verify Registration](#verify-registration) to confirm your agent appears in Entra admin center.
 
-## CI/CD Integration
-
-### GitHub Actions Example
-
-```yaml
-name: Deploy and Register Agent
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy-agent:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      
-      - name: Install azd
-        run: curl -fsSL https://aka.ms/install-azd.sh | bash
-      
-      - name: Get Environment Variables
-        run: |
-          eval $(azd env get-values)
-          echo "PROJECT_ENDPOINT=${PROJECT_ENDPOINT}" >> $GITHUB_ENV
-          echo "PROJECT_NAME=${PROJECT_NAME}" >> $GITHUB_ENV
-      
-      - name: Create Agent
-        run: |
-          ./scripts/create-agent.sh \
-            --name production-agent \
-            --instructions "$(cat agent-config/instructions.txt)"
-      
-      - name: Register with Microsoft Entra Agent Registry
-        run: |
-          ./scripts/register-agent-entra.sh \
-            --agent-name production-agent \
-            --display-name "Production AI Agent"
-```
-
-## Managing Registered Agents
-
-### List All Registered Agents
+### Step 5: List All Registered Agents
 
 ```bash
 ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
@@ -279,7 +205,7 @@ curl -X GET \
   -H "Content-Type: application/json"
 ```
 
-### Get a Specific Agent Instance
+### Step 6: Get a Specific Agent Instance
 
 ```bash
 INSTANCE_ID="<agent-instance-id>"
@@ -290,7 +216,7 @@ curl -X GET \
   -H "Content-Type: application/json"
 ```
 
-### Update an Agent Instance
+### Step 7: Update an Agent Instance
 
 ```bash
 INSTANCE_ID="<agent-instance-id>"
@@ -304,7 +230,7 @@ curl -X PATCH \
   }'
 ```
 
-### Delete an Agent Instance
+### Step 8: Delete an Agent Instance
 
 ```bash
 INSTANCE_ID="<agent-instance-id>"
@@ -313,48 +239,6 @@ curl -X DELETE \
   "https://graph.microsoft.com/beta/agentRegistry/agentInstances/${INSTANCE_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}"
 ```
-
-## Common Issues
-
-### Understanding Agent Identifiers
-
-When working with Microsoft Entra Agent Registry, you'll encounter several identifiers:
-
-| Identifier | Description | Where to Find It |
-|------------|-------------|------------------|
-| **Display Name** | Human-readable name you provide | `--display-name` parameter, Entra admin center UI |
-| **Agent Instance ID** | Unique ID assigned by Microsoft Graph API | API response after registration, Entra admin center details |
-| **Owner ID** | Microsoft Entra object ID of the agent owner | `az ad signed-in-user show --query id -o tsv` |
-| **Originating Store** | Platform that created the agent | Defaults to "MicrosoftFoundry", visible in Entra admin center |
-
-> **To find your agent in Entra admin center**: Search by **Display Name** or filter the list by **Originating Store** = "MicrosoftFoundry".
-
-### "Authorization failed" or "Access denied"
-
-**Cause**: Missing permissions or role assignments.
-
-**Solution**:
-1. Verify you have the Agent Registry Administrator role in Microsoft Entra
-2. If using an app registration, ensure `AgentInstance.ReadWrite.All` permission is granted
-3. Ensure admin consent has been granted for the permission
-
-### "Invalid request" or "Bad request"
-
-**Cause**: Missing required fields or invalid JSON format.
-
-**Solution**:
-1. Ensure `displayName` is provided (required field)
-2. If providing `ownerIds`, ensure it's a valid array of Microsoft Entra object IDs
-3. Check JSON formatting in the request body
-
-### Agent not appearing in Entra admin center
-
-**Cause**: Registration succeeded but agent isn't visible.
-
-**Solution**:
-1. Wait a few minutes for propagation
-2. Ensure you're filtering by "Agent ID (Preview)" application type
-3. Verify the agent was created successfully (check API response)
 
 ## Additional Resources
 

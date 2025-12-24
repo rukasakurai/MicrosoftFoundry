@@ -409,52 +409,6 @@ The role assignments will be automatically cleaned up when the service principal
 2. Navigate to: **Roles and administrators** → **Agent ID Administrator**
 3. Verify the deleted app no longer appears in the assignments
 
-### Complete Cleanup Script
-
-Here's a complete script to delete all resources created by this guide:
-
-```bash
-#!/bin/bash
-# Cleanup script for Agent Identity resources
-# Run this after completing the guide to remove all created resources
-
-# ===== SET THESE VALUES =====
-AGENT_IDENTITY_ID="<your-agent-identity-id>"      # e.g., 336fcd31-104c-44e9-b630-c6b619b80dc4
-BLUEPRINT_APP_ID="<your-blueprint-app-id>"        # e.g., eca7f06b-3587-422c-862c-31f20a4de4f3
-BLUEPRINT_OBJECT_ID="<your-blueprint-object-id>"  # Same as BLUEPRINT_APP_ID for blueprints
-AUTOMATION_APP_ID="<your-automation-app-id>"      # e.g., df96e70c-5afe-4616-958a-e6bb4ac7f2eb
-# ============================
-
-# Get access token
-ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
-
-echo "1. Deleting Agent Identity..."
-curl -s -X DELETE \
-  "https://graph.microsoft.com/beta/serviceprincipals/${AGENT_IDENTITY_ID}" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -H "OData-Version: 4.0"
-
-echo "2. Deleting Blueprint Principal..."
-BLUEPRINT_PRINCIPAL_ID=$(curl -s -X GET \
-  "https://graph.microsoft.com/beta/serviceprincipals?\$filter=appId eq '${BLUEPRINT_APP_ID}'" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" | jq -r '.value[0].id')
-curl -s -X DELETE \
-  "https://graph.microsoft.com/beta/serviceprincipals/${BLUEPRINT_PRINCIPAL_ID}" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -H "OData-Version: 4.0"
-
-echo "3. Deleting Agent Identity Blueprint..."
-curl -s -X DELETE \
-  "https://graph.microsoft.com/beta/applications/${BLUEPRINT_OBJECT_ID}" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}"
-
-echo "4. Deleting Automation App..."
-az ad sp delete --id $AUTOMATION_APP_ID 2>/dev/null
-az ad app delete --id $AUTOMATION_APP_ID
-
-echo "Cleanup complete!"
-```
-
 > **Note**: After deletion, verify in the [Microsoft Entra admin center](https://entra.microsoft.com) that all resources have been removed:
 > - **Agent ID (Preview)** → **All agent identities** - should not show deleted identity
 > - **App registrations** → **All applications** - should not show deleted apps
