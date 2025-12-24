@@ -66,7 +66,7 @@ ACCESS_TOKEN=$(az account get-access-token --resource https://ai.azure.com --que
 
 # List all agents in the project
 curl -X GET \
-  "${PROJECT_ENDPOINT}/agents?api-version=2025-05-01" \
+  "${PROJECT_ENDPOINT}/agents?api-version=2025-05-15-preview" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json"
 ```
@@ -79,7 +79,7 @@ AGENT_NAME="foundry-agent"
 AGENT_VERSION="1"
 
 curl -X GET \
-  "${PROJECT_ENDPOINT}/agents/${AGENT_NAME}/versions/${AGENT_VERSION}?api-version=2025-05-01" \
+  "${PROJECT_ENDPOINT}/agents/${AGENT_NAME}/versions/${AGENT_VERSION}?api-version=2025-05-15-preview" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json"
 ```
@@ -182,7 +182,7 @@ After creating an agent, you can test it by creating a conversation and response
 ```bash
 # Create conversation with initial message
 CONV_RESPONSE=$(curl -X POST \
-  "${PROJECT_ENDPOINT}/conversations?api-version=2025-05-01" \
+  "${PROJECT_ENDPOINT}/conversations?api-version=2025-05-15-preview" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -197,7 +197,7 @@ CONV_ID=$(echo "$CONV_RESPONSE" | jq -r '.id')
 
 # Create response using the agent
 curl -X POST \
-  "${PROJECT_ENDPOINT}/responses?api-version=2025-05-01" \
+  "${PROJECT_ENDPOINT}/responses?api-version=2025-05-15-preview" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
