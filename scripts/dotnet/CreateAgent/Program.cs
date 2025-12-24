@@ -20,8 +20,8 @@ using Azure.Identity;
 ///   dotnet run -- --project-endpoint <endpoint> --model-id <model>
 /// 
 /// Environment Variables (from 'azd env get-values'):
-///   COGNITIVE_SERVICES_ENDPOINT: Azure AI Services endpoint URL (primary)
-///   PROJECT_ENDPOINT: Project endpoint URL (fallback)
+///   PROJECT_ENDPOINT: Azure AI Foundry project endpoint URL (primary)
+///   COGNITIVE_SERVICES_ENDPOINT: Azure AI Services endpoint URL (fallback)
 ///   PROJECT_NAME: Name of the Foundry project (not used in SDK, but available)
 /// </summary>
 
@@ -66,13 +66,13 @@ class Program
             // Get project endpoint from environment if not provided
             if (string.IsNullOrEmpty(projectEndpoint))
             {
-                // Try COGNITIVE_SERVICES_ENDPOINT first (from azd), then PROJECT_ENDPOINT as fallback
-                projectEndpoint = Environment.GetEnvironmentVariable("COGNITIVE_SERVICES_ENDPOINT") 
-                    ?? Environment.GetEnvironmentVariable("PROJECT_ENDPOINT");
+                // Try PROJECT_ENDPOINT first (from azd), then COGNITIVE_SERVICES_ENDPOINT as fallback
+                projectEndpoint = Environment.GetEnvironmentVariable("PROJECT_ENDPOINT") 
+                    ?? Environment.GetEnvironmentVariable("COGNITIVE_SERVICES_ENDPOINT");
                 
                 if (string.IsNullOrEmpty(projectEndpoint))
                 {
-                    Console.Error.WriteLine("Error: Neither COGNITIVE_SERVICES_ENDPOINT nor PROJECT_ENDPOINT environment variable found.");
+                    Console.Error.WriteLine("Error: Neither PROJECT_ENDPOINT nor COGNITIVE_SERVICES_ENDPOINT environment variable found.");
                     Console.Error.WriteLine("Run 'azd env get-values' or provide --project-endpoint parameter.");
                     return 1;
                 }
@@ -138,7 +138,7 @@ class Program
         Console.WriteLine("Create an AI agent in Azure AI Foundry using the .NET SDK.");
         Console.WriteLine();
         Console.WriteLine("Options:");
-        Console.WriteLine("  --project-endpoint, -e <url>    Azure AI Services endpoint (default: from COGNITIVE_SERVICES_ENDPOINT env var)");
+        Console.WriteLine("  --project-endpoint, -e <url>    Azure AI Foundry project endpoint (default: from PROJECT_ENDPOINT env var)");
         Console.WriteLine("  --model-id, -m <id>             Model deployment ID (default: gpt-4o)");
         Console.WriteLine("  --agent-name, -n <name>         Agent name (default: foundry-agent)");
         Console.WriteLine("  --agent-instructions, -i <text> Agent instructions (default: 'You are a helpful AI assistant.')");

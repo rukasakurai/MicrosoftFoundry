@@ -148,5 +148,6 @@ output AZURE_TENANT_ID string = tenant().tenantId
 output COGNITIVE_SERVICES_NAME string = cognitiveServices.name
 output COGNITIVE_SERVICES_ENDPOINT string = cognitiveServices.properties.endpoint
 output PROJECT_NAME string = cognitiveServicesProject.name
+output PROJECT_ENDPOINT string = 'https://${cognitiveServices.name}.services.ai.azure.com/api/projects/${cognitiveServicesProject.name}'
 output APPLICATION_NAME string = cognitiveServicesApplication.?name ?? ''
 output AGENT_DEPLOYMENT_NAME string = agentDeployment.?name ?? ''
