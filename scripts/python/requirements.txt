@@ -1,4 +1,0 @@
-# Azure AI Projects SDK for creating and managing agents
-# Note: Version 1.0.0 GA - uses project endpoint (not connection string)
-azure-ai-projects>=1.0.0
-azure-identity>=1.12.0

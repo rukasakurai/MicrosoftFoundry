@@ -28,22 +28,6 @@ See [dotnet/README.md](dotnet/README.md) for detailed instructions.
 
 **Note:** This implementation uses the **classic Agents API** (`Azure.AI.Agents.Persistent`). Agents created with this SDK appear in the classic agent UI but not in the new Microsoft Foundry agent UI. Migration to the [new Agents API](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) is pending .NET SDK stabilization. See [migration guide](https://aka.ms/agent/migrate/tool) for the API differences.
 
-### Python - `python/create-agent.py`
-Python script using the Azure AI Projects SDK. Alternative option for Python-based workflows.
-
-**Requirements:**
-- Python 3.8+
-- `pip install -r python/requirements.txt`
-
-**Usage:**
-```bash
-# Use environment variables from azd
-python python/create-agent.py
-
-# Custom parameters
-python python/create-agent.py --model-id gpt-4o --agent-name my-agent
-```
-
 ### Bash/REST API - `create-agent.sh`
 Bash script using Azure CLI and REST API. Perfect for CI/CD pipelines and shell-based automation.
 
@@ -75,9 +59,6 @@ echo $PROJECT_NAME
 
 # Run .NET (recommended)
 cd dotnet/CreateAgent && dotnet run
-
-# OR Python
-python python/create-agent.py
 
 # OR Bash
 ./create-agent.sh
