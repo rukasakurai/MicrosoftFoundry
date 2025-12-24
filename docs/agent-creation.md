@@ -6,6 +6,8 @@ This guide explains how to programmatically create AI agents in your Microsoft F
 
 Microsoft Foundry agents are intelligent assistants powered by large language models (LLMs) that can be configured with custom instructions, tools, and capabilities. While the Bicep templates provision the infrastructure (AI Services, Projects, Applications, and Deployments), the actual agent logic must be created separately.
 
+> **Note**: This guide uses the **new Microsoft Foundry Agents API** which creates versioned agents using the `/agents/{name}/versions` endpoint. This is the recommended approach going forward.
+
 While various approaches exist, this repository focuses on programmatic agent creation with **REST API with Bash/Azure CLI**
 
 ## Prerequisites
@@ -17,6 +19,8 @@ While various approaches exist, this repository focuses on programmatic agent cr
   - **Linux/macOS**: Use the default terminal
   - **Windows**: Use [Git Bash](https://git-scm.com/downloads) (included with Git for Windows)
 - `jq` (optional, for better JSON formatting)
+
+> **API Version (as of December 2025)**: The new agents API requires preview API version `2025-05-15-preview`. The GA version `2025-05-01` only supports the classic assistants API. This may change as the API evolves.
 
 ## Quick Start
 
@@ -62,19 +66,20 @@ ACCESS_TOKEN=$(az account get-access-token --resource https://ai.azure.com --que
 
 # List all agents in the project
 curl -X GET \
-  "${PROJECT_ENDPOINT}/assistants?api-version=2025-05-01" \
+  "${PROJECT_ENDPOINT}/agents?api-version=2025-05-15-preview" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json"
 ```
 
-### Get Specific Agent Details
+### Get Specific Agent Version
 
 ```bash
-# Replace AGENT_ID with the ID returned from create-agent.sh
-AGENT_ID="asst_xxxxxxxxxxxxx"
+# Replace with agent name and version from create-agent.sh
+AGENT_NAME="foundry-agent"
+AGENT_VERSION="1"
 
 curl -X GET \
-  "${PROJECT_ENDPOINT}/assistants/${AGENT_ID}?api-version=2025-05-01" \
+  "${PROJECT_ENDPOINT}/agents/${AGENT_NAME}/versions/${AGENT_VERSION}?api-version=2025-05-15-preview" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json"
 ```
@@ -170,35 +175,41 @@ steps:
 
 ## Testing Your Agent
 
-After creating an agent, you can test it by creating a conversation thread:
+After creating an agent, you can test it by creating a conversation and response:
 
 **REST API:**
 
 ```bash
-# Create thread
-THREAD_RESPONSE=$(curl -X POST \
-  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads?api-version=2025-05-01" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -H "Content-Type: application/json")
-
-THREAD_ID=$(echo "$THREAD_RESPONSE" | jq -r '.id')
-
-# Add message
-curl -X POST \
-  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads/${THREAD_ID}/messages?api-version=2025-05-01" \
+# Create conversation with initial message
+CONV_RESPONSE=$(curl -X POST \
+  "${PROJECT_ENDPOINT}/conversations?api-version=2025-05-15-preview" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
-    "role": "user",
-    "content": "Hello! Can you help me?"
-  }'
+    "items": [{
+      "type": "message",
+      "role": "user",
+      "content": "Hello! Can you help me?"
+    }]
+  }')
 
-# Run the agent
+CONV_ID=$(echo "$CONV_RESPONSE" | jq -r '.id')
+
+# Create response using the agent
 curl -X POST \
-  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads/${THREAD_ID}/runs?api-version=2025-05-01" \
+  "${PROJECT_ENDPOINT}/responses?api-version=2025-05-15-preview" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{"assistant_id": "'${AGENT_ID}'"}'
+  -d '{
+    "conversation": "'${CONV_ID}'",
+    "extra_body": {
+      "agent": {
+        "type": "agent_reference",
+        "name": "'${AGENT_NAME}'",
+        "version": "1"
+      }
+    }
+  }'
 ```
 
 ## Publishing Agents to Applications
@@ -222,16 +233,19 @@ Once you've created and tested an agent, you can publish it to an application fo
 
 ## Documentation Test History
 
-### 2024-12-24
-- Result: PASS with manual steps and fixes
+### 2025-12-24
+- Result: PASS with fixes
 - Platform/Context: Windows PC with Git Bash
 - OS: Windows 11 (NT-10.0-26200)
-- Shell: GNU bash version 5.2.37(1)-release (MINGW64)
-- Tester: Automated Documentation Tester (with human intervention)
-- Notes: 
-  - Manual step required: Azure CLI authentication (`az login`)
-  - Manual step required: User confirmation to create Azure resources
-  - Fixed Quick Start example: Changed to use `&&` to chain commands so environment variables persist in bash
-  - Successfully created test agents using both default and custom parameters
-  - jq not required but recommended (script works without it)
-  - API version 2025-05-01 confirmed as current and working
+- Shell: GNU bash, version 5.2.37(1)-release (x86_64-pc-msys)
+- Tester: Automated Documentation Tester
+- Notes:
+  - ✅ All prerequisites passed: Azure CLI authenticated, azd installed (v1.22.5), bash available
+  - ✅ Infrastructure correctly provisioned: Microsoft.CognitiveServices resources found
+  - ✅ Agent created successfully using **new agents API** `/agents/{name}/versions` endpoint
+  - ✅ Script creates versioned agents with ID format `{name}:{version}`
+  - **Fixes Applied**:
+    - Changed API version from `2025-05-01` to `2025-05-15-preview` for new agents API
+    - Added required `"kind": "prompt"` property to definition object
+  - jq not installed but optional (script works without it)
+  - **Key Finding**: New agents API requires preview API version, not GA version

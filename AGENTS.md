@@ -57,6 +57,7 @@ When working on this repository, AI agents should:
    - Update configuration examples when parameters change
    - Maintain accuracy of resource descriptions and capabilities
    - Document known limitations and future migration paths transparently
+   - Avoid adding troubleshooting sections unless explicitly requested by the user
 
 ## Technology Reference
 

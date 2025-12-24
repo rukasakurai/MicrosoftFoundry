@@ -28,7 +28,7 @@ MODEL_ID="gpt-4o"
 AGENT_NAME="foundry-agent"
 AGENT_INSTRUCTIONS="You are a helpful AI assistant."
 AGENT_DESCRIPTION="Agent created programmatically via REST API"
-API_VERSION="2025-05-01"
+API_VERSION="2025-05-15-preview"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -117,11 +117,11 @@ fi
 # Remove trailing slash from endpoint if present
 ENDPOINT="${ENDPOINT%/}"
 
-# Construct API URL (handle both full project endpoint and legacy endpoint+project format)
+# Construct API URL for agent versions (new agents API)
 if [[ "$ENDPOINT" == */api/projects/* ]]; then
-  API_URL="${ENDPOINT}/assistants?api-version=${API_VERSION}"
+  API_URL="${ENDPOINT}/agents/${AGENT_NAME}/versions?api-version=${API_VERSION}"
 else
-  API_URL="${ENDPOINT}/api/projects/${PROJECT_NAME}/assistants?api-version=${API_VERSION}"
+  API_URL="${ENDPOINT}/api/projects/${PROJECT_NAME}/agents/${AGENT_NAME}/versions?api-version=${API_VERSION}"
 fi
 
 echo "Creating agent '${AGENT_NAME}' in project..."
@@ -139,13 +139,15 @@ if [ -z "$ACCESS_TOKEN" ]; then
   exit 1
 fi
 
-# Create request body
+# Create request body (new agents API format)
 REQUEST_BODY=$(cat <<EOF
 {
-  "model": "${MODEL_ID}",
-  "name": "${AGENT_NAME}",
   "description": "${AGENT_DESCRIPTION}",
-  "instructions": "${AGENT_INSTRUCTIONS}"
+  "definition": {
+    "kind": "prompt",
+    "model": "${MODEL_ID}",
+    "instructions": "${AGENT_INSTRUCTIONS}"
+  }
 }
 EOF
 )
@@ -174,10 +176,11 @@ if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
     echo "Agent Details:"
     echo "$RESPONSE_BODY" | jq '.'
     
-    AGENT_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty')
-    if [ -n "$AGENT_ID" ]; then
+    AGENT_NAME_RESP=$(echo "$RESPONSE_BODY" | jq -r '.name // empty')
+    AGENT_VERSION=$(echo "$RESPONSE_BODY" | jq -r '.version // empty')
+    if [ -n "$AGENT_NAME_RESP" ] && [ -n "$AGENT_VERSION" ]; then
       echo ""
-      echo "Agent ID: ${AGENT_ID}"
+      echo "Agent: ${AGENT_NAME_RESP}:${AGENT_VERSION}"
     fi
   else
     echo "Response:"
