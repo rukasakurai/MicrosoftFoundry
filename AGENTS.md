@@ -75,26 +75,7 @@ The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. Th
 | **Azure AI Foundry (Hub)** | `Microsoft.MachineLearningServices/workspaces` (kind: `Hub`) |
 | **Azure AI Foundry (Project)** | `Microsoft.MachineLearningServices/workspaces` (kind: `Project`) |
 | **Azure Machine Learning** | `Microsoft.MachineLearningServices/workspaces` (kind: `Default`) |
-| **Microsoft Agent SDK (.NET)** | NuGet: `Azure.AI.Agents.Persistent` |
-
-### New Agents Developer Experience (December 2025)
-
-Microsoft has introduced a new agents developer experience with updated API concepts. The infrastructure in this repository supports both the legacy and new patterns:
-
-| Legacy Concept | New Concept | Description |
-|---------------|-------------|-------------|
-| Thread | Conversation | Persistent context storing streams of items (messages, tool calls, outputs) |
-| Run | Response | Explicit tool call management with input/output items |
-| Message | Item | Flexible data including messages, tool calls, and outputs |
-| Assistants API | Agents API | Enhanced API with multi-agent workflow support |
-
-**Key benefits of the new experience:**
-- **Multi-agent Workflows**: Build and chain multiple agents for complex orchestration
-- **Stateful Context**: Conversations retain context across calls by default
-- **Enterprise Features**: Single-tenant storage, bring-your-own Cosmos DB
-- **Enhanced Security**: Granular RBAC controls and audit trails
-
-See [Microsoft's Migration Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) for details.
+| **Microsoft Agent SDK (.NET)** | NuGet: `Microsoft.Agents.AI.*` |
 
 ### Key Distinctions
 

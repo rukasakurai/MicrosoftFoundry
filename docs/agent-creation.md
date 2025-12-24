@@ -8,13 +8,6 @@ Microsoft Foundry agents are intelligent assistants powered by large language mo
 
 While various approaches exist, this repository focuses on programmatic agent creation with **REST API with Bash/Azure CLI**
 
-> **Migration Note (December 2025):** Microsoft has introduced a new agents developer experience with updated API concepts. Key terminology changes:
-> - **Threads → Conversations**: Conversations now support streams of items (messages, tool calls, outputs) for richer context management
-> - **Runs → Responses**: The Responses API provides more sophisticated agent-to-agent and tool workflow orchestration
-> - **Messages → Items**: Items can include messages, tool calls, and outputs for more flexible data handling
->
-> The existing `/assistants` API remains supported for backward compatibility. See Microsoft's [Migration Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) for details.
-
 ## Prerequisites
 
 - Microsoft Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
@@ -177,64 +170,14 @@ steps:
 
 ## Testing Your Agent
 
-After creating an agent, you can test it by creating a conversation. The new Responses API provides enhanced capabilities, though the legacy threads API remains supported for backward compatibility.
-
-### Using the New Conversations/Responses API (Recommended)
-
-The new API uses conversations (replacing threads) and responses (replacing runs) for improved context management:
-
-**REST API:**
-
-```bash
-# Create a conversation with initial message
-CONVERSATION_RESPONSE=$(curl -X POST \
-  "${PROJECT_ENDPOINT}/conversations?api-version=2025-05-01" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "items": [
-      {
-        "type": "message",
-        "role": "user",
-        "content": "Hello! Can you help me?"
-      }
-    ],
-    "metadata": {
-      "agent": "'${AGENT_ID}'"
-    }
-  }')
-
-CONVERSATION_ID=$(echo "$CONVERSATION_RESPONSE" | jq -r '.id')
-
-# Get a response from the agent
-RESPONSE=$(curl -X POST \
-  "${PROJECT_ENDPOINT}/responses?api-version=2025-05-01" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "conversation_id": "'${CONVERSATION_ID}'",
-    "input_items": [
-      {
-        "type": "message",
-        "role": "user",
-        "content": "What can you do?"
-      }
-    ]
-  }')
-
-echo "$RESPONSE" | jq '.output_items'
-```
-
-### Using the Legacy Threads API (Backward Compatible)
-
-The threads API is still supported for existing implementations:
+After creating an agent, you can test it by creating a conversation thread:
 
 **REST API:**
 
 ```bash
 # Create thread
 THREAD_RESPONSE=$(curl -X POST \
-  "${PROJECT_ENDPOINT}/threads?api-version=2025-05-01" \
+  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads?api-version=2025-05-01" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json")
 
@@ -242,7 +185,7 @@ THREAD_ID=$(echo "$THREAD_RESPONSE" | jq -r '.id')
 
 # Add message
 curl -X POST \
-  "${PROJECT_ENDPOINT}/threads/${THREAD_ID}/messages?api-version=2025-05-01" \
+  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads/${THREAD_ID}/messages?api-version=2025-05-01" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -252,7 +195,7 @@ curl -X POST \
 
 # Run the agent
 curl -X POST \
-  "${PROJECT_ENDPOINT}/threads/${THREAD_ID}/runs?api-version=2025-05-01" \
+  "${AZURE_AI_FOUNDRY_PROJECT_ENDPOINT}/threads/${THREAD_ID}/runs?api-version=2025-05-01" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{"assistant_id": "'${AGENT_ID}'"}'
@@ -276,31 +219,6 @@ Once you've created and tested an agent, you can publish it to an application fo
        }]
      }'
    ```
-
-## Migration Guide
-
-If you're migrating from the legacy Assistants API to the new Agents developer experience, here's a summary of the key changes:
-
-| Legacy Concept | New Concept | Description |
-|---------------|-------------|-------------|
-| Thread | Conversation | Persistent context that stores streams of items, not just messages |
-| Run | Response | Explicit tool call management with input/output items |
-| Message | Item | Items include messages, tool calls, and outputs |
-| Classic Agent | New Agent | Supports prompt-based, workflow-based, or container-based agents |
-
-### Migration Benefits
-
-- **Enhanced Enterprise Features**: Single-tenant storage, bring-your-own Cosmos DB for agent/conversation state
-- **Multi-Agent Workflows**: Build and chain multiple agents for complex orchestration
-- **Stateful Context**: Conversations retain context across calls by default
-- **Improved Security**: Granular RBAC controls and audit trails
-- **Expanded Model Support**: Access to latest models including GPT-5 and other providers
-
-### Resources
-
-- [Microsoft Migration Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry)
-- [Azure AI Foundry Agent Service REST API](https://learn.microsoft.com/en-us/rest/api/aifoundry/aiagents/)
-- [Responses API Documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/responses?view=foundry-classic)
 
 ## Documentation Test History
 
