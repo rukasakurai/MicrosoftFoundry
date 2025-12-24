@@ -57,3 +57,25 @@ When working on this repository, AI agents should:
    - Update configuration examples when parameters change
    - Maintain accuracy of resource descriptions and capabilities
    - Document known limitations and future migration paths transparently
+
+## Technology Reference
+
+> ⚠️ **Important:** Microsoft Foundry and Azure AI Foundry are **not interchangeable** and use **different ARM resource providers**. This section clarifies the technologies used in this repository.
+
+The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. This reference documents the precise technical identifiers for technologies used in this repository.
+
+| Technology Name | Technical Identifier | Status | Purpose | Distinct From | Synonyms/Aliases | Last Verified |
+|-----------------|---------------------|--------|---------|---------------|------------------|---------------|
+| **Microsoft Foundry** | `Microsoft.CognitiveServices/accounts` (kind: `AIServices`) | Preview | Multi-modal AI services platform using Cognitive Services ARM provider | Azure AI Foundry (uses different ARM provider) | Azure AI Services, Cognitive Services AIServices | 2025-12-24 |
+| **Foundry Projects** | `Microsoft.CognitiveServices/accounts/projects` | Preview | Organize AI solutions within a Cognitive Services account | Azure AI Foundry projects (different provider hierarchy) | Cognitive Services Projects | 2025-12-24 |
+| **Foundry Applications** | `Microsoft.CognitiveServices/accounts/projects/applications` | Preview | Stable endpoints for publishing agents externally | — | — | 2025-12-24 |
+| **Agent Deployments** | `Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments` | Preview | Hosting infrastructure for published agents | — | — | 2025-12-24 |
+| **Azure Developer CLI** | `azd` (CLI tool) | GA | Infrastructure deployment orchestration | Azure CLI (`az`), Terraform | azd | 2025-12-24 |
+| **Bicep** | `.bicep` files, ARM templates | GA | Infrastructure-as-Code language for Azure | Terraform, Pulumi, ARM JSON | Azure Bicep | 2025-12-24 |
+| **Azure AI Foundry** | `Microsoft.MachineLearningServices/workspaces` | GA | ML platform for model training and deployment | Microsoft Foundry (this repo uses Cognitive Services) | Azure Machine Learning, AML | 2025-12-24 |
+
+### Key Distinctions
+
+- **Microsoft Foundry** (this repository): Uses `Microsoft.CognitiveServices` ARM resource provider with `AIServices` kind. Focused on AI agents and cognitive services.
+- **Azure AI Foundry**: Uses `Microsoft.MachineLearningServices` ARM resource provider. Focused on machine learning workspaces, model training, and MLOps.
+- These are **separate products** with different ARM providers, APIs, and deployment patterns despite similar branding.
