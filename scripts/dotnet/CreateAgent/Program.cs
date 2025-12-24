@@ -1,5 +1,4 @@
-﻿using Azure.AI.Projects;
-using Azure.AI.Agents.Persistent;
+﻿using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 
 /// <summary>
@@ -11,7 +10,7 @@ using Azure.Identity;
 /// Prerequisites:
 /// - Azure CLI installed and authenticated (az login) or appropriate Azure credentials
 /// - .NET 9.0 or higher
-/// - Azure.AI.Projects and Azure.Identity NuGet packages
+/// - Azure.AI.Agents.Persistent and Azure.Identity NuGet packages
 /// 
 /// Usage:
 ///   # Using environment variables from azd
@@ -21,7 +20,8 @@ using Azure.Identity;
 ///   dotnet run -- --project-endpoint <endpoint> --model-id <model>
 /// 
 /// Environment Variables (from 'azd env get-values'):
-///   COGNITIVE_SERVICES_ENDPOINT: Azure AI Services endpoint URL
+///   COGNITIVE_SERVICES_ENDPOINT: Azure AI Services endpoint URL (primary)
+///   PROJECT_ENDPOINT: Project endpoint URL (fallback)
 ///   PROJECT_NAME: Name of the Foundry project (not used in SDK, but available)
 /// </summary>
 
@@ -66,10 +66,13 @@ class Program
             // Get project endpoint from environment if not provided
             if (string.IsNullOrEmpty(projectEndpoint))
             {
-                projectEndpoint = Environment.GetEnvironmentVariable("COGNITIVE_SERVICES_ENDPOINT");
+                // Try COGNITIVE_SERVICES_ENDPOINT first (from azd), then PROJECT_ENDPOINT as fallback
+                projectEndpoint = Environment.GetEnvironmentVariable("COGNITIVE_SERVICES_ENDPOINT") 
+                    ?? Environment.GetEnvironmentVariable("PROJECT_ENDPOINT");
+                
                 if (string.IsNullOrEmpty(projectEndpoint))
                 {
-                    Console.Error.WriteLine("Error: COGNITIVE_SERVICES_ENDPOINT environment variable not found.");
+                    Console.Error.WriteLine("Error: Neither COGNITIVE_SERVICES_ENDPOINT nor PROJECT_ENDPOINT environment variable found.");
                     Console.Error.WriteLine("Run 'azd env get-values' or provide --project-endpoint parameter.");
                     return 1;
                 }

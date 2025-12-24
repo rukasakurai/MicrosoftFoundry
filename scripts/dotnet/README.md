@@ -50,9 +50,7 @@ dotnet publish -c Release -r linux-x64 --self-contained
 ## NuGet Packages
 
 - `Azure.AI.Agents.Persistent` (1.2.0-beta.8) - Azure AI Persistent Agents client library
-- `Azure.AI.Projects` (1.2.0-beta.5) - Azure AI Projects client library  
 - `Azure.Identity` (1.17.1) - Azure authentication library
-- `System.CommandLine` (2.0.1) - Command-line parsing library
 
 ## Documentation
 
