@@ -16,6 +16,7 @@ This repository provides **Infrastructure-as-Code (IaC) for Microsoft Foundry**,
 - **Use azd patterns**: Follow Azure Developer CLI conventions for infrastructure and deployment
 - **Bicep best practices**: Use parameterization, abbreviations, and modular design
 - **Validate assumptions**: Test infrastructure changes in isolated environments before committing
+- **Document limitations**: Clearly document known limitations and migration paths rather than hiding technical debt
 
 ## Constraints & Assumptions
 
@@ -35,6 +36,7 @@ This repository provides **Infrastructure-as-Code (IaC) for Microsoft Foundry**,
 
 ### Development & Deployment
 
+- **Primary language**: .NET 10 is the preferred implementation language
 - **No license file**: License choice is deferred to repository owner
 - **Minimal CI/CD**: CI/CD patterns should be added as needed for the project
 - **Region flexibility**: Support deployment to any Azure region with AI Services availability
@@ -54,3 +56,4 @@ When working on this repository, AI agents should:
    - Keep deployment guides synchronized with infrastructure changes
    - Update configuration examples when parameters change
    - Maintain accuracy of resource descriptions and capabilities
+   - Document known limitations and future migration paths transparently

@@ -1,5 +1,42 @@
 # Local scratch files created during doc testing / CLI usage
 federated-credential.json
 
+# Azure Developer CLI
+.azure/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+local.settings.json
+
 # Bicep build output
 infra/main.json
+
+# .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.tmp
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# IDE
+.vs/
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

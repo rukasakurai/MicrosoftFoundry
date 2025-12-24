@@ -61,7 +61,7 @@ This command will:
 |-----------|---------------|-------------|
 | `location` | `japaneast` | Azure region for deployment |
 | `cognitiveServicesSku` | `S0` | SKU for Azure AI Services |
-| `projectDisplayName` | `AI Foundry Project` | Display name for the project |
+| `projectDisplayName` | `Microsoft Foundry Project` | Display name for the project |
 | `enableAgentDeployments` | `false` | Enable application and agent deployment resources |
 
 ### Customizing Parameters
@@ -172,7 +172,7 @@ Publishing an agent to an application enables:
 - Agent deployments require the `enableAgentDeployments` parameter to be set to `true`
 - The resource type is in preview (`2025-10-01-preview` API version)
 - Bicep type validation may not be available for this resource type until it reaches general availability
-- **Agent logic/behavior must be created separately** (via the [Foundry portal](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/quickstart?view=foundry), [SDK](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/quickstart?pivots=programming-language-python&view=foundry), or [REST API](https://learn.microsoft.com/en-us/rest/api/azureai/agents)) - Bicep provisions the hosting infrastructure and can register agent resources, but does not define the agent's code or instructions. See the [Azure AI Foundry Agents documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry) for details. *(As of December 2025; this may change as the service evolves.)*
+- **Agent logic/behavior must be created separately** (via the [Foundry portal](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/quickstart?view=foundry), SDK, or [REST API](https://learn.microsoft.com/en-us/rest/api/azureai/agents)) - Bicep provisions the hosting infrastructure and can register agent resources, but does not define the agent's code or instructions. See the [Azure AI Foundry Agents documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry) for details. *(As of December 2025; this may change as the service evolves.)*
 
 ### Example Usage
 
