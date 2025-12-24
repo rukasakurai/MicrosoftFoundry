@@ -433,15 +433,3 @@ The role assignments will be automatically cleaned up when the service principal
 - **Agent Creation**: See [agent-creation.md](./agent-creation.md) for creating agents in Microsoft Foundry
 
 ## Documentation Test History
-
-### 2025-12-24
-- Result: PASS with manual steps
-- Platform/Context: Microsoft Surface Laptop (Windows native)
-- OS: Microsoft Windows 11 Enterprise Build 26200
-- Shell: Bash (Git Bash) with Azure CLI 2.76.0, PowerShell 7.5.4
-- Tester: Automated Documentation Tester (with human intervention)
-- Notes: 
-  - All documented steps executed successfully and produced expected results
-  - Manual intervention required for: (1) Azure Portal login, (2) Adding API permissions via GUI, (3) Granting admin consent, (4) Assigning Agent ID Administrator role
-  - Successfully created: App Registration, Agent Identity Blueprint, Blueprint Principal, Blueprint credentials, and Agent Identity
-  - Initial authentication was as service principal which lacked permissions; required re-login as user with Application Developer role

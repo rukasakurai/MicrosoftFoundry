@@ -238,26 +238,3 @@ curl -X DELETE \
 - **Create more agents**: See [agent-creation.md](./agent-creation.md) for creating agents in Microsoft Foundry
 
 ## Documentation Test History
-
-### 2025-12-24 (Fifth Test)
-- Result: PASS with fixes
-- Platform/Context: Windows workstation with Git Bash
-- OS: Windows 11 (build 26200)
-- Shell: GNU bash 5.2.37(1)-release (x86_64-pc-msys)
-- Azure CLI: 2.76.0
-- Tester: Automated Documentation Tester (with human intervention)
-- Notes:
-  - **END-TO-END SUCCESS**: Agent successfully registered and visible in Entra admin center
-  - Agent Instance ID: `544aa946-36cd-415c-9172-4ca46398567e`
-  - Agent appears in Agent Registry with "Created in: MicrosoftFoundry"
-
-**Manual Steps Required (by user):**
-1. Added `AgentInstance.ReadWrite.All` permission in Azure Portal (GUI)
-2. Granted admin consent (required Global Admin login)
-3. Assigned Agent Registry Administrator role to service principal (GUI)
-4. Verified agent in Entra admin center (GUI)
-
-**Documentation Fixes Applied:**
-1. Added prerequisite #4: Admin consent capability requirement (Global Admin or Privileged Role Admin)
-2. Added warning note under "Add API Permission" explaining grayed-out consent button
-3. Added `--allow-no-subscriptions` flag to `az login` command for service principals without Azure subscription access
