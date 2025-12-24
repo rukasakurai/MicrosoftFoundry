@@ -168,11 +168,8 @@ fi
 
 REQUEST_BODY+=', "originatingStore": "'"${ORIGINATING_STORE}"'"'
 
-if [ -n "$DESCRIPTION" ]; then
-  # Add description as part of display name or notes (API doesn't have a direct description field)
-  # The description can be added via agent card/manifest later
-  :
-fi
+# Note: Description is not directly supported by the agentInstance API.
+# To add metadata like description, use an agent card/manifest after registration.
 
 REQUEST_BODY+='}'
 
@@ -197,7 +194,7 @@ if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
   echo ""
   
   # Try to parse and display response with jq if available
-  if command -v jq &> /dev/null; then
+  if command -v jq >/dev/null 2>&1; then
     echo "Agent Instance Details:"
     echo "$RESPONSE_BODY" | jq '.'
     
@@ -249,7 +246,7 @@ else
   fi
   
   echo "Response:"
-  if command -v jq &> /dev/null; then
+  if command -v jq >/dev/null 2>&1; then
     echo "$RESPONSE_BODY" | jq '.' 2>/dev/null || echo "$RESPONSE_BODY"
   else
     echo "$RESPONSE_BODY"
