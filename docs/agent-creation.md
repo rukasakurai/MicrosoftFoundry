@@ -1,29 +1,35 @@
-# Programmatically Creating Agents in Microsoft Foundry
+# Programmatically Creating Agents in Azure AI Foundry
 
 This guide explains how to programmatically create AI agents in your Microsoft Foundry project after provisioning infrastructure with Bicep templates.
 
 ## Overview
 
-Microsoft Foundry agents are intelligent assistants powered by large language models (LLMs) that can be configured with custom instructions, tools, and capabilities. While the Bicep templates provision the infrastructure (AI Services, Projects, Applications, and Deployments), the actual agent logic must be created separately.
+Azure AI Foundry agents are intelligent assistants powered by large language models (LLMs) that can be configured with custom instructions, tools, and capabilities. While the Bicep templates provision the infrastructure (AI Services, Projects, Applications, and Deployments), the actual agent logic must be created separately.
 
 This repository provides multiple approaches for programmatic agent creation:
 
-1. **Python SDK** - Recommended for application integration
-2. **REST API with Bash/Azure CLI** - Best for CI/CD and automation
-3. **REST API directly** - For custom implementations in any language
+1. **.NET SDK** - **Recommended** for application integration and Azure-native development
+2. **Python SDK** - Alternative for Python-based workflows
+3. **REST API with Bash/Azure CLI** - Best for CI/CD and automation
+4. **REST API directly** - For custom implementations in any language
 
 ## Prerequisites
 
-- Microsoft Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
+- Azure AI Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
 - Azure CLI installed and authenticated: `az login`
 - Model deployments available in your Azure OpenAI service or Azure AI Services
+
+### For .NET SDK Approach (Recommended)
+
+- .NET 9.0 or higher
+- Azure CLI authenticated or appropriate Azure credentials
 
 ### For Python SDK Approach
 
 - Python 3.8 or higher
 - Install required packages:
   ```bash
-  pip install azure-ai-projects azure-identity
+  pip install -r scripts/python/requirements.txt
   ```
 
 ### For Bash Script Approach
@@ -33,22 +39,69 @@ This repository provides multiple approaches for programmatic agent creation:
 
 ## Quick Start
 
-### Option 1: Python SDK (Recommended)
+### Option 1: .NET SDK (Recommended)
 
-The Python SDK provides the most robust and feature-rich approach with strong typing and error handling.
+The .NET SDK provides native Azure integration, strong typing, and comprehensive error handling.
+
+```bash
+# Set environment variables (from azd deployment)
+eval $(azd env get-values)
+
+# Navigate to the .NET project
+cd scripts/dotnet/CreateAgent
+
+# Create an agent
+dotnet run
+```
+
+**Example with custom parameters:**
+
+```bash
+dotnet run -- \
+  --model-id gpt-4o \
+  --agent-name my-customer-service-agent \
+  --agent-instructions "You are a customer service agent that helps users with product questions" \
+  --agent-description "Customer service automation"
+```
+
+**Using in your .NET application:**
+
+```csharp
+using Azure.AI.Agents.Persistent;
+using Azure.Identity;
+
+// Authenticate and create client
+var credential = new DefaultAzureCredential();
+var projectEndpoint = Environment.GetEnvironmentVariable("COGNITIVE_SERVICES_ENDPOINT");
+var agentsClient = new PersistentAgentsClient(projectEndpoint, credential);
+
+// Create agent
+var agent = await agentsClient.Administration.CreateAgentAsync(
+    model: "gpt-4o",
+    name: "my-agent",
+    instructions: "You are a helpful assistant.",
+    description: "My custom agent"
+);
+
+Console.WriteLine($"Created agent: {agent.Value.Id}");
+```
+
+### Option 2: Python SDK
+
+The Python SDK is ideal for Python-based applications and workflows.
 
 ```bash
 # Set environment variables (from azd deployment)
 eval $(azd env get-values)
 
 # Create an agent
-python scripts/create-agent.py
+python scripts/python/create-agent.py
 ```
 
 **Example with custom parameters:**
 
 ```bash
-python scripts/create-agent.py \
+python scripts/python/create-agent.py \
   --model-id gpt-4o \
   --agent-name my-customer-service-agent \
   --agent-instructions "You are a customer service agent that helps users with product questions" \
@@ -82,7 +135,7 @@ with project_client:
 > **Note:** The environment variable `PROJECT_ENDPOINT` should be in the format:
 > `https://<foundry-resource-name>.services.ai.azure.com/api/projects/<project-name>`
 
-### Option 2: Bash Script with REST API
+### Option 3: Bash Script with REST API
 
 The bash script is ideal for CI/CD pipelines and automation workflows.
 
@@ -104,7 +157,7 @@ eval $(azd env get-values)
   --description "Production agent for customer inquiries"
 ```
 
-### Option 3: Direct REST API
+### Option 4: Direct REST API
 
 You can call the REST API directly from any programming language or tool.
 

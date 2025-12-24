@@ -1,27 +1,47 @@
 # Agent Creation Scripts
 
-This directory contains scripts for programmatically creating AI agents in Microsoft Foundry.
+This directory contains scripts for programmatically creating AI agents in Azure AI Foundry.
 
-## Available Scripts
+## Available Implementations
 
-### `create-agent.py`
-Python script using the Azure AI Projects SDK to create agents. Provides strong typing, comprehensive error handling, and is ideal for integration into Python applications.
+### .NET (Default/Recommended) - `dotnet/CreateAgent/`
+.NET console application using the Azure AI Agents SDK. Provides strong typing, comprehensive error handling, and native Azure integration. **This is the recommended approach for this repository.**
+
+**Requirements:**
+- .NET 9.0 or higher
+- Azure CLI authenticated (`az login`) or appropriate Azure credentials
+
+**Usage:**
+```bash
+cd dotnet/CreateAgent
+
+# Use environment variables from azd
+dotnet run
+
+# Custom parameters
+dotnet run -- --model-id gpt-4o --agent-name my-agent --help
+```
+
+See [dotnet/README.md](dotnet/README.md) for detailed instructions.
+
+### Python - `python/create-agent.py`
+Python script using the Azure AI Projects SDK. Alternative option for Python-based workflows.
 
 **Requirements:**
 - Python 3.8+
-- `pip install azure-ai-projects azure-identity`
+- `pip install -r python/requirements.txt`
 
 **Usage:**
 ```bash
 # Use environment variables from azd
-python create-agent.py
+python python/create-agent.py
 
 # Custom parameters
-python create-agent.py --model-id gpt-4o --agent-name my-agent
+python python/create-agent.py --model-id gpt-4o --agent-name my-agent
 ```
 
-### `create-agent.sh`
-Bash script using Azure CLI and REST API to create agents. Perfect for CI/CD pipelines and shell-based automation.
+### Bash/REST API - `create-agent.sh`
+Bash script using Azure CLI and REST API. Perfect for CI/CD pipelines and shell-based automation.
 
 **Requirements:**
 - Bash shell
@@ -39,7 +59,7 @@ Bash script using Azure CLI and REST API to create agents. Perfect for CI/CD pip
 
 ## Getting Environment Variables
 
-Both scripts work with environment variables from your azd deployment:
+All scripts work with environment variables from your azd deployment:
 
 ```bash
 # Load environment variables
@@ -49,9 +69,13 @@ eval $(azd env get-values)
 echo $COGNITIVE_SERVICES_ENDPOINT
 echo $PROJECT_NAME
 
-# Run scripts
-python create-agent.py
-# OR
+# Run .NET (recommended)
+cd dotnet/CreateAgent && dotnet run
+
+# OR Python
+python python/create-agent.py
+
+# OR Bash
 ./create-agent.sh
 ```
 
