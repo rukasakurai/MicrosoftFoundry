@@ -1,12 +1,12 @@
 # .NET Agent Creation Tool
 
-This directory contains a .NET console application for programmatically creating AI agents in Azure AI Foundry.
+This directory contains a .NET console application for programmatically creating AI agents in Microsoft Foundry.
 
 ## Requirements
 
-- .NET 9.0 or higher
+- .NET 10 or higher
 - Azure CLI authenticated (`az login`) or appropriate Azure credentials
-- Azure AI Foundry project endpoint
+- Microsoft Foundry project endpoint
 
 ## Quick Start
 
