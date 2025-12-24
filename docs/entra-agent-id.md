@@ -319,3 +319,38 @@ curl -X DELETE \
 ## API Version Note
 
 > **API Version (as of December 2025)**: The Agent Registry API is available only in the Microsoft Graph beta endpoint (`https://graph.microsoft.com/beta/`). This API may change before reaching general availability. Monitor the [Microsoft Graph changelog](https://learn.microsoft.com/en-us/graph/changelog) for updates.
+
+## Documentation Test History
+
+### 2025-12-24
+- Result: PARTIAL
+- Platform/Context: Windows workstation with Git Bash
+- OS: Windows 11 (build 26200)
+- Shell: GNU bash 5.2.37(1)-release (x86_64-pc-msys)
+- Tester: Automated Documentation Tester (with human intervention)
+- Notes: Agent registration blocked by missing "Agent Registry Administrator" role (403 error), which correctly validates the documented prerequisites.
+
+**Test Command:**
+```bash
+cd scripts && bash register-agent-entra.sh --agent-name "doctest-agent-rusakura-1766570018" --display-name "Documentation Test Agent Rusakura"
+```
+
+**Error Output:**
+```
+✗ Error: Failed to register agent (HTTP 403)
+
+Authentication/Authorization Error
+
+This error typically occurs when:
+  1. The signed-in user doesn't have 'Agent Registry Administrator' role
+  2. The app/user doesn't have 'AgentInstance.ReadWrite.All' permission
+  3. Admin consent hasn't been granted for the required permissions
+
+To resolve:
+  1. Ensure you have the Agent Registry Administrator role in Microsoft Entra
+  2. If using an app registration, grant AgentInstance.ReadWrite.All permission
+  3. Have an admin grant consent for the permissions
+
+Response:
+{"error":{"code":"UnknownError","message":"","innerError":{"date":"2025-12-24T09:53:47","request-id":"x","client-request-id":"x"}}}
+```
