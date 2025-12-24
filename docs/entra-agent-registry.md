@@ -95,36 +95,7 @@ Now the script will use the app's token which includes `AgentInstance.ReadWrite.
 
 ## Register Your Agent
 
-After setting up permissions, you can register agents using either the bash script or REST API directly.
-
-### Using the Bash Script
-
-```bash
-# Basic registration
-./scripts/register-agent-entra.sh --agent-name "foundry-agent"
-
-# Full customization
-./scripts/register-agent-entra.sh \
-  --agent-name "customer-service-agent" \
-  --display-name "Customer Service AI Agent" \
-  --agent-url "https://myproject.services.ai.azure.com/api/agents/customer-service" \
-  --description "Automated customer service agent for support inquiries"
-```
-
-**Available Parameters:**
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `--agent-name` | Yes | Unique identifier for the agent |
-| `--display-name` | No | Human-readable name (defaults to agent-name) |
-| `--agent-url` | No | Operational endpoint URL for the agent |
-| `--owner-id` | No | Owner's Microsoft Entra object ID (defaults to current user) |
-| `--description` | No | Description of the agent's purpose |
-| `--originating-store` | No | Platform name (defaults to "MicrosoftFoundry") |
-
-### Using the REST API Directly
-
-You can also register agents directly using the Microsoft Graph API:
+After setting up permissions, register agents using the Microsoft Graph API:
 
 ```bash
 # Get access token
@@ -184,10 +155,20 @@ eval $(azd env get-values)
 ### Step 3: Register with Microsoft Entra Agent Registry
 
 ```bash
-# Register the agent with Microsoft Entra
-./scripts/register-agent-entra.sh \
-  --agent-name customer-assistant \
-  --display-name "Customer Service Assistant"
+# Get access token and owner ID
+ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
+OWNER_ID=$(az ad signed-in-user show --query id -o tsv)
+
+# Register the agent
+curl -X POST \
+  "https://graph.microsoft.com/beta/agentRegistry/agentInstances" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "displayName": "Customer Service Assistant",
+    "ownerIds": ["'"${OWNER_ID}"'"],
+    "originatingStore": "MicrosoftFoundry"
+  }'
 ```
 
 ### Step 4: Verify Registration

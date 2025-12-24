@@ -218,16 +218,9 @@ After creating an agent, you can integrate it with Microsoft Entra Agent ID for 
 
 ### Agent Registry (Visibility/Governance)
 
-Register your agent to make it visible and manageable in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview):
+Register your agent to make it visible and manageable in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview).
 
-```bash
-# Register the agent with Microsoft Entra Agent ID
-./scripts/register-agent-entra.sh \
-  --agent-name foundry-agent \
-  --display-name "My Foundry Agent"
-```
-
-For detailed instructions on setting up permissions and managing registered agents, see [entra-agent-registry.md](./entra-agent-registry.md).
+For detailed instructions on setting up permissions and registering agents, see [entra-agent-registry.md](./entra-agent-registry.md).
 
 ### Agent Identity (Authentication)
 

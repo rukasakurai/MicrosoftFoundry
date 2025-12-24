@@ -45,31 +45,6 @@ Bash script using Azure CLI and REST API. Perfect for CI/CD pipelines and shell-
 ./create-agent.sh --model gpt-4o --name my-agent
 ```
 
-### Microsoft Entra Agent ID Registration - `register-agent-entra.sh`
-
-Bash script to register agents with Microsoft Entra Agent ID, making them visible in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview).
-
-**Requirements:**
-- Bash shell
-- Azure CLI (`az login`)
-- Microsoft Entra Agent Registry Administrator role
-- Microsoft Graph API permission: `AgentInstance.ReadWrite.All`
-- `jq` (optional, for JSON formatting)
-
-**Usage:**
-```bash
-# Register an agent with Microsoft Entra Agent ID
-./register-agent-entra.sh --agent-name foundry-agent --display-name "My Foundry Agent"
-
-# Full customization
-./register-agent-entra.sh \
-  --agent-name customer-service-agent \
-  --display-name "Customer Service AI Agent" \
-  --agent-url "https://myproject.services.ai.azure.com/api/agents/customer-service"
-```
-
-See [docs/entra-agent-registry.md](../docs/entra-agent-registry.md) for detailed setup instructions and prerequisites.
-
 ## Getting Environment Variables
 
 All scripts work with environment variables from your azd deployment:
