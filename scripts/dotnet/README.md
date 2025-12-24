@@ -2,6 +2,8 @@
 
 This directory contains a .NET console application for programmatically creating AI agents in Microsoft Foundry.
 
+> **Migration Note (December 2025):** This tool uses the `Azure.AI.Agents.Persistent` SDK which supports both the legacy Assistants API and the new Agents developer experience. The SDK automatically handles the API evolution, providing backward compatibility while enabling access to new features like the Conversations and Responses API. See [Microsoft's Migration Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) for details on the new developer experience.
+
 ## Requirements
 
 - .NET 10 or higher

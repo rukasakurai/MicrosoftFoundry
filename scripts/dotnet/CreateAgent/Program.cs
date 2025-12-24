@@ -7,6 +7,14 @@ using Azure.Identity;
 /// This program demonstrates how to programmatically create an agent in a Microsoft Foundry
 /// project that has been provisioned with Bicep templates.
 /// 
+/// Migration Note (December 2025): This program uses the Azure.AI.Agents.Persistent SDK
+/// which supports both the legacy Assistants API and the new Agents developer experience.
+/// Key changes in the new developer experience:
+/// - Threads → Conversations: Enhanced context management with streams of items
+/// - Runs → Responses: Improved agent execution with explicit tool call management
+/// - Messages → Items: Flexible data handling including messages, tool calls, and outputs
+/// See: https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry
+/// 
 /// Prerequisites:
 /// - Azure CLI installed and authenticated (az login) or appropriate Azure credentials
 /// - .NET 9.0 or higher

@@ -142,6 +142,8 @@ accounts
 
 > **Important**: These resources do NOT create AI agents. They create the infrastructure to publish/host agents you've built in the Foundry portal or via SDK.
 
+> **New Agents Developer Experience (December 2025):** Microsoft has introduced an updated developer experience with new API concepts. See the [Migration Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) for details on transitioning to the new Conversations and Responses APIs. The infrastructure provisioned by this template supports both legacy and new patterns.
+
 ### Understanding the Workflow
 
 | Step | Action | How |
@@ -196,6 +198,8 @@ Publishing an agent to an application enables:
 - [Microsoft.CognitiveServices/accounts Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts)
 - [Microsoft.CognitiveServices/accounts/projects/applications Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications)
 - [Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications/agentdeployments)
+- [Agents Migration Guide](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry) - Guide to the new agents developer experience
+- [Azure AI Foundry Agent Service REST API](https://learn.microsoft.com/en-us/rest/api/aifoundry/aiagents/) - REST API reference
 
 ## Documentation Test History
 

@@ -5,6 +5,13 @@
 # This script demonstrates how to programmatically create an agent in a Microsoft Foundry
 # project that has been provisioned with Bicep templates.
 #
+# Migration Note (December 2025): This script uses the /assistants endpoint which remains
+# supported for backward compatibility. The new Agents developer experience introduces:
+# - Conversations (replacing threads) for richer context management
+# - Responses (replacing runs) for improved agent execution
+# - Items (replacing messages) for flexible data handling
+# See: https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/migrate?view=foundry
+#
 # Prerequisites:
 # - Azure CLI installed and authenticated (az login)
 # - jq installed for JSON parsing (optional but recommended)
