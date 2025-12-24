@@ -34,18 +34,3 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 | **5** *(optional)* | [entra-agent-identity.md](docs/entra-agent-identity.md) | Enable agents to authenticate as themselves |
 
 > **Note:** Step 1 (OIDC) is optional if you only plan to deploy locally. It's recommended when using GitHub Actions for CI/CD.
-
-## Creating AI Agents
-
-After deploying the infrastructure, you can programmatically create AI agents using:
-- **.NET SDK** - for Azure-native development and application integration
-- **Bash/Azure CLI** - Best for CI/CD and automation
-- **REST API** - For custom implementations
-
-See [docs/agent-creation.md](docs/agent-creation.md) for detailed instructions and examples.
-
-## Microsoft Entra Agent ID Integration
-
-Register your agents with [Microsoft Entra Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/identity-platform/what-is-agent-id) to enable centralized identity management, governance, and visibility in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview).
-
-See [docs/entra-agent-registry.md](docs/entra-agent-registry.md) for setup instructions and REST API examples.
