@@ -48,8 +48,7 @@ For detailed deployment instructions and configuration options, see [docs/azd-de
 ## Creating AI Agents
 
 After deploying the infrastructure, you can programmatically create AI agents using:
-- **.NET SDK** - **Recommended** for Azure-native development and application integration
-- **Python SDK** - Alternative for Python-based workflows
+- **.NET SDK** - for Azure-native development and application integration
 - **Bash/Azure CLI** - Best for CI/CD and automation
 - **REST API** - For custom implementations
 

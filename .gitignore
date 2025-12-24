@@ -1,25 +1,17 @@
 # Local scratch files created during doc testing / CLI usage
 federated-credential.json
 
+# Azure Developer CLI
+.azure/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+local.settings.json
+
 # Bicep build output
 infra/main.json
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-ENV/
-.venv
-pip-log.txt
-pip-delete-this-directory.txt
-.pytest_cache/
-*.egg-info/
-dist/
-build/
 
 # .NET
 bin/
@@ -31,3 +23,20 @@ obj/
 project.lock.json
 project.fragment.lock.json
 artifacts/
+
+# IDE
+.vs/
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
