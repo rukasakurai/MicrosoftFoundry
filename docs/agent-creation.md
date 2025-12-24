@@ -20,7 +20,7 @@ While various approaches exist, this repository focuses on programmatic agent cr
   - **Windows**: Use [Git Bash](https://git-scm.com/downloads) (included with Git for Windows)
 - `jq` (optional, for better JSON formatting)
 
-> **API Version (as of December 2024)**: The new agents API requires preview API version `2025-05-15-preview`. The GA version `2025-05-01` only supports the classic assistants API. This may change as the API evolves.
+> **API Version (as of December 2025)**: The new agents API requires preview API version `2025-05-15-preview`. The GA version `2025-05-01` only supports the classic assistants API. This may change as the API evolves.
 
 ## Quick Start
 
