@@ -97,7 +97,7 @@ Test the Markdown file: **${input:markdownFile:README.md}**
 
       ```
       ## Documentation Test History
-      ### YYYY-MM-DD
+      ### YYYY-MM-DD HH:MM JST
       - Result: PASS / PASS with manual steps / PASS with fixes / PARTIAL / FAIL
       - Platform/Context: [e.g., Microsoft Surface Laptop X, GitHub Codespaces (Dev Container), Azure Cloud Shell]
       - OS: [Operating System and version/build]

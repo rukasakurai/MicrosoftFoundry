@@ -23,35 +23,14 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 - [Azure Developer CLI (azd)](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd) installed
 - An active Azure subscription with Contributor role or higher
 
-### Quick Deployment
+## Recommended Setup Order
 
-1. **Authenticate with Azure:**
-   ```bash
-   azd auth login
-   ```
+| Step | Document | Purpose |
+|------|----------|---------|
+| **1** | [azure-oidc-setup.md](docs/azure-oidc-setup.md) | Configure GitHub Actions OIDC for automated deployments |
+| **2** | [azd-deployment.md](docs/azd-deployment.md) | Deploy infrastructure with `azd up` |
+| **3** | [agent-creation.md](docs/agent-creation.md) | Create AI agents programmatically |
+| **4** *(optional)* | [entra-agent-identity.md](docs/entra-agent-identity.md) | Enable agents to authenticate as themselves |
+| **5** *(optional)* | [entra-agent-registry.md](docs/entra-agent-registry.md) | Register agents for visibility in Entra admin center |
 
-2. **Initialize the environment:**
-   ```bash
-   azd init
-   ```
-
-3. **Deploy the infrastructure:**
-   ```bash
-   azd up
-   ```
-
-4. **Enable agent deployments (optional):**
-   ```bash
-   azd up --parameter enableAgentDeployments=true
-   ```
-
-For detailed deployment instructions and configuration options, see [docs/azd-deployment.md](docs/azd-deployment.md).
-
-## Creating AI Agents
-
-After deploying the infrastructure, you can programmatically create AI agents using:
-- **.NET SDK** - for Azure-native development and application integration
-- **Bash/Azure CLI** - Best for CI/CD and automation
-- **REST API** - For custom implementations
-
-See [docs/agent-creation.md](docs/agent-creation.md) for detailed instructions and examples.
+> **Note:** Step 1 (OIDC) is optional if you only plan to deploy locally. It's recommended when using GitHub Actions for CI/CD.
