@@ -212,28 +212,6 @@ curl -X POST \
   }'
 ```
 
-## Registering Agents with Microsoft Entra Agent ID
-
-After creating an agent, you can integrate it with Microsoft Entra Agent ID for governance and identity management. There are two independent features you can enable:
-
-### Agent Identity (Authentication)
-
-If your agent needs to authenticate as itself (request tokens, access Microsoft Graph, etc.), create an Agent Identity. This enables:
-
-- **Agent authentication**: Allow agents to request tokens and authenticate as themselves
-- **Delegated access**: Agents can act on behalf of users with proper consent
-- **Access control**: Configure Conditional Access and Identity Protection for agents
-
-See [entra-agent-identity.md](./entra-agent-identity.md) for the complete setup process.
-
-### Agent Registry (Visibility/Governance)
-
-Register your agent to make it visible and manageable in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview).
-
-For detailed instructions on setting up permissions and registering agents, see [entra-agent-registry.md](./entra-agent-registry.md).
-
-> **Note**: Agent Identity and Agent Registry are independent features. You can use either or both depending on your requirements.
-
 ## Publishing Agents to Applications
 
 Once you've created and tested an agent, you can publish it to an application for external access:
