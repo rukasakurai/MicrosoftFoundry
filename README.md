@@ -30,7 +30,7 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 | **1** | [azure-oidc-setup.md](docs/azure-oidc-setup.md) | Configure GitHub Actions OIDC for automated deployments |
 | **2** | [azd-deployment.md](docs/azd-deployment.md) | Deploy infrastructure with `azd up` |
 | **3** | [agent-creation.md](docs/agent-creation.md) | Create AI agents programmatically |
-| **4** *(optional)* | [entra-agent-registry.md](docs/entra-agent-registry.md) | Register agents for visibility in Entra admin center |
-| **5** *(optional)* | [entra-agent-identity.md](docs/entra-agent-identity.md) | Enable agents to authenticate as themselves |
+| **4** *(optional)* | [entra-agent-identity.md](docs/entra-agent-identity.md) | Enable agents to authenticate as themselves |
+| **5** *(optional)* | [entra-agent-registry.md](docs/entra-agent-registry.md) | Register agents for visibility in Entra admin center |
 
 > **Note:** Step 1 (OIDC) is optional if you only plan to deploy locally. It's recommended when using GitHub Actions for CI/CD.

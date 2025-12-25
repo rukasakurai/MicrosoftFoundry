@@ -113,9 +113,24 @@ curl -X POST \
     "displayName": "My Foundry Agent",
     "ownerIds": ["'"${OWNER_ID}"'"],
     "url": "https://myproject.services.ai.azure.com/api/agents/my-agent",
-    "originatingStore": "MicrosoftFoundry"
+    "originatingStore": "MicrosoftFoundry",
+    "agentIdentityBlueprintId": "<optional-blueprint-id>",
+    "agentIdentityId": "<optional-identity-id>"
   }'
 ```
+
+### Linking to Agent Identity
+
+If you've already created an Agent Identity (see [entra-agent-identity.md](./entra-agent-identity.md)), you can link it during registration:
+
+| Field | Description |
+|-------|-------------|
+| `agentIdentityBlueprintId` | The `appId` of the Agent Identity Blueprint |
+| `agentIdentityId` | The object ID of the Agent Identity service principal |
+
+Providing these fields will show **"Has Agent ID: Yes"** in the Entra admin center. If omitted, the agent will show **"Has Agent ID: No"**.
+
+> **Tip**: Creating the Agent Identity first, then registering with these fields populated, avoids needing to update the registry entry later.
 
 ### Verify Registration
 
