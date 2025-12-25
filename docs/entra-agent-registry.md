@@ -16,7 +16,7 @@ This guide explains how to register AI agents in the **Microsoft Entra Agent Reg
 
 > **Note**: Registering an agent in the registry does **not** give it authentication capabilities. After registration, your agent will show **"Has Agent ID: No"** in Entra admin center. To enable agent authentication, see [entra-agent-identity.md](./entra-agent-identity.md).
 
-## Prerequisites
+## 0. Prerequisites
 
 Before registering agents with Microsoft Entra Agent Registry, ensure you have:
 
@@ -33,7 +33,7 @@ Before registering agents with Microsoft Entra Agent Registry, ensure you have:
 
 > ⚠️ **Important**: The Azure CLI's built-in Microsoft Graph permissions do **not** include `AgentInstance.ReadWrite.All`. Even with the Agent Registry Administrator role, you cannot register agents using Azure CLI tokens directly. You must create a **custom app registration** with `AgentInstance.ReadWrite.All` permission granted and authenticate as that app. See [Setting Up Permissions](#setting-up-permissions) below.
 
-## Setting Up Permissions
+## 1. Setting Up Permissions
 
 Before registering agents, you need an app registration with the `AgentInstance.ReadWrite.All` Microsoft Graph API permission. Azure CLI user tokens do not include this scope.
 
@@ -93,7 +93,7 @@ Now the script will use the app's token which includes `AgentInstance.ReadWrite.
 
 > **Security Note**: For CI/CD, store the client secret in a secure secret store (GitHub Secrets, Azure Key Vault, etc.). Never commit secrets to source control.
 
-## Register Your Agent
+## 2. Register Your Agent
 
 After setting up permissions, register agents using the Microsoft Graph API:
 
@@ -144,53 +144,11 @@ After registration, verify your agent appears in the Microsoft Entra admin cente
 
 > **Note**: If you see "0 agents found", registration may have failed (check for HTTP 403 permission errors).
 
-## Complete Workflow
+## 4. Manage Registered Agents
 
-Here's the recommended workflow for creating and registering an agent:
+After registering agents, you can list, update, or delete them using the Microsoft Graph API.
 
-### Step 1: Deploy Infrastructure
-
-```bash
-# Deploy Microsoft Foundry infrastructure
-azd up
-```
-
-### Step 2: Create an Agent
-
-```bash
-# Load environment variables
-eval $(azd env get-values)
-
-# Create the agent in Microsoft Foundry
-./scripts/create-agent.sh \
-  --name customer-assistant \
-  --instructions "You are a helpful customer service assistant."
-```
-
-### Step 3: Register with Microsoft Entra Agent Registry
-
-```bash
-# Get access token and owner ID
-ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
-OWNER_ID=$(az ad signed-in-user show --query id -o tsv)
-
-# Register the agent
-curl -X POST \
-  "https://graph.microsoft.com/beta/agentRegistry/agentInstances" \
-  -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "displayName": "Customer Service Assistant",
-    "ownerIds": ["'"${OWNER_ID}"'"],
-    "originatingStore": "MicrosoftFoundry"
-  }'
-```
-
-### Step 4: Verify Registration
-
-See [Verify Registration](#verify-registration) to confirm your agent appears in Entra admin center.
-
-### Step 5: List All Registered Agents
+### List All Registered Agents
 
 ```bash
 ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
@@ -201,9 +159,10 @@ curl -X GET \
   -H "Content-Type: application/json"
 ```
 
-### Step 6: Get a Specific Agent Instance
+### Get a Specific Agent Instance
 
 ```bash
+ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
 INSTANCE_ID="<agent-instance-id>"
 
 curl -X GET \
@@ -212,9 +171,10 @@ curl -X GET \
   -H "Content-Type: application/json"
 ```
 
-### Step 7: Update an Agent Instance
+### Update an Agent Instance
 
 ```bash
+ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
 INSTANCE_ID="<agent-instance-id>"
 
 curl -X PATCH \
@@ -226,9 +186,10 @@ curl -X PATCH \
   }'
 ```
 
-### Step 8: Delete an Agent Instance
+### Delete an Agent Instance
 
 ```bash
+ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
 INSTANCE_ID="<agent-instance-id>"
 
 curl -X DELETE \
