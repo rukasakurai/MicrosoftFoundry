@@ -185,6 +185,9 @@ curl -X PATCH \
     "displayName": "Updated Agent Name"
   }'
 ```
+## 5. Deleting Created Resources
+
+This section covers how to clean up all resources created by this guide.
 
 ### Delete an Agent Instance
 
@@ -196,6 +199,43 @@ curl -X DELETE \
   "https://graph.microsoft.com/beta/agentRegistry/agentInstances/${INSTANCE_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}"
 ```
+
+### Remove Role Assignment
+
+Before deleting the app registration, remove the Agent Registry Administrator role assignment:
+
+1. Go to [Microsoft Entra admin center](https://entra.microsoft.com)
+2. Navigate to: **Roles and administrators** → **Agent Registry Administrator** → **Assignments**
+3. Find your app's service principal and remove the assignment
+
+### Delete the Service Principal
+
+```bash
+APP_ID="<your-app-id>"
+
+# Get the service principal object ID
+SP_ID=$(az ad sp show --id $APP_ID --query id -o tsv)
+
+# Delete the service principal
+az ad sp delete --id $SP_ID
+```
+
+### Delete the App Registration
+
+Deleting the app registration also removes all associated client secrets:
+
+```bash
+APP_ID="<your-app-id>"
+
+az ad app delete --id $APP_ID
+```
+
+> **Note**: If you only want to revoke a specific client secret without deleting the entire app:
+> ```bash
+> APP_ID="<your-app-id>"
+> KEY_ID="<credential-key-id>"
+> az ad app credential delete --id $APP_ID --key-id $KEY_ID
+> ```
 
 ## Additional Resources
 

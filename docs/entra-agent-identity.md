@@ -15,38 +15,7 @@ This guide explains how to create **Agent Identities** in Microsoft Entra, allow
 - **Agent authentication**: Allow agents to request tokens and authenticate as themselves
 - **Delegated access**: Agents can act on behalf of users with proper consent
 
-After creating an Agent Identity, your agent will show **"Has Agent ID: Yes"** in the Entra admin center.
-
-## Understanding Agent Identity Architecture
-
-Agent Identities use a **blueprint pattern**:
-
-```
-┌─────────────────────────────────────┐
-│     Agent Identity Blueprint        │
-│  (Template/Factory for identities)  │
-│  - Holds credentials                │
-│  - Defines shared configuration     │
-│  - Controls identity creation       │
-└─────────────────┬───────────────────┘
-                  │ creates
-                  ▼
-┌─────────────────────────────────────┐
-│        Agent Identity               │
-│  (Individual agent's identity)      │
-│  - Used by specific agent instance  │
-│  - Authenticates via blueprint      │
-│  - Has unique object ID             │
-└─────────────────────────────────────┘
-```
-
-| Component | Description | Purpose |
-|-----------|-------------|----------|
-| **Agent Identity Blueprint** | A template/factory for creating agent identities | Holds shared config, credentials, and permissions |
-| **Agent Identity** | An individual identity created from a blueprint | Used by a specific agent instance to authenticate |
-| **Agent Identity Blueprint Principal** | Service principal for the blueprint | Enables the blueprint to create identities |
-
-## Prerequisites
+## 0. Prerequisites
 
 Before creating Agent Identities, ensure you have:
 
@@ -64,7 +33,7 @@ Before creating Agent Identities, ensure you have:
 
 > ⚠️ **Important**: The Azure CLI's built-in Microsoft Graph permissions do **not** include `AgentIdentityBlueprint.*` scopes. You must create a **custom app registration** with these permissions granted and authenticate as that app.
 
-## Setting Up Permissions
+## 1. Setting Up Permissions
 
 ### Step 1: Create an App Registration
 
@@ -123,7 +92,7 @@ az login --service-principal -u $APP_ID -p $CLIENT_SECRET --tenant $TENANT_ID --
 az account show
 ```
 
-## Creating an Agent Identity
+## 2. Creating an Agent Identity
 
 ### Step 1: Get Access Token and User ID
 
@@ -268,7 +237,7 @@ curl -s -X GET \
 
 > **Tip**: If you also registered the agent in the Agent Registry (see [entra-agent-registry.md](./entra-agent-registry.md)), the agent will show **"Has Agent ID: Yes"** in the registry view.
 
-## Using the Agent Identity
+## 3. Using the Agent Identity
 
 Once created, your agent can use its identity to:
 
@@ -309,7 +278,7 @@ Connect-MgGraph -Scopes "AgentIdentityBlueprint.Create", "AgentIdentityBlueprint
 # See: https://aka.ms/agentidpowershell
 ```
 
-## Managing Agent Identities
+## 4. Managing Agent Identities
 
 ### List All Agent Identities
 
@@ -328,7 +297,7 @@ curl -s -X GET \
   -H "OData-Version: 4.0" | jq '.value[] | {displayName, appId, id}'
 ```
 
-## Cleanup: Deleting Created Resources
+## 5. Deleting Created Resources
 
 When you're done testing or want to clean up resources, delete them in the following order to avoid dependency issues:
 
