@@ -208,9 +208,4 @@ curl -X DELETE \
 
 > **API Version (as of December 2025)**: The Agent Registry API is available only in the Microsoft Graph beta endpoint (`https://graph.microsoft.com/beta/`). This API may change before reaching general availability. Monitor the [Microsoft Graph changelog](https://learn.microsoft.com/en-us/graph/changelog) for updates.
 
-## Next Steps
-
-- **Enable agent authentication**: See [entra-agent-identity.md](./entra-agent-identity.md) to give your agent its own credentials
-- **Create more agents**: See [agent-creation.md](./agent-creation.md) for creating agents in Microsoft Foundry
-
 ## Documentation Test History
