@@ -102,7 +102,12 @@ After setting up permissions, register agents using the Microsoft Graph API:
 ACCESS_TOKEN=$(az account get-access-token --resource https://graph.microsoft.com --query accessToken -o tsv)
 
 # Get your user object ID (for ownerIds)
-OWNER_ID=$(az ad signed-in-user show --query id -o tsv)
+# Note: This will fail if logged in as service principal - provide OWNER_ID manually
+OWNER_ID=$(az ad signed-in-user show --query id -o tsv 2>/dev/null || echo "<your-user-object-id>")
+
+# If OWNER_ID shows the placeholder, you need to provide it manually
+# You can find a user's Object ID in: Microsoft Entra admin center → Users → Select user → Object ID
+echo "OWNER_ID: $OWNER_ID"
 
 # Register the agent
 curl -X POST \
@@ -249,3 +254,17 @@ az ad app delete --id $APP_ID
 > **API Version (as of December 2025)**: The Agent Registry API is available only in the Microsoft Graph beta endpoint (`https://graph.microsoft.com/beta/`). This API may change before reaching general availability. Monitor the [Microsoft Graph changelog](https://learn.microsoft.com/en-us/graph/changelog) for updates.
 
 ## Documentation Test History
+
+### 2025-12-25 13:15 JST
+- Result: PASS with manual steps and fixes
+- Platform/Context: Microsoft Surface Laptop, Windows local environment
+- OS: Windows 11 Enterprise (build 26200.0)
+- Shell: GNU bash 5.2.37 (via Git Bash/MSYS2)
+- Tester: Automated Documentation Tester (with human intervention)
+- Notes:
+  - **Manual steps required**: App registration creation, API permissions and admin consent, client secret creation, Agent Registry Administrator role assignment, User Object ID provision, app registration deletion
+  - **Fixes applied**:
+    1. Section 2 "Register Your Agent": Added note about `az ad signed-in-user show` failing when logged in as service principal, with fallback pattern and manual ID provision instructions
+  - All API calls executed successfully (register, list, get, update, delete)
+  - Agent registered with Agent Identity linking ("Has Agent ID: Yes")
+  - Cleanup completed successfully

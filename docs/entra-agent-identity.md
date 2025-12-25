@@ -257,10 +257,14 @@ echo "Agent Token: ${AGENT_TOKEN:0:50}..."
 ### Access Microsoft Graph APIs
 
 ```bash
-# Example: Get the agent's own profile
+# Example: Get the agent identity's own service principal info
+# Note: The /me endpoint doesn't work with client credentials flow.
+# Use the service principal endpoint instead.
+AGENT_IDENTITY_ID="<your-agent-identity-id>"  # From Step 5
+
 curl -s -X GET \
-  "https://graph.microsoft.com/v1.0/me" \
-  -H "Authorization: Bearer ${AGENT_TOKEN}" | jq '.'
+  "https://graph.microsoft.com/beta/serviceprincipals/${AGENT_IDENTITY_ID}" \
+  -H "Authorization: Bearer ${AGENT_TOKEN}" | jq '{displayName, id, servicePrincipalType, agentIdentityBlueprintId}'
 ```
 
 ## Alternative: Using PowerShell
@@ -291,10 +295,14 @@ curl -s -X GET \
 ### List All Agent Identity Blueprints
 
 ```bash
+# Note: Filtering by @odata.type is not supported in Microsoft Graph.
+# To verify a specific blueprint, query it directly by ID:
 curl -s -X GET \
-  "https://graph.microsoft.com/beta/applications?\$filter=@odata.type eq 'microsoft.graph.agentIdentityBlueprint'" \
+  "https://graph.microsoft.com/beta/applications/${BLUEPRINT_OBJECT_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-  -H "OData-Version: 4.0" | jq '.value[] | {displayName, appId, id}'
+  -H "OData-Version: 4.0" | jq '{displayName, appId, id, odataType: ."@odata.type"}'
+
+# The @odata.type should be "#microsoft.graph.agentIdentityBlueprint" for blueprints
 ```
 
 ## 5. Deleting Created Resources
@@ -402,3 +410,17 @@ The role assignments will be automatically cleaned up when the service principal
 - **Agent Creation**: See [agent-creation.md](./agent-creation.md) for creating agents in Microsoft Foundry
 
 ## Documentation Test History
+
+### 2025-12-25 13:15 JST
+- Result: PASS with manual steps and fixes
+- Platform/Context: Microsoft Surface Laptop, Windows local environment
+- OS: Windows 11 Enterprise (build 26200.0)
+- Shell: GNU bash 5.2.37 (via Git Bash/MSYS2)
+- Tester: Automated Documentation Tester (with human intervention)
+- Notes:
+  - **Manual steps required**: App registration creation (Step 1), API permissions and admin consent (Step 2), client secret creation (Step 3), Agent ID Administrator role assignment (Step 5), User Object ID provision, app registration deletion
+  - **Fixes applied**:
+    1. Section 3 "Access Microsoft Graph APIs": Changed `/me` endpoint example to `/serviceprincipals/{id}` endpoint (the `/me` endpoint doesn't work with client credentials flow)
+    2. Section 4 "List All Agent Identity Blueprints": Removed non-working `@odata.type` filter and replaced with direct query approach
+  - All API calls executed successfully
+  - Agent Identity created, verified, and cleaned up successfully
