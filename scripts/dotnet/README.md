@@ -1,57 +1,40 @@
-# .NET Agent Creation Tool
+# .NET Tools for Microsoft Foundry
 
-This directory contains a .NET console application for programmatically creating AI agents in Microsoft Foundry.
+This directory contains .NET console applications for working with Microsoft Foundry.
+
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| [CreateAgent](./CreateAgent/) | Create an AI agent in Microsoft Foundry |
+| [VerifyStreamingCachedTokens](./VerifyStreamingCachedTokens/) | Verify `cached_tokens` in streaming Chat Completions usage chunks |
 
 ## Requirements
 
 - .NET 10 or higher
 - Azure CLI authenticated (`az login`) or appropriate Azure credentials
-- Microsoft Foundry project endpoint
+- Microsoft Foundry infrastructure deployed (see [azd-deployment.md](../../docs/azd-deployment.md))
 
-## Quick Start
+## CreateAgent
+
+Create an AI agent in Microsoft Foundry using the .NET SDK.
 
 ```bash
-# Navigate to the CreateAgent directory
 cd scripts/dotnet/CreateAgent
-
-# Load environment variables from azd deployment
 eval $(azd env get-values --cwd ../../..)
-
-# Run the application
 dotnet run
 ```
 
-## Usage
+See [docs/agent-creation.md](../../docs/agent-creation.md) for details.
+
+## VerifyStreamingCachedTokens
+
+Verify that `cached_tokens` is returned in streaming Chat Completions usage chunks when using `stream_options: {"include_usage": true}`.
 
 ```bash
-# Using environment variables
-dotnet run
-
-# With custom parameters
-dotnet run -- --model-id gpt-4o --agent-name my-agent
-
-# Show help
-dotnet run -- --help
+cd scripts/dotnet/VerifyStreamingCachedTokens
+eval $(azd env get-values --cwd ../../..)
+dotnet run -- --deployment gpt-5.2
 ```
 
-## Build and Publish
-
-```bash
-# Build the project
-dotnet build
-
-# Publish as self-contained executable
-dotnet publish -c Release -r linux-x64 --self-contained
-
-# Run published executable
-./bin/Release/net9.0/linux-x64/publish/CreateAgent --help
-```
-
-## NuGet Packages
-
-- `Azure.AI.Projects.OpenAI` (1.0.0-beta.3) - Azure AI Projects client library
-- `Azure.Identity` (1.17.1) - Azure authentication library
-
-## Documentation
-
-See [docs/agent-creation.md](../../../docs/agent-creation.md) for comprehensive documentation and examples.
+See [docs/streaming-cached-tokens.md](../../docs/streaming-cached-tokens.md) for details.
