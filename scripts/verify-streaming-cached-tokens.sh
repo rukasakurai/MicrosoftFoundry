@@ -138,7 +138,7 @@ REQUEST_BODY=$(jq -n \
     ],
     "stream": true,
     "stream_options": {"include_usage": true},
-    "max_tokens": 50
+    "max_completion_tokens": 50
   }')
 
 # Function to send a streaming request and extract the usage chunk

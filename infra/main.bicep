@@ -27,6 +27,26 @@ param projectDisplayName string = 'Microsoft Foundry Project'
 @description('Description for the Cognitive Services project')
 param projectDescription string = ''
 
+@description('Name of the model deployment')
+param modelDeploymentName string = 'gpt-5.4-mini'
+
+@description('Model name to deploy')
+param modelName string = 'gpt-5.4-mini'
+
+@description('Model version to deploy')
+param modelVersion string = '2026-03-17'
+
+@description('SKU name for the model deployment')
+@allowed([
+  'GlobalStandard'
+  'DataZoneStandard'
+  'Standard'
+])
+param modelDeploymentSkuName string = 'GlobalStandard'
+
+@description('Capacity for the model deployment (in thousands of tokens per minute)')
+param modelDeploymentCapacity int = 10
+
 @description('Enable application and agent deployment resources')
 param enableAgentDeployments bool = false
 
@@ -85,6 +105,23 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-10-01-prev
     customSubDomainName: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
     publicNetworkAccess: 'Enabled'
     allowProjectManagement: true
+  }
+}
+
+// Model Deployment (e.g., GPT-5 series)
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-10-01-preview' = {
+  parent: cognitiveServices
+  name: modelDeploymentName
+  sku: {
+    name: modelDeploymentSkuName
+    capacity: modelDeploymentCapacity
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: modelName
+      version: modelVersion
+    }
   }
 }
 
@@ -149,5 +186,6 @@ output COGNITIVE_SERVICES_NAME string = cognitiveServices.name
 output COGNITIVE_SERVICES_ENDPOINT string = cognitiveServices.properties.endpoint
 output PROJECT_NAME string = cognitiveServicesProject.name
 output PROJECT_ENDPOINT string = 'https://${cognitiveServices.name}.services.ai.azure.com/api/projects/${cognitiveServicesProject.name}'
+output MODEL_DEPLOYMENT_NAME string = modelDeployment.name
 output APPLICATION_NAME string = cognitiveServicesApplication.?name ?? ''
 output AGENT_DEPLOYMENT_NAME string = agentDeployment.?name ?? ''
