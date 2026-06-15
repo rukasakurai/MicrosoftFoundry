@@ -19,7 +19,7 @@ surrounding Microsoft security stack. For each risk it records:
 ## How this was verified
 
 - **Method:** Live navigation of the Foundry portal "New Foundry" experience using Playwright MCP.
-  See the [`foundry-ui-playwright`](../.github/skills/foundry-ui-playwright/SKILL.md) skill for the
+  See the [`foundry-ui-playwright`](../../.github/skills/foundry-ui-playwright/SKILL.md) skill for the
   navigation procedure and re-verification steps.
 - **Environment:** a non-production Foundry resource (`Microsoft.CognitiveServices/accounts`, kind
   `AIServices`) in `japaneast`. No environment identifiers are recorded here by design.
@@ -56,10 +56,10 @@ surrounding Microsoft security stack. For each risk it records:
 |---|------|---------------------|-----|---------|---------------|------------|
 | LLM01 | Prompt Injection | Guardrails: Jailbreak + Indirect prompt injections + Spotlighting; enforce via Compliance Policies | 🟢 | Covered | **Foundry** | Defender for AI, APIM |
 | LLM02 | Sensitive Information Disclosure | Guardrails: PII; Compliance: Purview DLP/sensitive-data monitoring | 🟢 | Covered | **Purview** + Foundry | Entra, Defender |
-| LLM03 | Supply Chain | Operate → Assets registry + Security posture (Defender) recs | 🟡 | Shared | **Azure API Center** (API/tool/MCP inventory + design-time governance) + Other (GHAS, Azure Policy) | Defender for Cloud, APIM (runtime), Purview (model/data lineage), Foundry |
+| LLM03 | Supply Chain | Operate → Assets registry + Security posture (Defender) recs | 🟡 | Shared | **Other** (GHAS, Azure Policy) + **Defender for Cloud** (vuln) | Azure API Center (leads API/tool/MCP inventory + allow-listing), APIM (runtime), Purview (model/data lineage), Foundry |
 | LLM04 | Data and Model Poisoning | Build → Data/Knowledge governance + Purview (indirect) | 🔴 | Shared | **Purview** + Foundry | Other (model provider, Storage immutability) |
 | LLM05 | Improper Output Handling | Output-side guardrails reduce bad output, but downstream sanitization is app-side | 🟡 | Out of scope | **Other** (app code / GHAS) | APIM, Foundry |
-| LLM06 | Excessive Agency | Guardrails: Task adherence; tool auth scoping | 🟡 | Gap | **Entra** + Foundry | APIM |
+| LLM06 | Excessive Agency | Guardrails: Task adherence; tool auth scoping | 🟡 | Gap | **Entra** + Foundry | APIM, Azure API Center (curated/approved tool catalog) |
 | LLM07 | System Prompt Leakage | No dedicated control (Jailbreak/Spotlighting help indirectly) | 🔴 | Out of scope | **Other** (architecture, Key Vault) | Foundry, Defender |
 | LLM08 | Vector and Embedding Weaknesses | RBAC on Knowledge/Data connections only | 🔴 | Shared | **Entra + Purview** | Other (vector-DB RBAC, Private Link) |
 | LLM09 | Misinformation | Evaluations (groundedness/relevance) — RBAC-gated in test env | 🟡 | Covered | **Foundry** | Other (human review) |
@@ -70,15 +70,15 @@ surrounding Microsoft security stack. For each risk it records:
 | # | Risk | Foundry GUI control | Cov | Verdict | Primary owner | Supporting |
 |---|------|---------------------|-----|---------|---------------|------------|
 | ASI01 | Agent Goal Hijack | Guardrails: Indirect prompt injections + Jailbreak + Task adherence | 🟢 | Covered | **Foundry** | Defender for AI, Sentinel |
-| ASI02 | Tool Misuse & Exploitation | Guardrails Task adherence (tool call) + PII (tool call/response); tool auth | 🟡 | Gap | **API Management** + Foundry | Entra, Defender |
+| ASI02 | Tool Misuse & Exploitation | Guardrails Task adherence (tool call) + PII (tool call/response); tool auth | 🟡 | Gap | **API Management** + Foundry | Entra, Defender, Azure API Center (vetted tool/MCP registry + allow-listing) |
 | ASI03 | Agent Identity & Privilege Abuse | Build → Tools auth (OAuth Passthrough/Entra) + Operate → Admin RBAC | 🟡 | Out of scope | **Entra** | Sentinel (UEBA), Defender for Identity |
 | ASI04 | Agentic Supply Chain Compromise | Assets registry + Security posture (Defender) + connection governance | 🟡 | Shared | **Azure API Center** (MCP/tool registry, allow-listing) + **Defender for Cloud** + Other (GHAS, Azure Policy) | Foundry, APIM |
 | ASI05 | Unexpected Code Execution | No user-facing knob (sandboxing is platform-internal) | 🔴 | Out of scope | **Foundry** (sandbox) + Defender | Other (container/network isolation) |
 | ASI06 | Memory & Context Poisoning | Indirect prompt injection guardrail (tool-response ingestion); Memory feature has no poisoning control | 🟡 | Gap | **Foundry** | Purview, Other |
-| ASI07 | Insecure Inter-Agent Communication | No GUI control for A2A channel security | 🔴 | Gap (emerging) | **API Management + Entra** | Other (Private Link, mTLS), Foundry |
+| ASI07 | Insecure Inter-Agent Communication | No GUI control for A2A channel security | 🔴 | Gap (emerging) | **API Management + Entra** | Other (Private Link, mTLS), Foundry, Azure API Center (A2A/MCP endpoint inventory) |
 | ASI08 | Cascading Agent Failures | Monitoring only: Operate → Overview (health/alerts/anomalies) + Quota | 🟡 | Gap | **API Management** + Foundry | Sentinel, Azure Monitor |
 | ASI09 | Human-Agent Trust Exploitation | Indirect: content-harm/groundedness reduce deceptive output | 🔴 | Out of scope | **Other** (UX, training, provenance labels) | Foundry, Purview |
-| ASI10 | Rogue / Shadow Agents | Assets inventory + Overview agent discovery + Admin + Defender detection | 🟡 | Gap | **Sentinel + Defender for Cloud** | Entra (Agent ID inventory), Foundry |
+| ASI10 | Rogue / Shadow Agents | Assets inventory + Overview agent discovery + Admin + Defender detection | 🟡 | Gap | **Sentinel + Defender for Cloud** | Entra (Agent ID inventory), Foundry, Azure API Center (sanctioned-tool baseline + Dev Proxy shadow detection) |
 
 ## Product ownership — role of each layer
 
@@ -115,33 +115,24 @@ adjacent layers. The Foundry-owned gaps cluster in the **agentic-era** controls 
 multi-agent comms, consumption/cost, rogue agents), which extend beyond the content-safety controls
 Foundry covers most strongly today.
 
-## Azure API Center for supply-chain risk (LLM03 / ASI04)
+## Per-product deep dives
 
-[Azure API Center](https://learn.microsoft.com/en-us/azure/api-center/overview) is a **design-time**
-API governance and discovery service (distinct from API Management, which is the **runtime** gateway).
-It can now catalog **MCP servers** as API entities
-([register](https://learn.microsoft.com/en-us/azure/api-center/register-discover-mcp-server) /
-[discover](https://learn.microsoft.com/en-us/azure/api-center/discover-catalog-mcp-server)), making it
-a natural owner for the **API / tool / MCP-server dependency** dimension of supply-chain risk.
+Detailed, per-product analyses (each scoring the product's role across all 20 risks) live in their own
+files so this overview stays readable:
 
-**What it covers:**
-- Org-wide **inventory** of all APIs/tools/MCP servers → eliminates shadow/unknown dependencies.
-- **Allow-listing & governance** via custom metadata (approval status, owner, license, data class),
-  lifecycle stages, and versioning.
-- **Design-time conformance** through API-definition analysis/linting (Spectral).
-- **GitOps/CI-CD** registration for an auditable record of what enters the estate.
+| Product | Deep dive | Status |
+|---------|-----------|--------|
+| Azure API Center | [api-center.md](./api-center.md) | ✅ Done |
+| Microsoft Foundry | _planned_ | ⏳ |
+| Microsoft Entra ID (incl. Agent ID) | _planned_ | ⏳ |
+| Azure API Management (GenAI Gateway) | _planned_ | ⏳ |
+| Microsoft Purview | _planned_ | ⏳ |
+| Microsoft Sentinel | _planned_ | ⏳ |
+| Microsoft Defender (for Cloud / AI / XDR) | _planned_ | ⏳ |
 
-**What it does NOT cover (pair accordingly):**
-- **No runtime enforcement** — it won't block an agent from calling an unregistered endpoint
-  (→ API Management gateway + network policy + Azure Policy to *require* registration).
-- **No vulnerability/CVE scanning** (→ Defender for Cloud, GitHub Advanced Security/Dependabot).
-- **No model or training-data provenance** — it catalogs APIs, not model weights, LoRA adapters, or
-  datasets (→ Purview lineage, model-provider attestation).
-
-It overlaps Foundry's **Operate → Assets** (Foundry-scoped inventory); API Center is the broader
-**cross-platform, org-wide** catalog. Net: API Center upgrades the LLM03/ASI04 *"Shared"* story with a
-concrete inventory+governance owner, but the coverage stays 🟡 because model/data provenance,
-vuln-scanning, and runtime enforcement remain with other layers.
+When adding a new product deep dive, follow the structure of `api-center.md` (what it is/is not →
+role across all 20 risks table → focus areas) and reflect any *material* Primary/Supporting roles back
+into the master tables above.
 
 ## Open questions to iterate
 
