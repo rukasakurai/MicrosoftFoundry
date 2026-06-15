@@ -27,6 +27,8 @@ The portal has two experiences, switched by a **toggle in the top toolbar** (ari
 
 ### Operate (Control Plane) panes
 
+> **"Control Plane" is a docs-only term — the GUI calls it "Operate".** The learn.microsoft.com articles brand this surface *Microsoft Foundry Control Plane*, but the live portal never uses that label for the feature: the menu is **Operate** and the panes are Overview/Assets/Compliance/Quota/Admin. The string "control plane" appears only once in the UI, lowercase, inside an *Ask AI* suggested-prompt chip on the Overview pane. So when a doc says "Control Plane", look for **Operate** in the portal. (Verified live 2026-06-15.)
+
 When the new experience is on, the left nav shows **Operate**, containing:
 
 | Pane | Path suffix | Notes |
@@ -58,6 +60,7 @@ The portal redirects this to the appropriate `/foundryProject/...` or `/nextgen/
 - **`browser_evaluate(... .click())` is a reliable fallback** when `browser_click` rejects its target/ref argument. Match the element by trimmed text or aria-label.
 - **The browser stays open across tool calls** until `browser_close`. Close it when done to free the session.
 - **Docs vs reality flow:** read the doc text first via `web_fetch` on the docs API (`https://learn.microsoft.com/api/article/body?pathname=/en/azure/foundry/...`) for clean markdown; then use Playwright to confirm the exact live labels/panes. Note any drift (label renames, preview gating, toggle requirements) with the date, since the portal changes often.
+- **Inspecting what a pane actually loads:** the `/nextgen` portal calls a private internal BFF (`ai.azure.com/nextgen/api/...Resolver`, no `api-version`), **not** public ARM (`management.azure.com`). When you need to confirm a feature is real from its network traffic, or to understand the docs' "available through the Foundry portal only" wording, see **[references/portal-backend-api.md](references/portal-backend-api.md)**.
 
 ## Setting up the Playwright MCP server
 
