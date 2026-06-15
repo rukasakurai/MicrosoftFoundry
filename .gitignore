@@ -1,6 +1,10 @@
 # Local scratch files created during doc testing / CLI usage
 federated-credential.json
 
+# Playwright MCP output (snapshots/screenshots/PDFs); prefer redirecting it
+# out of the repo via PLAYWRIGHT_MCP_OUTPUT_DIR — this is a safety net
+.playwright-mcp/
+
 # Azure Developer CLI
 .azure/
 
