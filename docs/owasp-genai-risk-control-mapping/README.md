@@ -60,7 +60,7 @@ surrounding Microsoft security stack. For each risk it records:
 | LLM04 | Data and Model Poisoning | Build → Data/Knowledge governance + Purview (indirect) | 🔴 | Shared | **Purview** + Foundry | Other (model provider, Storage immutability) |
 | LLM05 | Improper Output Handling | Output-side guardrails reduce bad output, but downstream sanitization is app-side | 🟡 | Out of scope | **Other** (app code / GHAS) | APIM, Foundry |
 | LLM06 | Excessive Agency | Guardrails: Task adherence; tool auth scoping | 🟡 | Gap | **Entra** + Foundry | APIM, Azure API Center (curated/approved tool catalog) |
-| LLM07 | System Prompt Leakage | No dedicated control (Jailbreak/Spotlighting help indirectly) | 🔴 | Out of scope | **Other** (architecture, Key Vault) | Foundry, Defender |
+| LLM07 | System Prompt Leakage | No dedicated control (Jailbreak/Spotlighting help indirectly) | 🔴 | Out of scope | **Other** (architecture, Key Vault) | Entra (managed identity ⇒ no secrets in prompt), Foundry, Defender |
 | LLM08 | Vector and Embedding Weaknesses | RBAC on Knowledge/Data connections only | 🔴 | Shared | **Entra + Purview** | Other (vector-DB RBAC, Private Link) |
 | LLM09 | Misinformation | Evaluations (groundedness/relevance) — RBAC-gated in test env | 🟡 | Covered | **Foundry** | Other (human review) |
 | LLM10 | Unbounded Consumption | Operate → Quota (deployment capacity) + Overview usage monitoring | 🟡 | Gap | **API Management** + Foundry | Defender/Monitor, Entra |
@@ -124,7 +124,7 @@ files so this overview stays readable:
 |---------|-----------|--------|
 | Azure API Center | [api-center.md](./api-center.md) | ✅ Done |
 | Microsoft Foundry | _planned_ | ⏳ |
-| Microsoft Entra ID (incl. Agent ID) | _planned_ | ⏳ |
+| Microsoft Entra ID (incl. Agent ID) | [entra.md](./entra.md) | ✅ Done |
 | Azure API Management (GenAI Gateway) | _planned_ | ⏳ |
 | Microsoft Purview | _planned_ | ⏳ |
 | Microsoft Sentinel | _planned_ | ⏳ |
