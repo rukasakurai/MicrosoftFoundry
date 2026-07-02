@@ -155,6 +155,14 @@ for the Entra configuration.
 | Token refresh / policy | per connection | centralized in the Toolbox |
 | Change tools without touching agents | no | yes |
 
+### When to use the Toolbox vs. connect directly
+
+Prefer the direct `Agent → MCP` connection for a single MCP server and a few
+agents; the Toolbox's indirection adds an auth hop for little benefit at that
+scale. Reach for a Toolbox when its centralization pays off — see
+[Foundry Toolbox overview](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox).
+It is also currently a portal/preview experience.
+
 ## What keeps the connection valid over time
 
 OAuth identity passthrough relies on the stored user token staying valid. **Token
