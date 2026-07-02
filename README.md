@@ -32,5 +32,6 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 | **3** | [agent-creation.md](docs/agent-creation.md) | Create AI agents programmatically |
 | **4** *(optional)* | [entra-agent-identity.md](docs/entra-agent-identity.md) | Enable agents to authenticate as themselves |
 | **5** *(optional)* | [entra-agent-registry.md](docs/entra-agent-registry.md) | Register agents for visibility in Entra admin center |
+| **6** *(optional)* | [agent-mcp-oauth.md](docs/agent-mcp-oauth.md) | Connect an agent to an OAuth-authenticated remote MCP server |
 
 > **Note:** Step 1 (OIDC) is optional if you only plan to deploy locally. It's recommended when using GitHub Actions for CI/CD.
