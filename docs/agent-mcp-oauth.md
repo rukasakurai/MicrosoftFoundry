@@ -130,9 +130,9 @@ the sign-in step. To inspect the stored connection, see the project's
 
 ## Toolbox path: Agent → Toolbox → MCP server
 
-> The direct path above is verified end-to-end in this repo. The Toolbox path
-> below follows the official Foundry documentation; Toolbox creation is currently
-> a portal/preview experience.
+> The direct path above is verified end-to-end in this repo. Toolbox **consumption**
+> is also verified (see below); Toolbox **creation** and the portal agent-build
+> surface are currently a preview experience.
 
 A [Foundry Toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox)
 bundles several tools (including MCP servers) behind a single MCP-compatible
@@ -162,6 +162,48 @@ agents; the Toolbox's indirection adds an auth hop for little benefit at that
 scale. Reach for a Toolbox when its centralization pays off — see
 [Foundry Toolbox overview](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox).
 It is also currently a portal/preview experience.
+
+### Consuming a Toolbox (verified 2026-07-03)
+
+An agent (or any MCP client) consumes a Toolbox through its MCP endpoint:
+
+- Consumer (always serves the default version): `{project_endpoint}/toolboxes/{name}/mcp?api-version=v1`
+- Developer (a specific version): `{project_endpoint}/toolboxes/{name}/versions/{version}/mcp?api-version=v1`
+
+**Consumption auth model — the key contrast with a direct connection:** the caller
+authenticates to the *Toolbox* with **its own Microsoft Entra token**
+(`DefaultAzureCredential`, scope `https://ai.azure.com/.default`) — it does **not**
+pass any per-tool credential. Every request must also carry the preview header
+`Foundry-Features: Toolboxes=V1Preview`. The Toolbox injects each downstream tool's
+credentials itself.
+
+**The pitfall the gateway enforces:** authenticating to the Toolbox the way you'd
+authenticate to a direct MCP server — an API key / subscription key instead of an
+Entra bearer token — fails at the gateway with
+`401 "Access denied due to invalid subscription key or wrong API key"`.
+
+To exercise this cleanly, bundle an **auth-free MCP** (for example the
+[Microsoft Learn MCP](https://learn.microsoft.com/api/mcp)). Holding downstream
+tool auth at "none" isolates the *Toolbox-consumption* auth as the only variable,
+so a failure can't be ambiguous. Tools then surface namespaced as
+`{server_label}___{tool}` (for example `learn___microsoft_docs_search`).
+
+**Portal vs. code (verified 2026-07-03):** the new-experience portal manages
+Toolboxes under **Build → Tools → Toolboxes** (create, list, and an
+*Endpoint + samples* pane titled *"Call this toolbox in code"*). In the agent
+builder, the **Add tool → Select a tool** picker (Configured / Catalog / Custom)
+offers direct **MCP**, OpenAPI, A2A, and catalog tools — but **no first-class
+option to consume a Toolbox**. So an agent consumes a Toolbox via **code/SDK**,
+not by adding it in the portal Playground. For the SDK/REST consumption samples,
+see [Create, test, and deploy a toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox)
+rather than reproducing them here.
+
+**RBAC:** building agents and consuming tools/toolboxes requires the data-plane
+**Foundry User** role on the project — control-plane roles such as subscription
+Owner or Contributor do not confer it. This repo's Bicep grants the deploying
+principal that role during `azd up` (see `infra/main.bicep`), so the baseline is
+usable without a manual step. For the full role matrix, see
+[Toolbox prerequisites](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox#prerequisites).
 
 ## What keeps the connection valid over time
 
