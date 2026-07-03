@@ -41,7 +41,7 @@ connection with:
 | Field | Value |
 | --- | --- |
 | Remote MCP Server endpoint | `https://api.githubcopilot.com/mcp/` |
-| Authentication | OAuth Identity Passthrough → Custom OAuth |
+| Authentication | OAuth Identity Passthrough |
 | Client ID / secret | from your GitHub OAuth App |
 | Auth URL | `https://github.com/login/oauth/authorize` |
 | Token URL | `https://github.com/login/oauth/access_token` |
@@ -222,11 +222,18 @@ lifetime is provider-dependent, and it is the most common place the connection
   valid until the user revokes the app or the OAuth app is deleted. This is why
   the GitHub example here does **not** reproduce a daily-expiry failure — the
   breakage class simply doesn't apply unless you opt into *expiring user tokens*
-  on the app (in which case you must configure the refresh URL).
+  on the app (in which case you must configure the refresh URL). A **GitHub App** —
+  GitHub's recommended app type — issues expiring user tokens by default; with
+  `offline_access` and the refresh URL configured, the direct path was verified
+  (2026-07-03) to refresh them silently past expiry, with no re-consent.
 
 The practical takeaway: for any new MCP server, check its token lifetime and
 whether it issues refresh tokens, then configure `offline_access` + refresh URL
 accordingly. Don't assume a working first call means the connection is durable.
+**Not all providers behave the same:** Foundry will *use* a refresh token when one
+exists, but each provider decides whether it *issues* one, and its own rotation,
+expiry, and re-consent policies still apply — so a result verified for one provider
+does not guarantee the same for another.
 
 ## Gotchas
 
