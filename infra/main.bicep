@@ -9,6 +9,16 @@ param environmentName string
 @description('Primary location for all resources')
 param location string
 
+@description('Object ID of the deploying user or service principal. Provided automatically by azd as AZURE_PRINCIPAL_ID. When set, the principal is granted the Foundry User role so it can build agents and consume tools/toolboxes from the azd up baseline.')
+param principalId string = ''
+
+@description('Type of the deploying principal (User or ServicePrincipal). Provided automatically by azd as AZURE_PRINCIPAL_TYPE.')
+@allowed([
+  'User'
+  'ServicePrincipal'
+])
+param principalType string = 'User'
+
 @description('Name of the Cognitive Services account')
 param cognitiveServicesName string = ''
 
@@ -100,6 +110,22 @@ resource cognitiveServicesProject 'Microsoft.CognitiveServices/accounts/projects
   properties: {
     displayName: projectDisplayName
     description: projectDescription
+  }
+}
+
+// Grant the deploying principal the Foundry User role on the account so the
+// azd up baseline is usable end-to-end: building agents and consuming
+// tools/toolboxes requires this data-plane role, which control-plane roles
+// (for example, subscription Owner or Contributor) do not confer. The role
+// inherits from the account to its projects.
+// Role: Foundry User (53ca6127-db72-4b80-b1b0-d745d6d5456d)
+resource foundryUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(principalId)) {
+  scope: cognitiveServices
+  name: guid(cognitiveServices.id, principalId, '53ca6127-db72-4b80-b1b0-d745d6d5456d')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')
+    principalId: principalId
+    principalType: principalType
   }
 }
 
