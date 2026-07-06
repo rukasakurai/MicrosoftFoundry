@@ -90,18 +90,15 @@ class Program
             // the (unavailable) Managed Identity endpoint before falling back.
             var credential = new AzureCliCredential();
 
-            // Create project client for new agents API
             var projectClient = new AIProjectClient(
                 endpoint: new Uri(projectEndpoint),
                 tokenProvider: credential);
 
-            // Define the agent (declarative / prompt-based)
             var agentDefinition = new DeclarativeAgentDefinition(model: modelId)
             {
                 Instructions = agentInstructions
             };
 
-            // Create a new agent version
             var agentVersion = (await projectClient.AgentAdministrationClient.CreateAgentVersionAsync(
                 agentName: agentName,
                 options: new ProjectsAgentVersionCreationOptions(agentDefinition)
