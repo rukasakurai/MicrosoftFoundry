@@ -55,11 +55,12 @@ what provides per-user trimming of retrieved knowledge. It underpins Foundry IQ.
 
 ## Verified in the portal vs. documented
 
-- **Verified in the live portal (2026-06):** the Purview enablement toggle exists
-  under **Operate → Compliance**. Portal labels shift during preview — this surface
-  has appeared as "Data security and governance" and, in current docs, under a
-  **Security posture** tab; navigate by **Operate → Compliance**.
+- **Verified in the live portal (2026-07-06):** the Purview enablement toggle exists
+  under **Operate → Compliance → Data security and governance** (a Preview pane). The
+  sibling **Security posture** tab there is Microsoft Defender for Cloud, not this
+  Purview surface — the two coexist.
 - **From documentation only:** the specific capability behaviors, the DLP
-  "blocks prompts by sensitive-information-type" limitation, the EXTRACT/VIEW
-  query-time enforcement in Azure AI Search, role requirement, and preview status —
-  see the linked Microsoft Learn pages above.
+  "blocks prompts by sensitive-information-type" limitation, and the EXTRACT/VIEW
+  query-time enforcement in Azure AI Search — see the linked Microsoft Learn pages
+  above. (The Foundry Account Owner role requirement and preview status are stated
+  in the portal itself.)
