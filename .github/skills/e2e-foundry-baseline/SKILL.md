@@ -17,26 +17,35 @@ description: Run an end-to-end (E2E) test of this repo's Microsoft Foundry basel
 This skill assumes the **Microsoft Foundry resource** architecture
 (`Microsoft.CognitiveServices/accounts`, kind `AIServices`) provisioned by this repo.
 
-## Testable surfaces and feasibility
+## Testable surfaces, feasibility, and reference times
 
 Pick the smallest set that covers the changed behavior; escalate to more of the list
 only when the change warrants it.
 
-| Flow | E2E check | Ease |
-| --- | --- | --- |
-| Baseline provision (`azd up` → account + project + model) | provision succeeds; outputs populated | easy |
-| Model serves inference | `POST {PROJECT_ENDPOINT}/openai/v1/responses` → 200 + reply | easy |
-| Agent creation (Bash) `scripts/create-agent.sh` | agent created, 2xx, versioned | easy |
-| Agent run step (documented flow) | run → 200 | easy |
-| Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | needs .NET SDK |
-| `enableAgentDeployments=true` path | provision with the toggle on | easy (param variation) |
-| MCP agent `scripts/create-mcp-agent.sh` | approval / OAuth item detection | needs an MCP server + OAuth |
-| Region / SKU / model / capacity overrides | provision with non-default params | easy but combinatorial |
-| Azure OIDC (`docs/azure-oidc-setup.md`, `.github/workflows/`) | federated GitHub Actions login | CI-only, needs repo secrets |
-| Entra agent identity / registry, MCP OAuth connection | agent identity / consent flows | mostly manual / tenant-admin |
+The **time** column is a single-run reference (one subscription, `japaneast`/`eastus2`,
+default params) — indicative, not a guarantee. Provisioning dominates; everything after
+provisioning is seconds. Status reflects what was actually observed when this table was
+grounded.
 
-The last two rows are largely manual and don't fit an automated per-PR E2E; validate
-them out-of-band and note that in the PR.
+| # | Flow | E2E check | Time | Status / notes |
+| --- | --- | --- | --- | --- |
+| 1 | Baseline provision (`azd up` → account + project + model) | provision succeeds; outputs populated | ~150s | ✅ easy |
+| 2 | Model serves inference | `POST {PROJECT_ENDPOINT}/openai/v1/responses` → 200 + reply | ~2s | ✅ easy |
+| 3 | Agent creation (Bash) `scripts/create-agent.sh` | agent created, 2xx, versioned | ~15s | ✅ easy |
+| 4 | Agent run step (documented flow) | run → 200 | ~1s | ✅ old `…/responses?api-version=` returns 404; use `/openai/v1/responses` |
+| 5 | Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | ~10s to fail | ❌ sample does not compile (SDK type drift) |
+| 6 | MCP agent (Responses API MCP tool) | create + run; `mcp_call` in output | ~15s | ✅ easy with an auth-free MCP; `scripts/create-mcp-agent.sh` itself needs a connection (flow 11) |
+| 7 | `enableAgentDeployments=true` path | provision with the toggle on | ~180s to fail | ❌ fails: `agentDeployment` has no agent ref (`Agents cannot be null or empty`) |
+| 8 | Agent publish → application/deployment update | app + deployment with `agents:[…]` | — | ⚠️ needs an agent ref; do via ARM deployment or portal Publish |
+| 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~60s | ⚠️ triggers via `gh workflow run`; green needs an Entra federated credential matching the ref |
+| 10 | Entra agent identity / registry | `instance_identity` present; registry visible | ~5s | ✅ identity auto-created (API); registry view is portal-only |
+| 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy (OAuth app setup); portal-navigable via Playwright MCP |
+| 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination) |
+
+Flows 8, 9, and 11 are largely manual / setup-dependent and don't fit an automated
+per-PR E2E; validate them out-of-band and note that in the PR. For portal-only checks
+(registry view, MCP connection dialog, Publish button), the `foundry-ui-playwright`
+skill can drive an authenticated portal session.
 
 ## Prerequisites and the auth gotcha
 
