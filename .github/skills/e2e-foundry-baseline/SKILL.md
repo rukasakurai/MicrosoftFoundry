@@ -33,6 +33,15 @@ time below: `azd provision` ~**2.5 min** and, at the end, `azd down --force --pu
 ~**6 min minimum** even for a 2-second data-plane check. Batch multiple data-plane
 flows into one provisioned environment rather than paying that overhead per flow.
 
+**Regression budget (wall clock, incl. teardown).** Total time is driven by how many
+provision→teardown cycles you run, not by summing the rows — the data-plane flows
+(2, 3, 4, 6, 10) share **one** provisioned env (~40s combined after provision):
+
+- **Core happy-path** (provision → flows 2, 3, 4, 6, 10 → teardown): ~**6–7 min**.
+- **Full regression**: ~**20–25 min** — the core cycle plus separate provision→teardown
+  cycles for flow 7 (toggle, fails) and flow 12 (region), flow 5 (.NET, local, ~10s)
+  and flow 9 (OIDC, CI, ~20–60s); flow 11 isn't runnable without OAuth credentials.
+
 | # | Flow | E2E check | Time | Status / notes |
 | --- | --- | --- | --- | --- |
 | 1 | Baseline provision (`azd up` → account + project + model) | provision succeeds; outputs populated | ~150s | ✅ easy |
