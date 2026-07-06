@@ -1,5 +1,11 @@
 # Foundry "Data security and governance": what it governs, and what it doesn't
 
+> **Preview (as of 2026-07-06).** The "Data security and governance" pane is the
+> Foundry portal's Microsoft Purview integration, which Microsoft's own docs mark as
+> **(preview)** — see the section
+> [Enable enterprise-grade data security and compliance for Foundry with Microsoft Purview (preview)](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security#enable-enterprise-grade-data-security-and-compliance-for-foundry-with-microsoft-purview-preview).
+> It has no SLA and isn't recommended for production. Behavior may change.
+
 The Microsoft Foundry portal exposes a **Microsoft Purview integration** under
 **Operate → Compliance**. Its framing ("enforce Data Loss Prevention policies",
 "monitor sensitive data flowing through AI agents") is easy to misread as: *enabling
@@ -31,7 +37,6 @@ Notes:
 - Purview **data security policies** apply to API calls that carry user context (an
   Entra ID user-context token). Other authentication scenarios get audit and
   classification only.
-- These capabilities are in **preview** at time of writing.
 
 ### Use cases
 
@@ -87,9 +92,8 @@ self-serve**:
 ## What it is not
 
 It is **not** the mechanism that decides which retrieved documents a specific user is
-allowed to see in a RAG response. Toggling this pane does not trim search results
-per user — it monitors and governs the *interaction*, not the *retrieval
-authorization*.
+allowed to see in a RAG response. Toggling it on does not trim search results per
+user — that authorization check happens elsewhere.
 
 ### The control that does per-user retrieval trimming
 
