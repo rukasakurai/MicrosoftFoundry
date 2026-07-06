@@ -57,6 +57,32 @@ governance pane. It underpins Foundry IQ, and there are two paths:
   (AI Search `2026-05-01-preview`, **preview**) and
   [Sensitivity labels and AI interactions](https://learn.microsoft.com/purview/ai-azure-foundry#sensitivity-labels-and-ai-interactions).
 
+## Use cases for this pane
+
+Things you can do *with the Data security and governance pane* (all Microsoft
+Purview / DSPM for AI). Both are **preview**; status tags mark how far each is
+confirmed (Documented = Microsoft Learn only; behavior not yet exercised end-to-end).
+
+- **Block a prompt by sensitive-information-type (DLP).** A Purview DLP policy that
+  stops prompts matching a sensitive-information-type. *Documented; behavior Untested.*
+  - *Privilege:* tenant admin — Entra Compliance/Global Admin or Purview Compliance
+    Admin to turn on DSPM, plus billing rights; also Graph admin consent and Security
+    & Compliance PowerShell. Not self-serviceable by a developer.
+  - *Cost:* Microsoft Purview pay-as-you-go meters; the block test also stands up an
+    instrumented app (Functions + Cosmos DB + Static Web App + Azure OpenAI).
+  - *Enablement plane:* mostly **off ARM** — DSPM onboarding and DLP policy on the
+    **Purview/compliance plane**; app registration + admin consent on the **Entra
+    plane**; the app calls `processContent` on the **data plane** (Microsoft Graph).
+    The Foundry→Purview toggle is a portal (private BFF) action, **not** an ARM
+    property, so it can't be set in Bicep.
+- **Audit / monitor AI interactions.** Prompts/responses captured in the unified
+  audit log and DSPM for AI Activity Explorer, plus insider-risk detection over AI
+  usage. *Documented; behavior Untested.*
+  - *Privilege:* tenant admin (DSPM turn-on + billing), as above.
+  - *Cost:* Microsoft Purview pay-as-you-go meters.
+  - *Enablement plane:* **Purview/compliance plane** (portal toggle + Purview config);
+    ARM only associates a subscription for PAYG billing.
+
 ## Verified in the portal vs. documented
 
 - **Verified in the live portal (2026-07-06):** the Purview enablement toggle exists
