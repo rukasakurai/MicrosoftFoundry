@@ -1,4 +1,5 @@
-﻿using Azure.AI.Projects.OpenAI;
+using Azure.AI.Projects;
+using Azure.AI.Projects.Agents;
 using Azure.Identity;
 
 /// <summary>
@@ -10,7 +11,7 @@ using Azure.Identity;
 /// Prerequisites:
 /// - Azure CLI installed and authenticated (az login) or appropriate Azure credentials
 /// - .NET 10 or higher
-/// - Azure.AI.Projects.OpenAI and Azure.Identity NuGet packages
+/// - Azure.AI.Projects, Azure.AI.Projects.Agents, and Azure.Identity NuGet packages
 /// 
 /// Usage:
 ///   # Using environment variables from azd
@@ -83,31 +84,30 @@ class Program
             Console.WriteLine($"  Model: {modelId}");
             Console.WriteLine();
 
-            // Authenticate using DefaultAzureCredential
-            // This supports multiple authentication methods:
-            // - Environment variables
-            // - Managed Identity
-            // - Azure CLI (az login)
-            // - Azure PowerShell
-            // - Interactive browser
-            var credential = new DefaultAzureCredential();
+            // Authenticate with the Azure CLI sign-in (az login), matching
+            // scripts/create-agent.sh. AzureCliCredential is used instead of
+            // DefaultAzureCredential so local runs don't stall ~3 minutes probing
+            // the (unavailable) Managed Identity endpoint before falling back.
+            var credential = new AzureCliCredential();
 
             // Create project client for new agents API
-            var projectClient = new AIProjectClient(new Uri(projectEndpoint), credential);
+            var projectClient = new AIProjectClient(
+                endpoint: new Uri(projectEndpoint),
+                tokenProvider: credential);
 
-            // Define agent with new PromptAgentDefinition
-            var agentDefinition = new PromptAgentDefinition(modelId)
+            // Define the agent (declarative / prompt-based)
+            var agentDefinition = new DeclarativeAgentDefinition(model: modelId)
             {
                 Instructions = agentInstructions
             };
 
-            // Create agent version (replaces old create_agent)
-            var agentVersion = await projectClient.Agents.CreateAgentVersionAsync(
+            // Create a new agent version
+            var agentVersion = (await projectClient.AgentAdministrationClient.CreateAgentVersionAsync(
                 agentName: agentName,
-                options: new CreateAgentVersionOptions(agentDefinition)
+                options: new ProjectsAgentVersionCreationOptions(agentDefinition)
                 {
                     Description = agentDescription
-                });
+                })).Value;
 
             Console.WriteLine("✓ Agent created successfully!");
             Console.WriteLine($"  Agent ID: {agentVersion.Name}:{agentVersion.Version}");

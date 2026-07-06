@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,8 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.AI.Projects.OpenAI" Version="1.0.0-beta.3" />
-    <PackageReference Include="Azure.Identity" Version="1.17.1" />
+    <!-- Azure.AI.Projects[.Agents] are prerelease-only; no stable release exists yet. -->
+    <PackageReference Include="Azure.AI.Projects" Version="2.1.0-beta.4" />
+    <PackageReference Include="Azure.AI.Projects.Agents" Version="2.1.0-beta.4" />
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
   </ItemGroup>
 
 </Project>
