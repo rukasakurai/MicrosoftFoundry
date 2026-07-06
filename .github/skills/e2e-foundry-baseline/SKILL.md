@@ -73,6 +73,10 @@ portal over direct `az rest` for nested management resources.
 
 ## Procedure (isolated throwaway environment)
 
+> **Cost & consent:** this provisions **real, billable** Azure resources. Get the
+> repo owner's go-ahead before running, always use an **isolated throwaway env**
+> (never a persistent/shared one), and tear down afterward (next section).
+
 Run from the repo root on the branch under test. Use a unique env name so the run is
 isolated from any persistent environment.
 
@@ -126,6 +130,9 @@ config changes.
   can return 404.
 - **Provision creates the resource group before validating**, so a validation failure
   can still leave an empty RG — delete it during teardown.
+- **Trailing `\r` from `az` output.** On Windows/WSL, `az ... -o tsv` can emit values
+  with a trailing carriage return. Piped into a resource id or ARM parameter, it
+  corrupts the path (e.g. `ParentResourceNotFound`). Strip it: `... -o tsv | tr -d '\r\n'`.
 
 ## Public-safe / secret hygiene
 
