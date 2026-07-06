@@ -33,19 +33,27 @@ grounded.
 | 2 | Model serves inference | `POST {PROJECT_ENDPOINT}/openai/v1/responses` → 200 + reply | ~2s | ✅ easy |
 | 3 | Agent creation (Bash) `scripts/create-agent.sh` | agent created, 2xx, versioned | ~15s | ✅ easy |
 | 4 | Agent run step (documented flow) | run → 200 | ~1s | ✅ old `…/responses?api-version=` returns 404; use `/openai/v1/responses` |
-| 5 | Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | ~10s to fail | ❌ sample does not compile (SDK type drift) |
+| 5 | Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | ~10s to fail | ❌ sample does not compile (SDK type drift) — known bug |
 | 6 | MCP agent (Responses API MCP tool) | create + run; `mcp_call` in output | ~15s | ✅ easy with an auth-free MCP; `scripts/create-mcp-agent.sh` itself needs a connection (flow 11) |
-| 7 | `enableAgentDeployments=true` path | provision with the toggle on | ~180s to fail | ❌ fails: `agentDeployment` has no agent ref (`Agents cannot be null or empty`) |
-| 8 | Agent publish → application/deployment update | app + deployment with `agents:[…]` | — | ⚠️ needs an agent ref; do via ARM deployment or portal Publish |
-| 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~60s | ⚠️ triggers via `gh workflow run`; green needs an Entra federated credential matching the ref |
-| 10 | Entra agent identity / registry | `instance_identity` present; registry visible | ~5s | ✅ identity auto-created (API); registry view is portal-only |
-| 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy (OAuth app setup); portal-navigable via Playwright MCP |
+| 7 | `enableAgentDeployments=true` path | provision with the toggle on | ~180s to fail | ❌ fails: `Agents cannot be null or empty` — known bug; supplying `agents:[…]` via ARM does **not** fix it |
+| 8 | Agent publish → application/deployment update | agent deployed to an application | ~50s (ARM attempt) | ⚠️ ARM path fails (same as flow 7); the **portal Publish** action works — use it (Playwright) |
+| 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~60s | ⚠️ triggers via `gh workflow run`; green needs an Entra federated-identity credential matching the branch ref (`AADSTS700213` otherwise) |
+| 10 | Entra agent identity / registry | `instance_identity` present; agent visible in portal | ~5s | ✅ identity auto-created (agent API); agent also visible in the nextgen portal project view (Playwright) |
+| 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy: needs a real OAuth app (client id/secret). Portal "Connect a tool → MCP" dialog exists (Playwright); a working OAuth connection can't be created without those credentials |
 | 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination) |
 
-Flows 8, 9, and 11 are largely manual / setup-dependent and don't fit an automated
-per-PR E2E; validate them out-of-band and note that in the PR. For portal-only checks
-(registry view, MCP connection dialog, Publish button), the `foundry-ui-playwright`
-skill can drive an authenticated portal session.
+Flows 8, 9, and 11 are setup-dependent and don't fit an automated per-PR E2E;
+validate them out-of-band and note that in the PR. For portal-based checks (agent
+visible in the project, MCP connection dialog, Publish action), the
+`foundry-ui-playwright` skill can drive an authenticated portal session — verified to
+work without an interactive login when the operator already has a portal session in
+the target tenant.
+
+**Environment gotcha:** in some environments a proxy rejects long management-plane
+REST URLs (nested `accounts/.../projects/.../applications?...`) with `HTTP 400
+Invalid URL`, while short URLs, ARM template deployments, and data-plane
+(`*.services.ai.azure.com`) calls succeed. Prefer `azd`/ARM deployments or the
+portal over direct `az rest` for nested management resources.
 
 ## Prerequisites and the auth gotcha
 
