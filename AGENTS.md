@@ -39,6 +39,7 @@ This repository provides **Infrastructure-as-Code (IaC) for Microsoft Foundry**,
 - **Primary language**: .NET 10 is the preferred implementation language
 - **No license file**: License choice is deferred to repository owner
 - **Minimal CI/CD**: CI/CD patterns should be added as needed for the project
+- **E2E testing before merge**: Changes must be validated end-to-end (from a clean `azd up` through the affected flow) before merging to `main`. How much testing — including whether to run wider regression — is a per-PR judgment call. The repository owner may override this requirement when necessary; the override should be visible (e.g., noted in the PR). Fully-automated CI E2E is a non-goal for now; a human-attested check with an easy owner override is preferred. For the runnable procedure and the map of testable surfaces, see the [`e2e-foundry-baseline`](.github/skills/e2e-foundry-baseline/SKILL.md) skill.
 - **Region flexibility**: Support deployment to any Azure region with AI Services availability
 - **SKU parameterization**: Allow customization of service tiers through parameters
 

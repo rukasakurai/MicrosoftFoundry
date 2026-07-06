@@ -28,6 +28,24 @@ param cognitiveServicesName string = ''
 ])
 param cognitiveServicesSku string = 'S0'
 
+@description('Name of the model deployment. Also used as the model/deployment id when creating agents (see docs/agent-creation.md).')
+param modelDeploymentName string = 'gpt-5.4'
+
+@description('Name of the model to deploy')
+param modelName string = 'gpt-5.4'
+
+@description('Version of the model to deploy. Availability varies by region; override if the default is not available in the target region.')
+param modelVersion string = '2026-03-05'
+
+@description('Format/publisher of the model to deploy')
+param modelFormat string = 'OpenAI'
+
+@description('SKU name for the model deployment')
+param modelSkuName string = 'GlobalStandard'
+
+@description('Capacity (in thousands of tokens per minute) for the model deployment')
+param modelCapacity int = 50
+
 @description('Name of the Cognitive Services project')
 param projectName string = ''
 
@@ -80,7 +98,7 @@ var tags = {
 }
 
 // Cognitive Services - AIServices
-resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
+resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
   name: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
   location: location
   tags: tags
@@ -98,8 +116,27 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-10-01-prev
   }
 }
 
+// Model deployment so the azd up baseline is runnable end-to-end: the
+// agent-creation flow (docs/agent-creation.md, scripts/create-agent.sh) creates
+// an agent bound to a model and then runs it, which requires a deployed model.
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
+  parent: cognitiveServices
+  name: modelDeploymentName
+  sku: {
+    name: modelSkuName
+    capacity: modelCapacity
+  }
+  properties: {
+    model: {
+      format: modelFormat
+      name: modelName
+      version: modelVersion
+    }
+  }
+}
+
 // Cognitive Services Project
-resource cognitiveServicesProject 'Microsoft.CognitiveServices/accounts/projects@2025-10-01-preview' = {
+resource cognitiveServicesProject 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
   parent: cognitiveServices
   name: !empty(projectName) ? projectName : '${abbrs.cognitiveServicesAccounts}project-${resourceToken}'
   location: location
@@ -137,7 +174,7 @@ resource foundryUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022
 // - User data isolation between consumers
 // - SaaS-like behavior for sharing agents externally
 // You must first create an agent in the Foundry portal or via SDK, then publish it to this application.
-resource cognitiveServicesApplication 'Microsoft.CognitiveServices/accounts/projects/applications@2025-10-01-preview' = if (enableAgentDeployments) {
+resource cognitiveServicesApplication 'Microsoft.CognitiveServices/accounts/projects/applications@2026-05-15-preview' = if (enableAgentDeployments) {
   parent: cognitiveServicesProject
   name: !empty(applicationName) ? applicationName : '${abbrs.cognitiveServicesApplications}${resourceToken}'
   properties: {
@@ -157,7 +194,7 @@ resource cognitiveServicesApplication 'Microsoft.CognitiveServices/accounts/proj
 // 1. Create an agent in the Foundry portal (Agents > Create agent) or via SDK
 // 2. Update this deployment via REST API to include: agents: [{ agentName: '...', agentVersion: '...' }]
 // Or publish the agent directly from the Foundry portal which creates the application and deployment automatically.
-resource agentDeployment 'Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments@2025-10-01-preview' = if (enableAgentDeployments) {
+resource agentDeployment 'Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments@2026-05-15-preview' = if (enableAgentDeployments) {
   parent: cognitiveServicesApplication
   name: !empty(agentDeploymentName) ? agentDeploymentName : '${abbrs.cognitiveServicesAgentDeployments}${resourceToken}'
   properties: {
@@ -173,6 +210,7 @@ output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output COGNITIVE_SERVICES_NAME string = cognitiveServices.name
 output COGNITIVE_SERVICES_ENDPOINT string = cognitiveServices.properties.endpoint
+output MODEL_DEPLOYMENT_NAME string = modelDeployment.name
 output PROJECT_NAME string = cognitiveServicesProject.name
 output PROJECT_ENDPOINT string = 'https://${cognitiveServices.name}.services.ai.azure.com/api/projects/${cognitiveServicesProject.name}'
 output APPLICATION_NAME string = cognitiveServicesApplication.?name ?? ''

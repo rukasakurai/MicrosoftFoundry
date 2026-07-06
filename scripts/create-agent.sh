@@ -24,7 +24,7 @@
 set -e
 
 # Default values
-MODEL_ID="gpt-4o"
+MODEL_ID="${MODEL_DEPLOYMENT_NAME:-gpt-5.4}"
 AGENT_NAME="foundry-agent"
 AGENT_INSTRUCTIONS="You are a helpful AI assistant."
 AGENT_DESCRIPTION="Agent created programmatically via REST API"
@@ -65,7 +65,7 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --endpoint <url>        Azure AI Services endpoint (default: from COGNITIVE_SERVICES_ENDPOINT env var)"
       echo "  --project <name>        Project name (default: from PROJECT_NAME env var)"
-      echo "  --model <id>            Model deployment ID (default: gpt-4o)"
+      echo "  --model <id>            Model deployment ID (default: gpt-5.4)"
       echo "  --name <name>           Agent name (default: foundry-agent)"
       echo "  --instructions <text>   Agent instructions (default: 'You are a helpful AI assistant.')"
       echo "  --description <text>    Agent description (default: 'Agent created programmatically via REST API')"
@@ -82,7 +82,7 @@ while [[ $# -gt 0 ]]; do
       echo "  $0 \\"
       echo "    --endpoint https://cog-abc123.services.ai.azure.com \\"
       echo "    --project my-project \\"
-      echo "    --model gpt-4o \\"
+      echo "    --model gpt-5.4 \\"
       echo "    --name custom-agent \\"
       echo "    --instructions 'You are a specialized customer service agent' \\"
       echo "    --description 'Customer service automation agent'"

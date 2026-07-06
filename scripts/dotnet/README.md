@@ -28,7 +28,7 @@ dotnet run
 dotnet run
 
 # With custom parameters
-dotnet run -- --model-id gpt-4o --agent-name my-agent
+dotnet run -- --model-id gpt-5.4 --agent-name my-agent
 
 # Show help
 dotnet run -- --help
