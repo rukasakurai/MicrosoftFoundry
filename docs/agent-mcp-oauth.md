@@ -118,7 +118,7 @@ invocation. Treat a run as verified only when the raw output items contain an ac
 `mcp_call` (with output), not just prose.
 
 `scripts/classify-agent-run.sh` inspects a Responses API response and classifies the
-run, so a plausible answer is never mistaken for a real tool call:
+run:
 
 - **pass** — an `mcp_call` returned output (a verifiable tool invocation).
 - **fail** — an `mcp_call` returned an error (auth / consent / config / runtime).

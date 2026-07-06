@@ -1,40 +1,14 @@
 #!/bin/bash
 #
-# Evidence-safe classification of a Microsoft Foundry agent run.
+# Classify a Microsoft Foundry agent run as pass / fail / invalid from its Responses
+# API output items, so assistant prose is never mistaken for a verified tool call.
+# See docs/agent-mcp-oauth.md ("Evidence-safe validation") for the rationale.
 #
-# Assistant prose is NOT proof that a tool ran. For any tool-backed agent, the
-# authoritative single-run evidence is the Responses API output items themselves
-# (mcp_list_tools, mcp_approval_request, mcp_call with output or error,
-# oauth_consent_request, and the final message). This script inspects those items
-# and classifies the run as pass / fail / invalid so a plausible-looking answer is
-# never mistaken for a verified tool invocation.
-#
-# For richer, server-side evidence see the Foundry portal Traces tab / Application
-# Insights (provisioned by infra/ when enableObservability is on) and the built-in
-# Tool Call Success / Accuracy evaluators. This script is the lightweight,
-# CI-friendly complement for a single run.
-#
-# Scope: MCP tools (the item shapes are easy to detect). The taxonomy and structure
-# generalize to OpenAPI / Function tools later.
-#
-# Usage:
-#   ./classify-agent-run.sh < response.json
-#   some_command_that_prints_the_responses_json | ./classify-agent-run.sh
-#   ./classify-agent-run.sh --file response.json
-#
-# Input: a Responses API response JSON (the object returned by
-#   POST {PROJECT_ENDPOINT}/openai/v1/responses), on stdin or via --file.
-#
-# Output: a secret-free JSON verdict on stdout. Never prints tokens, consent links,
-#   or tenant-specific identifiers.
-#
-# Exit code (CI-friendly): 0 = pass, 1 = fail, 2 = invalid/inconclusive, 3 = usage/parse error.
-#
-# Classification:
-#   pass    - a verifiable tool invocation (mcp_call) returned output and no error.
-#   fail    - a verifiable tool invocation (mcp_call) returned an error.
-#   invalid - assistant text and/or a pending approval/consent request, but NO
-#             verifiable tool invocation or tool error (the false-confidence case).
+# Usage:   ./classify-agent-run.sh < response.json
+#          ./classify-agent-run.sh --file response.json
+# Input:   a Responses API response JSON (from POST .../openai/v1/responses).
+# Output:  a secret-free JSON verdict (never tokens, consent links, or tenant ids).
+# Exit:    0 = pass, 1 = fail, 2 = invalid/inconclusive, 3 = usage/parse error.
 
 set -euo pipefail
 
@@ -83,8 +57,7 @@ VERDICT=$(echo "$RESP" | jq '
       tool_outputs: (($calls | length) - ($errs | length)),
       tool_errors: ($errs | length),
       approval_requests: (($o | map(select(.type == "mcp_approval_request")) | length)),
-      consent_required: (($o | map(select(.type == "oauth_consent_request")) | length) > 0),
-      tools_listed: (($o | map(select(.type == "mcp_list_tools")) | length) > 0)
+      consent_required: (($o | map(select(.type == "oauth_consent_request")) | length) > 0)
     }
   | . + {
       classification:
