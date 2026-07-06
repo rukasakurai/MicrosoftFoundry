@@ -33,7 +33,7 @@ class Program
         {
             // Parse command line arguments
             string? projectEndpoint = null;
-            string modelId = "gpt-4o";
+            string modelId = "gpt-5.4";
             string agentName = "foundry-agent";
             string agentInstructions = "You are a helpful AI assistant.";
             string agentDescription = "Agent created programmatically via .NET SDK";
@@ -147,7 +147,7 @@ class Program
         Console.WriteLine();
         Console.WriteLine("Options:");
         Console.WriteLine("  --project-endpoint, -e <url>    Microsoft Foundry project endpoint (default: from PROJECT_ENDPOINT env var)");
-        Console.WriteLine("  --model-id, -m <id>             Model deployment ID (default: gpt-4o)");
+        Console.WriteLine("  --model-id, -m <id>             Model deployment ID (default: gpt-5.4)");
         Console.WriteLine("  --agent-name, -n <name>         Agent name (default: foundry-agent)");
         Console.WriteLine("  --agent-instructions, -i <text> Agent instructions (default: 'You are a helpful AI assistant.')");
         Console.WriteLine("  --agent-description, -d <text>  Agent description (default: 'Agent created programmatically via .NET SDK')");
@@ -163,7 +163,7 @@ class Program
         Console.WriteLine("  # Full customization");
         Console.WriteLine("  dotnet run -- \\");
         Console.WriteLine("    --project-endpoint https://cog-abc123.services.ai.azure.com \\");
-        Console.WriteLine("    --model-id gpt-4o \\");
+        Console.WriteLine("    --model-id gpt-5.4 \\");
         Console.WriteLine("    --agent-name custom-agent \\");
         Console.WriteLine("    --agent-instructions \"You are a specialized customer service agent\" \\");
         Console.WriteLine("    --agent-description \"Customer service automation agent\"");

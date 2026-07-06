@@ -14,7 +14,7 @@ While various approaches exist, this repository focuses on programmatic agent cr
 
 - Microsoft Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
 - Azure CLI installed and authenticated: `az login`
-- Model deployments available in your Microsoft Foundry (Azure AI Services) account. `azd up` deploys one by default (`gpt-4o`, exposed as the `MODEL_DEPLOYMENT_NAME` output); override with the `modelDeploymentName`/`modelName`/`modelVersion` parameters.
+- Model deployments available in your Microsoft Foundry (Azure AI Services) account. `azd up` deploys one by default (`gpt-5.4`, exposed as the `MODEL_DEPLOYMENT_NAME` output); override with the `modelDeploymentName`/`modelName`/`modelVersion` parameters.
 - Bash shell:
   - **Linux/macOS**: Use the default terminal
   - **Windows**: Use [Git Bash](https://git-scm.com/downloads) (included with Git for Windows)
@@ -92,7 +92,7 @@ When creating an agent, you can configure various properties:
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `model` | string | Yes | Model deployment ID (e.g., "gpt-4o", "gpt-4-turbo") |
+| `model` | string | Yes | Model deployment ID (e.g., "gpt-5.4", "gpt-4o") |
 | `name` | string | No | Display name for the agent |
 | `description` | string | No | Description of the agent's purpose |
 | `instructions` | string | No | System instructions defining agent behavior |
@@ -146,7 +146,7 @@ jobs:
       - name: Create Agent
         run: |
           ./scripts/create-agent.sh \
-            --model gpt-4o \
+            --model gpt-5.4 \
             --name production-agent \
             --instructions "$(cat agent-config/instructions.txt)"
 ```
@@ -170,7 +170,7 @@ steps:
     scriptType: 'bash'
     scriptLocation: 'scriptPath'
     scriptPath: 'scripts/create-agent.sh'
-    arguments: '--model gpt-4o --name production-agent'
+    arguments: '--model gpt-5.4 --name production-agent'
 ```
 
 ## Testing Your Agent

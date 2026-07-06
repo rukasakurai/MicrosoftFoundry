@@ -29,13 +29,13 @@ param cognitiveServicesName string = ''
 param cognitiveServicesSku string = 'S0'
 
 @description('Name of the model deployment. Also used as the model/deployment id when creating agents (see docs/agent-creation.md).')
-param modelDeploymentName string = 'gpt-4o'
+param modelDeploymentName string = 'gpt-5.4'
 
 @description('Name of the model to deploy')
-param modelName string = 'gpt-4o'
+param modelName string = 'gpt-5.4'
 
 @description('Version of the model to deploy. Availability varies by region; override if the default is not available in the target region.')
-param modelVersion string = '2024-11-20'
+param modelVersion string = '2026-03-05'
 
 @description('Format/publisher of the model to deploy')
 param modelFormat string = 'OpenAI'
