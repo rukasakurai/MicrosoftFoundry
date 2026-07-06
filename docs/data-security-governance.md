@@ -42,16 +42,45 @@ authorization*.
 
 ## The control that does per-user retrieval trimming
 
-RAG over **Azure AI Search** honors **Microsoft Purview sensitivity labels at query
-time**: for an encrypted item, the querying user must hold the **EXTRACT** usage
-right (in addition to **VIEW**) for that item to be returned in search results. This
-is enforced inside **Azure AI Search**, not by the Foundry governance pane, and it is
-what provides per-user trimming of retrieved knowledge. It underpins Foundry IQ.
+Per-user trimming of retrieved knowledge is enforced inside **Azure AI Search** at
+query time (under the caller's Microsoft Entra identity), **not** by the Foundry
+governance pane. It underpins Foundry IQ, and there are two paths:
 
-- [Query-Time Microsoft Purview Sensitivity Label Enforcement in Azure AI Search](https://learn.microsoft.com/azure/search/search-query-sensitivity-labels)
-  — part of the AI Search `2026-05-01-preview` REST API (**preview**).
-- [Sensitivity labels and AI interactions](https://learn.microsoft.com/purview/ai-azure-foundry#sensitivity-labels-and-ai-interactions)
-  — how RAG-based Foundry apps honor labels via EXTRACT/VIEW usage rights.
+- **Document-level ACLs / RBAC scope** — indexed knowledge sources carry Entra
+  user/group permissions (natively from sources like ADLS Gen2, or pushed into
+  permission fields); results are filtered by the caller's identity. This path needs
+  **no** Microsoft Purview. See
+  [Document-level access control in Azure AI Search](https://learn.microsoft.com/azure/search/search-document-level-access-overview).
+- **Microsoft Purview sensitivity labels** — for an encrypted item the querying user
+  must hold the **EXTRACT** usage right (plus **VIEW**) for it to be returned. See
+  [Query-Time Microsoft Purview Sensitivity Label Enforcement in Azure AI Search](https://learn.microsoft.com/azure/search/search-query-sensitivity-labels)
+  (AI Search `2026-05-01-preview`, **preview**) and
+  [Sensitivity labels and AI interactions](https://learn.microsoft.com/purview/ai-azure-foundry#sensitivity-labels-and-ai-interactions).
+
+<!-- BEGIN governance-controls map (candidate scope expansion; may be excised) -->
+## Where this fits: other Foundry governance controls
+
+The Purview pane is one of several governance controls for a Microsoft Foundry
+(`Microsoft.CognitiveServices/accounts`, kind `AIServices`) deployment. This map
+situates it. Each entry is tagged by how far it's been confirmed: **Verified** (confirmed
+against the `Microsoft.CognitiveServices` ARM provider and this repo's IaC),
+**Documented** (Microsoft Learn only), **Untested** (mechanism exists but end-to-end
+behavior not exercised).
+
+| Control | What it governs | Where it lives | Status |
+| --- | --- | --- | --- |
+| Purview "Data security and governance" pane | Interaction-level audit, insider-risk, DLP-by-SIT (see above) | Operate → Compliance | Verified (pane); DLP/audit behavior Untested |
+| Per-user RAG trimming | Which retrieved documents a user may see | Azure AI Search (ACL/RBAC or Purview labels) | Documented |
+| Network isolation | Whether the data plane is reachable from the public internet | Account `publicNetworkAccess` + private endpoint | Verified (repo sets `Enabled`); isolation Untested |
+| Key vs. Entra-only auth | Whether non-Entra key auth is accepted | Account `disableLocalAuth` | Repo Bicep does not set it (key auth enabled by default on deploy); set it to enforce Entra-only |
+| Foundry RBAC roles | Management vs. use (not a data-access tier) | Foundry built-in roles / role assignments | Verified — User & Project Manager have full data-plane; Account Owner has none |
+| Content filtering (responsible AI) | Model prompt/response content filtering | `accounts/raiPolicies` on the deployment | Documented mechanism; Untested |
+| Diagnostic / audit logging | Audit trail of resource + interaction activity | Diagnostic settings → Log Analytics | Verified categories (`Audit`, `RequestResponse`, `Trace`, `AzureOpenAIRequestUsage`) |
+| Azure Policy compliance | Posture enforcement/audit (backs the portal's Defender recommendations) | Built-in `Microsoft.CognitiveServices` policies | Verified availability |
+
+Running these as experiments is tracked separately as issues, not in this reference.
+
+<!-- END governance-controls map -->
 
 ## Verified in the portal vs. documented
 
