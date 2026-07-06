@@ -33,31 +33,7 @@ Notes:
   classification only.
 - These capabilities are in **preview** at time of writing.
 
-## What it is not
-
-It is **not** the mechanism that decides which retrieved documents a specific user is
-allowed to see in a RAG response. Toggling this pane does not trim search results
-per user — it monitors and governs the *interaction*, not the *retrieval
-authorization*.
-
-## The control that does per-user retrieval trimming
-
-Per-user trimming of retrieved knowledge is enforced inside **Azure AI Search** at
-query time (under the caller's Microsoft Entra identity), **not** by the Foundry
-governance pane. It underpins Foundry IQ, and there are two paths:
-
-- **Document-level ACLs / RBAC scope** — indexed knowledge sources carry Entra
-  user/group permissions (natively from sources like ADLS Gen2, or pushed into
-  permission fields); results are filtered by the caller's identity. This path needs
-  **no** Microsoft Purview. See
-  [Document-level access control in Azure AI Search](https://learn.microsoft.com/azure/search/search-document-level-access-overview).
-- **Microsoft Purview sensitivity labels** — for an encrypted item the querying user
-  must hold the **EXTRACT** usage right (plus **VIEW**) for it to be returned. See
-  [Query-Time Microsoft Purview Sensitivity Label Enforcement in Azure AI Search](https://learn.microsoft.com/azure/search/search-query-sensitivity-labels)
-  (AI Search `2026-05-01-preview`, **preview**) and
-  [Sensitivity labels and AI interactions](https://learn.microsoft.com/purview/ai-azure-foundry#sensitivity-labels-and-ai-interactions).
-
-## Use cases for this pane
+### Use cases
 
 Things you can do *with the Data security and governance pane* (all Microsoft
 Purview / DSPM for AI). Both are **preview**; status tags mark how far each is
@@ -83,37 +59,48 @@ confirmed (Documented = Microsoft Learn only; behavior not yet exercised end-to-
   - *Enablement plane:* **Purview/compliance plane** (portal toggle + Purview config);
     ARM only associates a subscription for PAYG billing.
 
-## Testing these use cases: privileges required
+### Testing: privileges required
 
-> Not yet verified end-to-end. The requirements below come from documentation and
-> Azure role definitions; they are to be confirmed by experiment — both that a
-> capability is **blocked without** the listed privilege and that it **works with** it.
+> The Purview cases (DLP block, audit) are **not yet verified end-to-end** — they are
+> blocked in this environment by tenant licensing (see `purview-dspm-access.md`).
 
-The sharpest distinction is *which layer* can even attempt each test:
+Both use cases (DLP block, audit) require **tenant-admin roles — a developer cannot
+self-serve**:
 
-- **Requires tenant-admin roles — a developer cannot self-serve (DLP block, audit):**
-  - Turning on **DSPM for AI** (the prerequisite for both) requires an Entra
-    **Compliance Administrator** / **Global Administrator** or a **Purview Compliance
-    Administrator** role.
-  - Applying Purview policies requires **pay-as-you-go billing** associated to the
-    tenant (billing / subscription-owner rights). Without it, only audit is available.
-  - The DLP block additionally needs: creating an **Entra app registration** (tenants
-    often restrict this to an **Application Developer**/admin role), **admin consent**
-    for its Microsoft Graph permissions (a privileged directory admin), and
-    **Security & Compliance PowerShell** access (Compliance Administrator).
-  - Subscription **Contributor** alone is insufficient for any of the above.
+- Turning on **DSPM for AI** (the prerequisite for both) requires an Entra
+  **Compliance Administrator** / **Global Administrator** or a **Purview Compliance
+  Administrator** role.
+- Applying Purview policies requires **pay-as-you-go billing** associated to the
+  tenant (billing / subscription-owner rights). Without it, only audit is available.
+- The DLP block additionally needs: creating an **Entra app registration** (tenants
+  often restrict this to an **Application Developer**/admin role), **admin consent**
+  for its Microsoft Graph permissions (a privileged directory admin), and
+  **Security & Compliance PowerShell** access (Compliance Administrator).
+- Subscription **Contributor** alone is insufficient for any of the above.
 
-- **Doable at the developer/subscription layer (the per-user trimming control in
-  Azure AI Search):**
-  - Provisioning Azure AI Search and building the index: subscription **Contributor**.
-  - Assigning the data-plane roles that scope query-time access: **Owner** or **User
-    Access Administrator** (plain Contributor cannot create role assignments).
-  - Proving trimming with a **single** identity — a document permissioned to a
-    *different* principal is filtered from your own results — needs no extra identity.
-  - Proving it with **two** identities (each sees only their own documents)
-    additionally requires creating a second principal: a **service principal / app
-    registration** (may be restricted in the tenant) or a second Entra user or group
-    (**directory admin**).
+## What it is not
+
+It is **not** the mechanism that decides which retrieved documents a specific user is
+allowed to see in a RAG response. Toggling this pane does not trim search results
+per user — it monitors and governs the *interaction*, not the *retrieval
+authorization*.
+
+### The control that does per-user retrieval trimming
+
+Per-user trimming of retrieved knowledge is enforced inside **Azure AI Search** at
+query time (under the caller's Microsoft Entra identity), **not** by the Foundry
+governance pane. It underpins Foundry IQ, and there are two paths:
+
+- **Document-level ACLs / RBAC scope** — indexed knowledge sources carry Entra
+  user/group permissions (natively from sources like ADLS Gen2, or pushed into
+  permission fields); results are filtered by the caller's identity. This path needs
+  **no** Microsoft Purview. See
+  [Document-level access control in Azure AI Search](https://learn.microsoft.com/azure/search/search-document-level-access-overview).
+- **Microsoft Purview sensitivity labels** — for an encrypted item the querying user
+  must hold the **EXTRACT** usage right (plus **VIEW**) for it to be returned. See
+  [Query-Time Microsoft Purview Sensitivity Label Enforcement in Azure AI Search](https://learn.microsoft.com/azure/search/search-query-sensitivity-labels)
+  (AI Search `2026-05-01-preview`, **preview**) and
+  [Sensitivity labels and AI interactions](https://learn.microsoft.com/purview/ai-azure-foundry#sensitivity-labels-and-ai-interactions).
 
 ## Verified in the portal vs. documented
 
