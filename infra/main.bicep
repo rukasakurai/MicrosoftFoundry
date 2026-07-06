@@ -58,6 +58,13 @@ param projectDescription string = ''
 @description('Enable application and agent deployment resources')
 param enableAgentDeployments bool = false
 
+@description('Enable observability: a Log Analytics workspace + workspace-based Application Insights, connected to the project so agent runs are traceable in the Foundry portal.')
+param enableObservability bool = true
+
+@description('Retention (days) for the Log Analytics workspace')
+@minValue(30)
+param logAnalyticsRetentionInDays int = 30
+
 @description('Name of the Cognitive Services application')
 param applicationName string = ''
 
@@ -150,6 +157,54 @@ resource cognitiveServicesProject 'Microsoft.CognitiveServices/accounts/projects
   }
 }
 
+// Observability (conditional): a Log Analytics workspace + workspace-based
+// Application Insights, connected to the project so agent runs are traceable in
+// the Foundry portal's Traces view. Foundry does not provision an observability
+// sink by default, so out of the box the Traces view is empty and prompts the
+// user to connect an Application Insights resource. This wires that up.
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (enableObservability) {
+  name: '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
+  location: location
+  tags: tags
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: logAnalyticsRetentionInDays
+  }
+}
+
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = if (enableObservability) {
+  name: '${abbrs.insightsComponents}${resourceToken}'
+  location: location
+  tags: tags
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: enableObservability ? logAnalytics.id : null
+  }
+}
+
+// Foundry project connection to Application Insights (category AppInsights).
+// Only one Application Insights connection can be set on a project at a time.
+resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = if (enableObservability) {
+  parent: cognitiveServicesProject
+  name: 'appinsights'
+  properties: {
+    category: 'AppInsights'
+    target: enableObservability ? applicationInsights.id : ''
+    authType: 'ApiKey'
+    isSharedToAll: true
+    credentials: {
+      key: enableObservability ? applicationInsights.properties.ConnectionString : ''
+    }
+    metadata: {
+      ApiType: 'Azure'
+      ResourceId: enableObservability ? applicationInsights.id : ''
+    }
+  }
+}
+
 // Grant the deploying principal the Foundry User role on the account so the
 // azd up baseline is usable end-to-end: building agents and consuming
 // tools/toolboxes requires this data-plane role, which control-plane roles
@@ -215,3 +270,5 @@ output PROJECT_NAME string = cognitiveServicesProject.name
 output PROJECT_ENDPOINT string = 'https://${cognitiveServices.name}.services.ai.azure.com/api/projects/${cognitiveServicesProject.name}'
 output APPLICATION_NAME string = cognitiveServicesApplication.?name ?? ''
 output AGENT_DEPLOYMENT_NAME string = agentDeployment.?name ?? ''
+output APPLICATION_INSIGHTS_NAME string = enableObservability ? applicationInsights.name : ''
+output LOG_ANALYTICS_WORKSPACE_NAME string = enableObservability ? logAnalytics.name : ''

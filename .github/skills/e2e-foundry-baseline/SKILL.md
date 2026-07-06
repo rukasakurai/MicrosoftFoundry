@@ -70,7 +70,8 @@ Treat the minute figures as a **floor**, not an ETA.
 | 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~20–60s (runner queue) | ⚠️ triggers via `gh workflow run`; green needs an Entra federated-identity credential matching the branch ref (`AADSTS700213` otherwise) |
 | 10 | Entra agent identity / registry | `instance_identity` present; agent visible in portal | ~5s | ✅ identity auto-created (agent API); agent also visible in the nextgen portal project view (Playwright) |
 | 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy: needs a real OAuth app (client id/secret). Portal "Connect a tool → MCP" dialog exists (Playwright); a working OAuth connection can't be created without those credentials |
-| 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination) |
+| 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination). `enableObservability=false` is a variation here — it drops the observability resources, ≈ the pre-observability baseline |
+| 13 | Observability + agent-run tracing (`enableObservability`, default on) | App Insights connection attached; after a run, spans land in the Log Analytics workspace | ~+18s provision, then ~2–3 min ingestion lag | ✅ resolves #36. Verify deterministically by querying the workspace (see below), not the portal |
 
 Flows 8, 9, and 11 are setup-dependent and don't fit an automated per-PR E2E;
 validate them out-of-band and note that in the PR. For portal-based checks (agent
@@ -78,6 +79,21 @@ visible in the project, MCP connection dialog, Publish action), the
 `foundry-ui-playwright` skill can drive an authenticated portal session — verified to
 work without an interactive login when the operator already has a portal session in
 the target tenant.
+
+**Flow 13 — deterministic tracing check.** After provisioning (observability on) and
+running an agent, confirm span-level telemetry actually landed. Query the **Log
+Analytics workspace** (workspace-based App Insights routes telemetry there; the
+App-Insights-by-appId query API may be blocked by a proxy — see the environment
+gotcha). Allow ~2–3 min for ingestion, then look for an `invoke_agent` span:
+
+```bash
+RG="rg-$ENVNAME"
+WSID=$(az monitor log-analytics workspace show -g "$RG" \
+  -n "$LOG_ANALYTICS_WORKSPACE_NAME" --query customerId -o tsv | tr -d '\r\n')
+az monitor log-analytics query -w "$WSID" \
+  --analytics-query "AppDependencies | where TimeGenerated > ago(20m) | project Name, DependencyType" -o table
+# green = an "invoke_agent <name>:<version>" row (plus a "chat <model>" span) is present
+```
 
 > **Keeping this table honest:** the Status column is a grounded observation, not a
 > spec. Linked issues (e.g. [#34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34),
