@@ -20,7 +20,10 @@ While various approaches exist, this repository focuses on programmatic agent cr
   - **Windows**: Use [Git Bash](https://git-scm.com/downloads) (included with Git for Windows)
 - `jq` (optional, for better JSON formatting)
 
-> **API Version (as of December 2025)**: The new agents API requires preview API version `2025-05-15-preview`. The GA version `2025-05-01` only supports the classic assistants API. This may change as the API evolves.
+> **API version**: This guide targets the stable **`v1`** API surface. Data-plane
+> calls (`/agents`, `/conversations`) use `?api-version=v1`, and the run step uses
+> the path-versioned `/openai/v1/responses` endpoint (no `api-version` query). Earlier
+> previews such as `2025-05-15-preview` no longer serve the run step — `POST /responses?api-version=2025-05-15-preview` returns HTTP 404.
 
 ## Quick Start
 
@@ -66,7 +69,7 @@ ACCESS_TOKEN=$(az account get-access-token --resource https://ai.azure.com --que
 
 # List all agents in the project
 curl -X GET \
-  "${PROJECT_ENDPOINT}/agents?api-version=2025-05-15-preview" \
+  "${PROJECT_ENDPOINT}/agents?api-version=v1" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json"
 ```
@@ -79,7 +82,7 @@ AGENT_NAME="foundry-agent"
 AGENT_VERSION="1"
 
 curl -X GET \
-  "${PROJECT_ENDPOINT}/agents/${AGENT_NAME}/versions/${AGENT_VERSION}?api-version=2025-05-15-preview" \
+  "${PROJECT_ENDPOINT}/agents/${AGENT_NAME}/versions/${AGENT_VERSION}?api-version=v1" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json"
 ```
@@ -182,7 +185,7 @@ After creating an agent, you can test it by creating a conversation and response
 ```bash
 # Create conversation with initial message
 CONV_RESPONSE=$(curl -X POST \
-  "${PROJECT_ENDPOINT}/conversations?api-version=2025-05-15-preview" \
+  "${PROJECT_ENDPOINT}/conversations?api-version=v1" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -197,17 +200,15 @@ CONV_ID=$(echo "$CONV_RESPONSE" | jq -r '.id')
 
 # Create response using the agent
 curl -X POST \
-  "${PROJECT_ENDPOINT}/responses?api-version=2025-05-15-preview" \
+  "${PROJECT_ENDPOINT}/openai/v1/responses" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
     "conversation": "'${CONV_ID}'",
-    "extra_body": {
-      "agent": {
-        "type": "agent_reference",
-        "name": "'${AGENT_NAME}'",
-        "version": "1"
-      }
+    "agent_reference": {
+      "type": "agent_reference",
+      "name": "'${AGENT_NAME}'",
+      "version": "1"
     }
   }'
 ```
@@ -232,6 +233,22 @@ Once you've created and tested an agent, you can publish it to an application fo
    ```
 
 ## Documentation Test History
+
+### 2026-07-06
+- Result: PASS
+- Platform/Context: WSL (Ubuntu), Azure CLI + azd, throwaway `azd` environment (`japaneast`)
+- Tester: Automated E2E (see `.github/skills/e2e-foundry-baseline`)
+- Notes:
+  - Migrated the flow to the stable **`v1`** API surface (see #24). Data-plane calls
+    (`/agents`, `/conversations`) use `?api-version=v1`; the run step uses
+    `/openai/v1/responses`.
+  - ✅ Confirmed `POST /responses?api-version=2025-05-15-preview` now returns **HTTP 404**
+    (the break this change fixes).
+  - ✅ `scripts/create-agent.sh` (now `API_VERSION=v1`) created `guide-agent:1`.
+  - ✅ Two-step run flow (create conversation → `POST /openai/v1/responses` with a
+    top-level `agent_reference`) returned **HTTP 200** and the agent's reply.
+  - Note: the run body uses top-level `agent_reference`, not the previous
+    `extra_body.agent` shape (which returns "Missing required parameter: 'model'").
 
 ### 2025-12-24
 - Result: PASS with fixes

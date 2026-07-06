@@ -28,7 +28,7 @@ MODEL_ID="${MODEL_DEPLOYMENT_NAME:-gpt-5.4}"
 AGENT_NAME="foundry-agent"
 AGENT_INSTRUCTIONS="You are a helpful AI assistant."
 AGENT_DESCRIPTION="Agent created programmatically via REST API"
-API_VERSION="2025-05-15-preview"
+API_VERSION="v1"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
