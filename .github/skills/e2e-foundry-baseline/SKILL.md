@@ -33,10 +33,10 @@ grounded.
 | 2 | Model serves inference | `POST {PROJECT_ENDPOINT}/openai/v1/responses` → 200 + reply | ~2s | ✅ easy |
 | 3 | Agent creation (Bash) `scripts/create-agent.sh` | agent created, 2xx, versioned | ~15s | ✅ easy |
 | 4 | Agent run step (documented flow) | run → 200 | ~1s | ✅ old `…/responses?api-version=` returns 404; use `/openai/v1/responses` |
-| 5 | Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | ~10s to fail | ❌ sample does not compile (SDK type drift) — known bug |
+| 5 | Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | ~10s to fail | ❌ sample does not compile (SDK type drift) — [known bug #35](https://github.com/rukasakurai/MicrosoftFoundry/issues/35) |
 | 6 | MCP agent (Responses API MCP tool) | create + run; `mcp_call` in output | ~15s | ✅ easy with an auth-free MCP; `scripts/create-mcp-agent.sh` itself needs a connection (flow 11) |
-| 7 | `enableAgentDeployments=true` path | provision with the toggle on | ~180s to fail | ❌ fails: `Agents cannot be null or empty` — known bug; supplying `agents:[…]` via ARM does **not** fix it |
-| 8 | Agent publish → application/deployment update | agent deployed to an application | ~50s (ARM attempt) | ⚠️ ARM path fails (same as flow 7); the **portal Publish** action works — use it (Playwright) |
+| 7 | `enableAgentDeployments=true` path | provision with the toggle on | ~180s to fail | ❌ fails: `Agents cannot be null or empty` — [known bug #34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34); supplying `agents:[…]` via ARM does **not** fix it |
+| 8 | Agent publish → application/deployment update | agent deployed to an application | ~50s (ARM attempt) | ⚠️ ARM path fails (same as flow 7, [#34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34)); the **portal Publish** action works — use it (Playwright) |
 | 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~60s | ⚠️ triggers via `gh workflow run`; green needs an Entra federated-identity credential matching the branch ref (`AADSTS700213` otherwise) |
 | 10 | Entra agent identity / registry | `instance_identity` present; agent visible in portal | ~5s | ✅ identity auto-created (agent API); agent also visible in the nextgen portal project view (Playwright) |
 | 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy: needs a real OAuth app (client id/secret). Portal "Connect a tool → MCP" dialog exists (Playwright); a working OAuth connection can't be created without those credentials |
@@ -48,6 +48,12 @@ visible in the project, MCP connection dialog, Publish action), the
 `foundry-ui-playwright` skill can drive an authenticated portal session — verified to
 work without an interactive login when the operator already has a portal session in
 the target tenant.
+
+> **Keeping this table honest:** the Status column is a grounded observation, not a
+> spec. Linked issues (e.g. [#34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34),
+> [#35](https://github.com/rukasakurai/MicrosoftFoundry/issues/35)) are the source of
+> truth for the ❌/⚠️ rows. **If you fix a linked bug or change a flow's behavior,
+> update the matching row here in the same PR** (and close/reference the issue).
 
 **Environment gotcha:** in some environments a proxy rejects long management-plane
 REST URLs (nested `accounts/.../projects/.../applications?...`) with `HTTP 400
