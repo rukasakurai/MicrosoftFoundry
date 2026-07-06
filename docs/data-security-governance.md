@@ -74,9 +74,10 @@ it is settable in Bicep.
   **pay-as-you-go billing**; only fires on API calls carrying a **user-context
   token**; and per-app wiring — a PowerShell cmdlet scoped to an Entra-registered AI
   app, whose app calls `processContent` (Microsoft Graph) to honor the verdict.
-  - *vs. Azure AI Language PII:* see the note at the top of this doc — Language PII
-    (app-owned, GA) can do **both** block and audit of sensitive info; Purview DLP is
-    the admin-defined, org-wide, compliance-grade (preview) version of the same goal.
+
+Both outcomes have a GA, app-owned alternative in **Azure AI Language PII** — see the
+note at the top of this doc. This pane is the admin-defined, org-wide,
+compliance-grade (preview) version of the same goal.
 
 A sensitivity **label** on retrieved content is only ever **audited/classified** by
 this pane — it is never used to block a prompt. Preventing *labeled* data from being
