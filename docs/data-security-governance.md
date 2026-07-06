@@ -37,12 +37,31 @@ and [Use Microsoft Purview to manage data security & compliance for Microsoft Fo
 A toggle under **Operate → Compliance** that connects Foundry interaction data
 (prompts and responses) to Microsoft Purview (DSPM for AI), which classifies it by
 **sensitive-information-type** and either **audits** the match or **blocks** the
-prompt (DLP). Both are preview, require **tenant-admin** setup (Compliance/Global
-Admin + pay-as-you-go billing; the DLP block additionally needs an Entra app
-registration, Microsoft Graph admin consent, and a PowerShell cmdlet), and are
-configured off ARM (portal toggle + Purview plane), so not settable in Bicep. Neither
-is verified end-to-end here — see `purview-dspm-access.md`. For a GA alternative, see
-the note at the top.
+prompt (DLP). Both are preview, configured off ARM (portal toggle + Purview plane, so
+not settable in Bicep), and gated by the access layers below. Neither is verified
+end-to-end here. For a GA alternative, see the note at the top.
+
+### Turning it on: the access gates
+
+Enabling and testing this pane is gated by **several independent layers** — clearing
+one doesn't reveal the next:
+
+1. **Foundry Account Owner** (Azure RBAC on the Foundry resource) to flip the
+   Foundry→Purview toggle — a portal action, not an ARM/Bicep property.
+2. **Compliance / Global / Purview Compliance Administrator** to turn on DSPM;
+   subscription **Contributor** is insufficient.
+3. **A Microsoft 365 / Purview license — the hard gate.** A tenant with only
+   Azure / Power-Platform SKUs is blocked, and **no role fixes it**. The self-serve
+   Purview Suite trial can return `NotAvailable` at the tenant/commerce level — even a
+   **Global Administrator** cannot self-serve-activate it. *(Observed in this
+   environment.)*
+4. **(DLP block only)** additionally: an Entra **app registration**, Microsoft Graph
+   **admin consent**, **Security & Compliance PowerShell**, and **pay-as-you-go
+   billing**.
+
+The takeaway: the highest-value governance tests are the **least** addressable from
+this repo's IaC — they hinge on tenant licensing and admin-plane actions Bicep can't
+perform.
 
 ## What it is not
 
