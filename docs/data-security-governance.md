@@ -35,23 +35,11 @@ and [Use Microsoft Purview to manage data security & compliance for Microsoft Fo
 ## What it is
 
 A toggle that connects Foundry **interaction data** (prompts and responses) to your
-tenant's Microsoft Purview (DSPM for AI), then applies Purview capabilities to that
-data:
-
-- **Audit** — prompts/responses captured in the unified audit log and surfaced in
-  DSPM for AI Activity Explorer.
-- **Insider-risk detection** over AI usage.
-- **Data loss prevention** — today, support is limited to a DLP policy that **blocks
-  prompts by sensitive-information-type** (configured via a PowerShell cmdlet scoped
-  to an Entra-registered AI app).
-
-Notes:
-
-- Enabling the Purview integration requires the **Foundry Account Owner** role;
-  applying Purview policies requires pay-as-you-go billing in the tenant.
-- Purview **data security policies** apply to API calls that carry user context (an
-  Entra ID user-context token). Other authentication scenarios get audit and
-  classification only.
+tenant's Microsoft Purview (DSPM for AI), so Purview can classify that data by
+**sensitive-information-type** and act on it. The two outcomes worth describing —
+**audit** and **DLP block** — are detailed under *Use cases*. (The toggle also
+surfaces other Purview solutions over AI interactions, e.g. Insider Risk Management
+and eDiscovery; those are out of scope here.)
 
 ### Use cases
 
