@@ -103,6 +103,20 @@ The grouping matters because it predicts *who* can run an experiment and *what* 
 costs before any work starts. Status tags (Verified / Documented / Untested) carry
 the same meaning as the controls map above.
 
+**Enablement planes.** Each group also notes *where* the enabling work happens, since
+much of Foundry governance is **not** an ARM/Bicep operation:
+
+- **ARM control plane** — `management.azure.com` via Bicep/azd, using Azure RBAC:
+  resource CRUD, resource properties, and role/policy assignments.
+- **Data plane** — the service's own endpoint (Foundry `*.services.ai.azure.com`,
+  Azure AI Search `*.search.windows.net`, Microsoft Graph), using Entra data-plane
+  tokens or keys: agents/inference, index and knowledge-base operations,
+  `processContent` calls.
+- **Microsoft Entra plane** — app registrations, admin consent, service principals,
+  and group membership.
+- **Purview / compliance plane** — `purview.microsoft.com` and Security & Compliance
+  PowerShell: DSPM onboarding, DLP policies, sensitivity labels, and audit.
+
 ### Group 1 — Interaction governance via Microsoft Purview
 - **Purpose:** govern the *interaction* (prompts/responses) for compliance.
 - **Privilege:** tenant admin — Entra Compliance/Global Admin or Purview Compliance
@@ -111,6 +125,12 @@ the same meaning as the controls map above.
 - **Cost:** Microsoft Purview pay-as-you-go meters (distinct, less predictable);
   the DLP block test also stands up a serverless app (Functions + Cosmos DB + Static
   Web App + Azure OpenAI).
+- **Enablement plane:** mostly **off ARM**. DSPM onboarding, DLP policy, and audit
+  live on the **Purview / compliance plane**; the AI app registration + Graph
+  admin-consent are on the **Entra plane** (A2); the app then calls `processContent`
+  on the **data plane** (Microsoft Graph). ARM's only role is associating a
+  subscription for PAYG billing — and the Foundry→Purview toggle is a portal action
+  (private BFF), **not** an ARM property, so it can't be set in Bicep.
 - Purview DLP: block a prompt by sensitive-information-type (needs an instrumented
   Entra-registered app). *Documented; behavior Untested.*
 - Purview audit/monitoring of AI interactions (DSPM for AI Activity Explorer).
@@ -124,6 +144,12 @@ the same meaning as the controls map above.
   ACL/RBAC path.
 - **Cost:** an Azure AI Search service (free tier + free agentic-retrieval token
   allocation available for POC) plus inference tokens.
+- **Enablement plane:** split. **ARM control plane** provisions the plumbing — the
+  Azure AI Search service, the Foundry project→Search connection
+  (`accounts/projects/connections`), and role assignments (all Bicep-able). The
+  **data plane** (AI Search `*.search.windows.net` REST/SDK) creates the index with
+  permission fields, the knowledge source, and the knowledge base. The **Entra plane**
+  supplies the caller/second identity whose token scopes the per-user trimming.
 - Foundry IQ knowledge grounding: connect a knowledge base so an agent retrieves from
   enterprise data (Azure Blob, SharePoint, OneLake, web). *Documented.*
 - Per-user retrieval trimming: filter which retrieved documents a specific user sees,
@@ -135,6 +161,10 @@ the same meaning as the controls map above.
 - **Privilege:** beyond plain Contributor — role assignments need Owner or User
   Access Administrator; policy assignment needs Owner or Resource Policy Contributor.
 - **Cost:** effectively free (assignments/assessments, no billable resource).
+- **Enablement plane:** **ARM control plane** only —
+  `Microsoft.Authorization/roleAssignments` (B3) and `policyAssignments` (B6), both
+  Bicep-able. Verification crosses to the **data plane** (does the assigned role
+  actually let the identity invoke an agent).
 - Foundry RBAC boundary: management-vs-use, not a data tier (User & Project Manager
   have full data-plane; Account Owner has none). *Verified (role definitions).*
 - Azure Policy compliance for `Microsoft.CognitiveServices` (backs the portal's
@@ -147,6 +177,12 @@ the same meaning as the controls map above.
 - **Cost:** config-only or minor (Key Vault for CMK; Log Analytics ingestion by
   volume — the repo provisions a workspace by default, unless observability is
   disabled).
+- **Enablement plane:** **ARM control plane** enables every item — account properties
+  (`disableLocalAuth`, encryption/CMK), `accounts/raiPolicies`, and
+  `Microsoft.Insights/diagnosticSettings` — all Bicep-able (CMK also needs a Key Vault
+  and its key, the latter on the Key Vault **data plane**). Verification uses the
+  Foundry **data plane** (e.g., a key call vs. a token call; sending a prompt through
+  the content filter).
 - Disable local/key auth to enforce Entra-only (`disableLocalAuth`). *Verified mechanism.*
 - Diagnostic/audit logging to Log Analytics (`Audit`, `RequestResponse`, `Trace`,
   `AzureOpenAIRequestUsage`). *Verified categories.*
@@ -160,6 +196,10 @@ the same meaning as the controls map above.
   isolation usually needs a central networking team (shared VNet / private DNS zones).
 - **Cost:** a private endpoint (hourly + data processing), typically plus a VNet and a
   vantage host to verify the private round-trip.
+- **Enablement plane:** **ARM control plane** — the account `publicNetworkAccess`
+  property plus `Microsoft.Network` private endpoint, private DNS zone, and VNet, all
+  Bicep-able. Verification is **data plane** (reaching the Foundry endpoint from inside
+  vs. outside the network).
 - Network isolation: disable public access + add a private endpoint. *Verified default
   (`Enabled`); isolation Untested.*
 
