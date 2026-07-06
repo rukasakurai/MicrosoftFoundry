@@ -1,5 +1,10 @@
 # Foundry "Data security and governance": what it governs, and what it doesn't
 
+> ⚠️ **This is a preview feature; the facts below will likely change quickly.** Roles,
+> licensing, capabilities, preview status, and portal wording were accurate as of the
+> dates noted but may already be out of date. Verify against the linked Microsoft Learn
+> pages and the live portal before relying on anything here.
+
 > **Preview (as of 2026-07-06).** The "Data security and governance" pane is the
 > Foundry portal's Microsoft Purview integration, which Microsoft's own docs mark as
 > **(preview)** — see the section
