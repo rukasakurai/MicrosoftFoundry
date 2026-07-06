@@ -24,7 +24,7 @@
 set -e
 
 # Default values
-MODEL_ID="gpt-4o"
+MODEL_ID="${MODEL_DEPLOYMENT_NAME:-gpt-4o}"
 AGENT_NAME="foundry-agent"
 AGENT_INSTRUCTIONS="You are a helpful AI assistant."
 AGENT_DESCRIPTION="Agent created programmatically via REST API"

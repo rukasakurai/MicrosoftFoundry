@@ -14,7 +14,7 @@ While various approaches exist, this repository focuses on programmatic agent cr
 
 - Microsoft Foundry infrastructure deployed (see [azd-deployment.md](./azd-deployment.md))
 - Azure CLI installed and authenticated: `az login`
-- Model deployments available in your Azure OpenAI service or Azure AI Services
+- Model deployments available in your Microsoft Foundry (Azure AI Services) account. `azd up` deploys one by default (`gpt-4o`, exposed as the `MODEL_DEPLOYMENT_NAME` output); override with the `modelDeploymentName`/`modelName`/`modelVersion` parameters.
 - Bash shell:
   - **Linux/macOS**: Use the default terminal
   - **Windows**: Use [Git Bash](https://git-scm.com/downloads) (included with Git for Windows)

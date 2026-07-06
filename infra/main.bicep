@@ -28,6 +28,24 @@ param cognitiveServicesName string = ''
 ])
 param cognitiveServicesSku string = 'S0'
 
+@description('Name of the model deployment. Also used as the model/deployment id when creating agents (see docs/agent-creation.md).')
+param modelDeploymentName string = 'gpt-4o'
+
+@description('Name of the model to deploy')
+param modelName string = 'gpt-4o'
+
+@description('Version of the model to deploy. Availability varies by region; override if the default is not available in the target region.')
+param modelVersion string = '2024-11-20'
+
+@description('Format/publisher of the model to deploy')
+param modelFormat string = 'OpenAI'
+
+@description('SKU name for the model deployment')
+param modelSkuName string = 'GlobalStandard'
+
+@description('Capacity (in thousands of tokens per minute) for the model deployment')
+param modelCapacity int = 50
+
 @description('Name of the Cognitive Services project')
 param projectName string = ''
 
@@ -95,6 +113,25 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-10-01-prev
     customSubDomainName: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
     publicNetworkAccess: 'Enabled'
     allowProjectManagement: true
+  }
+}
+
+// Model deployment so the azd up baseline is runnable end-to-end: the
+// agent-creation flow (docs/agent-creation.md, scripts/create-agent.sh) creates
+// an agent bound to a model and then runs it, which requires a deployed model.
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
+  parent: cognitiveServices
+  name: modelDeploymentName
+  sku: {
+    name: modelSkuName
+    capacity: modelCapacity
+  }
+  properties: {
+    model: {
+      format: modelFormat
+      name: modelName
+      version: modelVersion
+    }
   }
 }
 
@@ -173,6 +210,7 @@ output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output COGNITIVE_SERVICES_NAME string = cognitiveServices.name
 output COGNITIVE_SERVICES_ENDPOINT string = cognitiveServices.properties.endpoint
+output MODEL_DEPLOYMENT_NAME string = modelDeployment.name
 output PROJECT_NAME string = cognitiveServicesProject.name
 output PROJECT_ENDPOINT string = 'https://${cognitiveServices.name}.services.ai.azure.com/api/projects/${cognitiveServicesProject.name}'
 output APPLICATION_NAME string = cognitiveServicesApplication.?name ?? ''
