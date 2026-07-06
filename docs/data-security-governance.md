@@ -142,7 +142,8 @@ the same meaning as the controls map above.
 - **Privilege:** Contributor on the resource is enough (exception: *loosening*
   default content filters requires a Microsoft approval process).
 - **Cost:** config-only or minor (Key Vault for CMK; Log Analytics ingestion by
-  volume — the workspace already exists in this repo).
+  volume — the repo provisions a workspace by default, unless observability is
+  disabled).
 - Disable local/key auth to enforce Entra-only (`disableLocalAuth`). *Verified mechanism.*
 - Diagnostic/audit logging to Log Analytics (`Audit`, `RequestResponse`, `Trace`,
   `AzureOpenAIRequestUsage`). *Verified categories.*
