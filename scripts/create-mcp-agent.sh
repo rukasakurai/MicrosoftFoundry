@@ -112,6 +112,13 @@ RESP=$(curl -fsS -X POST "${ENDPOINT}/openai/v1/responses" \
 
 echo "$RESP" | jq '{id, status, output: [.output[] | {type, server_label, name, consent_link}]}'
 
+# 2b) Evidence-safe verdict: assistant prose is not proof a tool ran. Classify the
+#     run from its output items (pass / fail / invalid). Non-zero exit is expected
+#     for fail/invalid, so don't let it abort this demo script.
+echo ""
+echo "Run classification (evidence-safe):"
+echo "$RESP" | "$(dirname "$0")/classify-agent-run.sh" || true
+
 # 3) Surface the interactive steps the caller must handle.
 CONSENT=$(echo "$RESP" | jq -r '.output[]? | select(.type=="oauth_consent_request") | .consent_link' | head -1)
 APPROVAL=$(echo "$RESP" | jq -r '.output[]? | select(.type=="mcp_approval_request") | .id' | head -1)

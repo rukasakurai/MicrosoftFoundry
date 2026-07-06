@@ -110,6 +110,36 @@ with the tool result plus the assistant's `message`. For example, asking
 "What is my GitHub username?" drives a `get_me` call whose output includes the
 user's GitHub `login`.
 
+### Evidence-safe validation: assistant text is not proof
+
+For any tool-backed agent, the assistant's `message` is **not** proof that the tool
+actually ran — the model can produce a plausible answer with no verifiable tool
+invocation. Treat a run as verified only when the raw output items contain an actual
+`mcp_call` (with output), not just prose.
+
+`scripts/classify-agent-run.sh` inspects a Responses API response and classifies the
+run, so a plausible answer is never mistaken for a real tool call:
+
+- **pass** — an `mcp_call` returned output (a verifiable tool invocation).
+- **fail** — an `mcp_call` returned an error (auth / consent / config / runtime).
+- **invalid** — assistant text and/or a pending consent/approval request, but **no**
+  verifiable tool invocation (the false-confidence case).
+
+```bash
+# Classify a saved response, or pipe one straight from a run:
+./scripts/classify-agent-run.sh --file response.json
+# exit code: 0 = pass, 1 = fail, 2 = invalid  (CI-friendly)
+```
+
+The verdict is secret-free (it never prints tokens, consent links, or
+tenant-specific identifiers). `scripts/create-mcp-agent.sh` runs this classifier
+automatically after a run.
+
+For authoritative, server-side evidence beyond a single run, use the Foundry portal
+**Traces** tab / Application Insights (provisioned by `infra/` when
+`enableObservability` is on) and the built-in **Tool Call Success / Accuracy**
+evaluators. The classifier is the lightweight, CI-friendly complement.
+
 ### Verify in the Foundry portal
 
 You can also exercise the same agent interactively:
