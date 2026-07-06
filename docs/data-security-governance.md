@@ -65,10 +65,6 @@ Both outcomes have a GA, app-owned alternative in **Azure AI Language PII** — 
 note at the top of this doc. This pane is the admin-defined, org-wide,
 compliance-grade (preview) version of the same goal.
 
-A sensitivity **label** on retrieved content is only ever **audited/classified** by
-this pane — it is never used to block a prompt. Preventing *labeled* data from being
-returned is a different mechanism entirely (see *What it is not*, below).
-
 ### Testing: privileges required
 
 > The Purview cases (DLP block, audit) are **not yet verified end-to-end** — they are
