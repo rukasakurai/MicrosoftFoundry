@@ -124,8 +124,11 @@ the same meaning as the controls map above.
   ACL/RBAC path.
 - **Cost:** an Azure AI Search service (free tier + free agentic-retrieval token
   allocation available for POC) plus inference tokens.
-- Foundry IQ per-user retrieval trimming and knowledge grounding, via Azure AI Search
-  document-level ACL/RBAC (Purview-free) or Purview sensitivity labels. *Documented.*
+- Foundry IQ knowledge grounding: connect a knowledge base so an agent retrieves from
+  enterprise data (Azure Blob, SharePoint, OneLake, web). *Documented.*
+- Per-user retrieval trimming: filter which retrieved documents a specific user sees,
+  via Azure AI Search document-level ACL/RBAC (Purview-free) or Purview sensitivity
+  labels. *Documented.*
 
 ### Group 3 — Authorization & posture (elevated Azure RBAC, free)
 - **Purpose:** control-plane authorization and posture enforcement.
