@@ -112,33 +112,23 @@ user's GitHub `login`.
 
 ### Evidence-safe validation: assistant text is not proof
 
-For any tool-backed agent, the assistant's `message` is **not** proof that the tool
-actually ran — the model can produce a plausible answer with no verifiable tool
-invocation. Treat a run as verified only when the raw output items contain an actual
-`mcp_call` (with output), not just prose.
+The assistant's `message` is **not** proof a tool ran — the model can answer
+plausibly with no verifiable tool call. `scripts/classify-agent-run.sh` reads a
+Responses API response and classifies the run (secret-free; exit `0`/`1`/`2`):
 
-`scripts/classify-agent-run.sh` inspects a Responses API response and classifies the
-run:
-
-- **pass** — an `mcp_call` returned output (a verifiable tool invocation).
+- **pass** — an `mcp_call` returned output.
 - **fail** — an `mcp_call` returned an error (auth / consent / config / runtime).
-- **invalid** — assistant text and/or a pending consent/approval request, but **no**
-  verifiable tool invocation (the false-confidence case).
+- **invalid** — assistant text and/or a pending consent/approval request, but no
+  verifiable tool call (the false-confidence case).
 
 ```bash
-# Classify a run's response JSON:
 ./scripts/classify-agent-run.sh < response.json
-# exit code: 0 = pass, 1 = fail, 2 = invalid  (CI-friendly)
 ```
 
-The verdict is secret-free (it never prints tokens, consent links, or
-tenant-specific identifiers). `scripts/create-mcp-agent.sh` runs this classifier
-automatically after a run.
-
-For authoritative, server-side evidence beyond a single run, use the Foundry portal
-**Traces** tab / Application Insights (provisioned by `infra/` when
-`enableObservability` is on) and the built-in **Tool Call Success / Accuracy**
-evaluators. The classifier is the lightweight, CI-friendly complement.
+`scripts/create-mcp-agent.sh` runs it automatically after a run. For authoritative
+server-side evidence, use the Foundry portal **Traces** tab / Application Insights
+(provisioned by `infra/` when `enableObservability` is on) and the built-in
+**Tool Call Success / Accuracy** evaluators.
 
 ### Verify in the Foundry portal
 

@@ -112,9 +112,7 @@ RESP=$(curl -fsS -X POST "${ENDPOINT}/openai/v1/responses" \
 
 echo "$RESP" | jq '{id, status, output: [.output[] | {type, server_label, name, consent_link}]}'
 
-# 2b) Evidence-safe verdict: assistant prose is not proof a tool ran. Classify the
-#     run from its output items (pass / fail / invalid). Non-zero exit is expected
-#     for fail/invalid, so don't let it abort this demo script.
+# 2b) Evidence-safe verdict (pass/fail/invalid); || true: non-zero exit is expected.
 echo ""
 echo "Run classification (evidence-safe):"
 echo "$RESP" | "$(dirname "$0")/classify-agent-run.sh" || true
