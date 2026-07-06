@@ -38,9 +38,9 @@ A toggle that connects Foundry **interaction data** (prompts and responses) to y
 tenant's Microsoft Purview (DSPM for AI), then applies Purview capabilities to that
 data:
 
-- **Interaction-level monitoring and audit** — prompts/responses captured in the
-  unified audit log and surfaced in DSPM for AI Activity Explorer.
-- **Insider-risk detection** and other DSPM/compliance solutions over AI usage.
+- **Audit** — prompts/responses captured in the unified audit log and surfaced in
+  DSPM for AI Activity Explorer.
+- **Insider-risk detection** over AI usage.
 - **Data loss prevention** — today, support is limited to a DLP policy that **blocks
   prompts by sensitive-information-type** (configured via a PowerShell cmdlet scoped
   to an Entra-registered AI app).
