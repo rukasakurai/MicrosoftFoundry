@@ -34,55 +34,15 @@ and [Use Microsoft Purview to manage data security & compliance for Microsoft Fo
 
 ## What it is
 
-A toggle that connects Foundry **interaction data** (prompts and responses) to your
-tenant's Microsoft Purview (DSPM for AI), so Purview can classify that data by
-**sensitive-information-type** and act on it. The two outcomes worth describing —
-**audit** and **DLP block** — are detailed under *Use cases*.
-
-### Use cases
-
-All of these run on **one detection engine**: with the pane on, Microsoft Purview
-classifies Foundry interaction data (prompts and responses) by
-**sensitive-information-type** (SSN, credit card, My Number, …). What differs is the
-**outcome** you attach to a match — *audit* it or *block* it. Both are **preview**,
-and neither is yet exercised end-to-end here (blocked by tenant licensing — see
-`purview-dspm-access.md`). Both need **tenant-admin** setup (privileges below) and are
-enabled mostly **off ARM**: the Foundry→Purview toggle is a portal (private BFF)
-action and the policy/onboarding live on the **Purview/compliance plane**, so none of
-it is settable in Bicep.
-
-- **Audit the match** *(visibility — record it)*. The prompt/response is captured in
-  the unified audit log and DSPM for AI Activity Explorer. Included in the
-  **Microsoft Purview license** (no pay-as-you-go), works for **all** authentication
-  scenarios, and needs no per-app setup. Nothing is stopped.
-- **Block the prompt (DLP)** *(prevention — stop it)*. A Purview DLP policy stops
-  prompts matching a sensitive-information-type. Adds requirements over audit:
-  **pay-as-you-go billing**; only fires on API calls carrying a **user-context
-  token**; and per-app wiring — a PowerShell cmdlet scoped to an Entra-registered AI
-  app, whose app calls `processContent` (Microsoft Graph) to honor the verdict.
-
-Both outcomes have a GA, app-owned alternative in **Azure AI Language PII** — see the
-note at the top of this doc. This pane is the admin-defined, org-wide,
-compliance-grade (preview) version of the same goal.
-
-### Testing: privileges required
-
-> The Purview cases (DLP block, audit) are **not yet verified end-to-end** — they are
-> blocked in this environment by tenant licensing (see `purview-dspm-access.md`).
-
-Both use cases (DLP block, audit) require **tenant-admin roles — a developer cannot
-self-serve**:
-
-- Turning on **DSPM for AI** (the prerequisite for both) requires an Entra
-  **Compliance Administrator** / **Global Administrator** or a **Purview Compliance
-  Administrator** role.
-- Applying Purview policies requires **pay-as-you-go billing** associated to the
-  tenant (billing / subscription-owner rights). Without it, only audit is available.
-- The DLP block additionally needs: creating an **Entra app registration** (tenants
-  often restrict this to an **Application Developer**/admin role), **admin consent**
-  for its Microsoft Graph permissions (a privileged directory admin), and
-  **Security & Compliance PowerShell** access (Compliance Administrator).
-- Subscription **Contributor** alone is insufficient for any of the above.
+A toggle under **Operate → Compliance** that connects Foundry interaction data
+(prompts and responses) to Microsoft Purview (DSPM for AI), which classifies it by
+**sensitive-information-type** and either **audits** the match or **blocks** the
+prompt (DLP). Both are preview, require **tenant-admin** setup (Compliance/Global
+Admin + pay-as-you-go billing; the DLP block additionally needs an Entra app
+registration, Microsoft Graph admin consent, and a PowerShell cmdlet), and are
+configured off ARM (portal toggle + Purview plane), so not settable in Bicep. Neither
+is verified end-to-end here — see `purview-dspm-access.md`. For a GA alternative, see
+the note at the top.
 
 ## What it is not
 
