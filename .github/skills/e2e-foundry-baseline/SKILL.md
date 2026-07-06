@@ -70,7 +70,8 @@ Treat the minute figures as a **floor**, not an ETA.
 | 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~20–60s (runner queue) | ⚠️ triggers via `gh workflow run`; green needs an Entra federated-identity credential matching the branch ref (`AADSTS700213` otherwise) |
 | 10 | Entra agent identity / registry | `instance_identity` present; agent visible in portal | ~5s | ✅ identity auto-created (agent API); agent also visible in the nextgen portal project view (Playwright) |
 | 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy: needs a real OAuth app (client id/secret). Portal "Connect a tool → MCP" dialog exists (Playwright); a working OAuth connection can't be created without those credentials |
-| 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination) |
+| 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination). `enableObservability=false` is a variation here — it drops the observability resources, ≈ the pre-observability baseline |
+| 13 | Observability + agent-run tracing (`enableObservability`, default on) | App Insights connection attached; after a run, spans land in the Log Analytics workspace | ~+18s provision, then ~2–3 min ingestion lag | ✅ resolves #36. Verify deterministically by querying the workspace (see below), not the portal |
 
 Flows 8, 9, and 11 are setup-dependent and don't fit an automated per-PR E2E;
 validate them out-of-band and note that in the PR. For portal-based checks (agent
@@ -78,6 +79,21 @@ visible in the project, MCP connection dialog, Publish action), the
 `foundry-ui-playwright` skill can drive an authenticated portal session — verified to
 work without an interactive login when the operator already has a portal session in
 the target tenant.
+
+**Flow 13 — deterministic tracing check.** After provisioning (observability on) and
+running an agent, confirm span-level telemetry actually landed. Query the **Log
+Analytics workspace** (workspace-based App Insights routes telemetry there; the
+App-Insights-by-appId query API may be blocked by a proxy — see the environment
+gotcha). Allow ~2–3 min for ingestion, then look for an `invoke_agent` span:
+
+```bash
+RG="rg-$ENVNAME"
+WSID=$(az monitor log-analytics workspace show -g "$RG" \
+  -n "$LOG_ANALYTICS_WORKSPACE_NAME" --query customerId -o tsv | tr -d '\r\n')
+az monitor log-analytics query -w "$WSID" \
+  --analytics-query "AppDependencies | where TimeGenerated > ago(20m) | project Name, DependencyType" -o table
+# green = an "invoke_agent <name>:<version>" row (plus a "chat <model>" span) is present
+```
 
 > **Keeping this table honest:** the Status column is a grounded observation, not a
 > spec. Linked issues (e.g. [#34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34),
@@ -161,19 +177,32 @@ agent is created (2xx), and the run returns HTTP 200 with the expected text.
 
 ## Teardown and state restore (always)
 
-Teardown is not instant: `azd down --force --purge` takes ~**3 min** (observed
-2m48s–3m07s) because it deletes the resource group and purges the soft-deleted
-Cognitive Services account. Wait for it to finish before considering the run done.
+Teardown is slow (~**3 min**: `azd down --force --purge` deletes the resource group
+and purges the soft-deleted Cognitive Services account — and the Log Analytics
+workspace, if observability was on). **Don't block on it.** Once the run is green,
+the *verdict is already known*, so start teardown in the **background** and use the
+wait to do useful work (commit, open/update the PR, write the summary):
 
 ```bash
-azd down --force --purge                     # delete + purge the throwaway resources (~3 min)
+# Kick off teardown detached; capture its log so you can confirm success later.
+nohup azd down --force --purge > /tmp/azd-down-$ENVNAME.log 2>&1 &
+# ... now continue with commit / PR / reporting while Azure deletes ...
+```
+
+Then, **before merging**, confirm teardown actually finished cleanly (a teardown
+failure — e.g. a purge that needs a fix — is merge-relevant, so it must be checked,
+just not blocked on):
+
+```bash
+grep -E 'SUCCESS|ERROR' /tmp/azd-down-$ENVNAME.log   # expect SUCCESS, no ERROR
 azd env select <your-default-env>            # restore the previous default env
 rm -rf ".azure/$ENVNAME"                      # remove the local throwaway env
 azd config unset auth.useAzCliAuth           # revert the auth config change
 ```
 
-Leave the workspace exactly as found: no leftover resource groups, azd envs, or
-config changes.
+If you must run teardown synchronously (e.g. no background support), it still takes
+~3 min; wait for `SUCCESS` before considering the run done. Either way, leave the
+workspace exactly as found: no leftover resource groups, azd envs, or config changes.
 
 ## Gotchas worth knowing
 
