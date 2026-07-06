@@ -11,6 +11,15 @@
 > when the *Data security and governance* tab is selected — so the pane itself carries
 > no visible preview label (verified live in the portal). Treat it as preview
 > regardless, per the docs above.
+>
+> **Want GA today? Use Azure AI Language PII instead of this pane.** To block or audit
+> sensitive info on generally-available technology, call
+> [Azure AI Language PII detection](https://learn.microsoft.com/azure/ai-services/language-service/personally-identifiable-information/overview)
+> from your app: **block** = refuse/redact on a hit; **audit** = detect-only and log
+> hits (e.g. to Azure Monitor / Log Analytics). This pane is only preferable when you
+> specifically want turnkey, admin-defined, org-wide compliance governance (unified
+> audit log, insider-risk, eDiscovery, retention) with no app code — and accept
+> preview.
 
 The Microsoft Foundry portal exposes a **Microsoft Purview integration** under
 **Operate → Compliance**. Its framing ("enforce Data Loss Prevention policies",
