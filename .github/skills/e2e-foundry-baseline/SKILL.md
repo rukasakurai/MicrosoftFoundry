@@ -61,6 +61,25 @@ the target tenant.
 > truth for the ❌/⚠️ rows. **If you fix a linked bug or change a flow's behavior,
 > update the matching row here in the same PR** (and close/reference the issue).
 
+### Time the timed operations — deviations are a signal
+
+Whenever you run a flow that has a reference time here (or the provision/teardown
+overhead), **actually measure it** (e.g. wrap it in `t=$SECONDS; …; echo $((SECONDS-t))s`)
+and compare to the number above. The reference times are a cheap regression signal:
+
+- **Small deviation (within ~2×):** normal run-to-run variance (region, load, cold
+  start). Ignore.
+- **Large deviation (roughly ≥3× slower, or an operation that used to be seconds now
+  taking minutes):** treat as a symptom that something may be wrong — a service-side
+  regression, a changed API surface, retries masking an error, or a config problem.
+  Re-run once to rule out a transient blip.
+- **Repeated or logically-explainable large deviation:** if a large deviation
+  reproduces across runs, or you can point to a concrete cause (e.g. a new retry
+  loop, an added synchronous wait, a slower API version), **file a GitHub issue**
+  with the flow number, the reference vs. observed time, how many runs you saw it
+  across, and any suspected cause. Update the reference time here only once the new
+  timing is confirmed as the correct steady state (not a symptom of the bug).
+
 **Environment gotcha:** in some environments a proxy rejects long management-plane
 REST URLs (nested `accounts/.../projects/.../applications?...`) with `HTTP 400
 Invalid URL`, while short URLs, ARM template deployments, and data-plane
