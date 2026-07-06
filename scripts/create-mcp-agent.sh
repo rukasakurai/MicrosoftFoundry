@@ -112,6 +112,11 @@ RESP=$(curl -fsS -X POST "${ENDPOINT}/openai/v1/responses" \
 
 echo "$RESP" | jq '{id, status, output: [.output[] | {type, server_label, name, consent_link}]}'
 
+# 2b) Evidence-safe verdict (pass/fail/invalid); || true: non-zero exit is expected.
+echo ""
+echo "Run verdict (evidence-safe):"
+echo "$RESP" | "$(dirname "$0")/verify-agent-run.sh" || true
+
 # 3) Surface the interactive steps the caller must handle.
 CONSENT=$(echo "$RESP" | jq -r '.output[]? | select(.type=="oauth_consent_request") | .consent_link' | head -1)
 APPROVAL=$(echo "$RESP" | jq -r '.output[]? | select(.type=="mcp_approval_request") | .id' | head -1)

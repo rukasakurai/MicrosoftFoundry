@@ -110,6 +110,26 @@ with the tool result plus the assistant's `message`. For example, asking
 "What is my GitHub username?" drives a `get_me` call whose output includes the
 user's GitHub `login`.
 
+### Evidence-safe validation: assistant text is not proof
+
+The assistant's `message` is **not** proof a tool ran — the model can answer
+plausibly with no verifiable tool call. `scripts/verify-agent-run.sh` reads a
+Responses API response and returns a verdict on the run (secret-free; exit `0`/`1`/`2`):
+
+- **pass** — an `mcp_call` returned output.
+- **fail** — an `mcp_call` returned an error (auth / consent / config / runtime).
+- **invalid** — assistant text and/or a pending consent/approval request, but no
+  verifiable tool call (the false-confidence case).
+
+```bash
+./scripts/verify-agent-run.sh < response.json
+```
+
+`scripts/create-mcp-agent.sh` runs it automatically after a run. For authoritative
+server-side evidence, use the Foundry portal **Traces** tab / Application Insights
+(provisioned by `infra/` when `enableObservability` is on) and the built-in
+**Tool Call Success / Accuracy** evaluators.
+
 ### Verify in the Foundry portal
 
 You can also exercise the same agent interactively:
