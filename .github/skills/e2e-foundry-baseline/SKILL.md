@@ -27,17 +27,23 @@ default params) — indicative, not a guarantee. Provisioning dominates; everyth
 provisioning is seconds. Status reflects what was actually observed when this table was
 grounded.
 
+Budget the **fixed overhead** any provisioning flow carries, on top of the per-flow
+time below: `azd provision` ~**2.5 min** and, at the end, `azd down --force --purge`
+~**3 min** (observed 2m48s–3m07s). So a clean provision→test→teardown cycle is
+~**6 min minimum** even for a 2-second data-plane check. Batch multiple data-plane
+flows into one provisioned environment rather than paying that overhead per flow.
+
 | # | Flow | E2E check | Time | Status / notes |
 | --- | --- | --- | --- | --- |
 | 1 | Baseline provision (`azd up` → account + project + model) | provision succeeds; outputs populated | ~150s | ✅ easy |
 | 2 | Model serves inference | `POST {PROJECT_ENDPOINT}/openai/v1/responses` → 200 + reply | ~2s | ✅ easy |
 | 3 | Agent creation (Bash) `scripts/create-agent.sh` | agent created, 2xx, versioned | ~15s | ✅ easy |
-| 4 | Agent run step (documented flow) | run → 200 | ~1s | ✅ old `…/responses?api-version=` returns 404; use `/openai/v1/responses` |
+| 4 | Agent run step (documented flow) | run → 200 | ~2s | ✅ old `…/responses?api-version=` returns 404; use `/openai/v1/responses` |
 | 5 | Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | ~10s to fail | ❌ sample does not compile (SDK type drift) — [known bug #35](https://github.com/rukasakurai/MicrosoftFoundry/issues/35) |
 | 6 | MCP agent (Responses API MCP tool) | create + run; `mcp_call` in output | ~15s | ✅ easy with an auth-free MCP; `scripts/create-mcp-agent.sh` itself needs a connection (flow 11) |
 | 7 | `enableAgentDeployments=true` path | provision with the toggle on | ~180s to fail | ❌ fails: `Agents cannot be null or empty` — [known bug #34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34); supplying `agents:[…]` via ARM does **not** fix it |
 | 8 | Agent publish → application/deployment update | agent deployed to an application | ~50s (ARM attempt) | ⚠️ ARM path fails (same as flow 7, [#34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34)); the **portal Publish** action works — use it (Playwright) |
-| 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~60s | ⚠️ triggers via `gh workflow run`; green needs an Entra federated-identity credential matching the branch ref (`AADSTS700213` otherwise) |
+| 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~20–60s (runner queue) | ⚠️ triggers via `gh workflow run`; green needs an Entra federated-identity credential matching the branch ref (`AADSTS700213` otherwise) |
 | 10 | Entra agent identity / registry | `instance_identity` present; agent visible in portal | ~5s | ✅ identity auto-created (agent API); agent also visible in the nextgen portal project view (Playwright) |
 | 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy: needs a real OAuth app (client id/secret). Portal "Connect a tool → MCP" dialog exists (Playwright); a working OAuth connection can't be created without those credentials |
 | 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination) |
@@ -112,8 +118,12 @@ agent is created (2xx), and the run returns HTTP 200 with the expected text.
 
 ## Teardown and state restore (always)
 
+Teardown is not instant: `azd down --force --purge` takes ~**3 min** (observed
+2m48s–3m07s) because it deletes the resource group and purges the soft-deleted
+Cognitive Services account. Wait for it to finish before considering the run done.
+
 ```bash
-azd down --force --purge                     # delete + purge the throwaway resources
+azd down --force --purge                     # delete + purge the throwaway resources (~3 min)
 azd env select <your-default-env>            # restore the previous default env
 rm -rf ".azure/$ENVNAME"                      # remove the local throwaway env
 azd config unset auth.useAzCliAuth           # revert the auth config change

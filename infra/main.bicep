@@ -98,7 +98,7 @@ var tags = {
 }
 
 // Cognitive Services - AIServices
-resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-10-01-preview' = {
+resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
   name: !empty(cognitiveServicesName) ? cognitiveServicesName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
   location: location
   tags: tags
@@ -119,7 +119,7 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2025-10-01-prev
 // Model deployment so the azd up baseline is runnable end-to-end: the
 // agent-creation flow (docs/agent-creation.md, scripts/create-agent.sh) creates
 // an agent bound to a model and then runs it, which requires a deployed model.
-resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
+resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2026-05-01' = {
   parent: cognitiveServices
   name: modelDeploymentName
   sku: {
@@ -136,7 +136,7 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-
 }
 
 // Cognitive Services Project
-resource cognitiveServicesProject 'Microsoft.CognitiveServices/accounts/projects@2025-10-01-preview' = {
+resource cognitiveServicesProject 'Microsoft.CognitiveServices/accounts/projects@2026-05-01' = {
   parent: cognitiveServices
   name: !empty(projectName) ? projectName : '${abbrs.cognitiveServicesAccounts}project-${resourceToken}'
   location: location
@@ -174,7 +174,7 @@ resource foundryUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022
 // - User data isolation between consumers
 // - SaaS-like behavior for sharing agents externally
 // You must first create an agent in the Foundry portal or via SDK, then publish it to this application.
-resource cognitiveServicesApplication 'Microsoft.CognitiveServices/accounts/projects/applications@2025-10-01-preview' = if (enableAgentDeployments) {
+resource cognitiveServicesApplication 'Microsoft.CognitiveServices/accounts/projects/applications@2026-05-15-preview' = if (enableAgentDeployments) {
   parent: cognitiveServicesProject
   name: !empty(applicationName) ? applicationName : '${abbrs.cognitiveServicesApplications}${resourceToken}'
   properties: {
@@ -194,7 +194,7 @@ resource cognitiveServicesApplication 'Microsoft.CognitiveServices/accounts/proj
 // 1. Create an agent in the Foundry portal (Agents > Create agent) or via SDK
 // 2. Update this deployment via REST API to include: agents: [{ agentName: '...', agentVersion: '...' }]
 // Or publish the agent directly from the Foundry portal which creates the application and deployment automatically.
-resource agentDeployment 'Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments@2025-10-01-preview' = if (enableAgentDeployments) {
+resource agentDeployment 'Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments@2026-05-15-preview' = if (enableAgentDeployments) {
   parent: cognitiveServicesApplication
   name: !empty(agentDeploymentName) ? agentDeploymentName : '${abbrs.cognitiveServicesAgentDeployments}${resourceToken}'
   properties: {
