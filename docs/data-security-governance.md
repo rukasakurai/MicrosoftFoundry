@@ -74,12 +74,9 @@ it is settable in Bicep.
   **pay-as-you-go billing**; only fires on API calls carrying a **user-context
   token**; and per-app wiring — a PowerShell cmdlet scoped to an Entra-registered AI
   app, whose app calls `processContent` (Microsoft Graph) to honor the verdict.
-  - *Purview DLP vs. Azure AI Language PII:* both recognize SSN-type data via
-    **independent** engines — choose by operating model, not by "who can spot an SSN."
-    Use **Azure AI Language PII** for a developer API your app calls to detect/redact
-    PII, where the app owns the action (per-app, in code, no org policy or audit).
-    Use **Purview DLP** (this pane) for an admin-defined, tenant-wide compliance
-    policy with centralized enforcement and an audit trail.
+  - *vs. Azure AI Language PII:* see the note at the top of this doc — Language PII
+    (app-owned, GA) can do **both** block and audit of sensitive info; Purview DLP is
+    the admin-defined, org-wide, compliance-grade (preview) version of the same goal.
 
 A sensitivity **label** on retrieved content is only ever **audited/classified** by
 this pane — it is never used to block a prompt. Preventing *labeled* data from being
