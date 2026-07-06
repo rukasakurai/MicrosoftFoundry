@@ -83,6 +83,38 @@ confirmed (Documented = Microsoft Learn only; behavior not yet exercised end-to-
   - *Enablement plane:* **Purview/compliance plane** (portal toggle + Purview config);
     ARM only associates a subscription for PAYG billing.
 
+## Testing these use cases: privileges required
+
+> Not yet verified end-to-end. The requirements below come from documentation and
+> Azure role definitions; they are to be confirmed by experiment — both that a
+> capability is **blocked without** the listed privilege and that it **works with** it.
+
+The sharpest distinction is *which layer* can even attempt each test:
+
+- **Requires tenant-admin roles — a developer cannot self-serve (DLP block, audit):**
+  - Turning on **DSPM for AI** (the prerequisite for both) requires an Entra
+    **Compliance Administrator** / **Global Administrator** or a **Purview Compliance
+    Administrator** role.
+  - Applying Purview policies requires **pay-as-you-go billing** associated to the
+    tenant (billing / subscription-owner rights). Without it, only audit is available.
+  - The DLP block additionally needs: creating an **Entra app registration** (tenants
+    often restrict this to an **Application Developer**/admin role), **admin consent**
+    for its Microsoft Graph permissions (a privileged directory admin), and
+    **Security & Compliance PowerShell** access (Compliance Administrator).
+  - Subscription **Contributor** alone is insufficient for any of the above.
+
+- **Doable at the developer/subscription layer (the per-user trimming control in
+  Azure AI Search):**
+  - Provisioning Azure AI Search and building the index: subscription **Contributor**.
+  - Assigning the data-plane roles that scope query-time access: **Owner** or **User
+    Access Administrator** (plain Contributor cannot create role assignments).
+  - Proving trimming with a **single** identity — a document permissioned to a
+    *different* principal is filtered from your own results — needs no extra identity.
+  - Proving it with **two** identities (each sees only their own documents)
+    additionally requires creating a second principal: a **service principal / app
+    registration** (may be restricted in the tenant) or a second Entra user or group
+    (**directory admin**).
+
 ## Verified in the portal vs. documented
 
 - **Verified in the live portal (2026-07-06):** the Purview enablement toggle exists
