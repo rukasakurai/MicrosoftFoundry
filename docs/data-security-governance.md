@@ -5,6 +5,12 @@
 > **(preview)** — see the section
 > [Enable enterprise-grade data security and compliance for Foundry with Microsoft Purview (preview)](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security#enable-enterprise-grade-data-security-and-compliance-for-foundry-with-microsoft-purview-preview).
 > It has no SLA and isn't recommended for production. Behavior may change.
+>
+> **The portal doesn't make this obvious.** As of 2026-07-06, the Foundry portal
+> shows a "Preview" badge on the Compliance workspace's *Policies* view but **not**
+> when the *Data security and governance* tab is selected — so the pane itself carries
+> no visible preview label (verified live in the portal). Treat it as preview
+> regardless, per the docs above.
 
 The Microsoft Foundry portal exposes a **Microsoft Purview integration** under
 **Operate → Compliance**. Its framing ("enforce Data Loss Prevention policies",
