@@ -49,8 +49,9 @@ dotnet publish -c Release -r linux-x64 --self-contained
 
 ## NuGet Packages
 
-- `Azure.AI.Projects.OpenAI` (1.0.0-beta.3) - Azure AI Projects client library
-- `Azure.Identity` (1.17.1) - Azure authentication library
+- `Azure.AI.Projects` (2.1.0-beta.4) - Azure AI Projects client library
+- `Azure.AI.Projects.Agents` (2.1.0-beta.4) - agent administration APIs
+- `Azure.Identity` (1.21.0) - Azure authentication library
 
 ## Documentation
 
