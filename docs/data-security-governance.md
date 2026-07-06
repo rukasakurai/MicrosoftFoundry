@@ -53,8 +53,8 @@ one doesn't reveal the next:
 3. **A Microsoft 365 / Purview license — the hard gate.** A tenant with only
    Azure / Power-Platform SKUs is blocked, and **no role fixes it**. The self-serve
    Purview Suite trial can return `NotAvailable` at the tenant/commerce level — even a
-   **Global Administrator** cannot self-serve-activate it. *(Observed in this
-   environment.)*
+   **Global Administrator** cannot self-serve-activate it. *(Observed on a tenant with
+   no Microsoft 365 base subscription.)*
 4. **(DLP block only)** additionally: an Entra **app registration**, Microsoft Graph
    **admin consent**, **Security & Compliance PowerShell**, and **pay-as-you-go
    billing**.
