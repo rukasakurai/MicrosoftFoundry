@@ -114,8 +114,8 @@ echo "$RESP" | jq '{id, status, output: [.output[] | {type, server_label, name, 
 
 # 2b) Evidence-safe verdict (pass/fail/invalid); || true: non-zero exit is expected.
 echo ""
-echo "Run classification (evidence-safe):"
-echo "$RESP" | "$(dirname "$0")/classify-agent-run.sh" || true
+echo "Run verdict (evidence-safe):"
+echo "$RESP" | "$(dirname "$0")/verify-agent-run.sh" || true
 
 # 3) Surface the interactive steps the caller must handle.
 CONSENT=$(echo "$RESP" | jq -r '.output[]? | select(.type=="oauth_consent_request") | .consent_link' | head -1)

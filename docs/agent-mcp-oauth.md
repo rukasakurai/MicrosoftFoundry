@@ -113,8 +113,8 @@ user's GitHub `login`.
 ### Evidence-safe validation: assistant text is not proof
 
 The assistant's `message` is **not** proof a tool ran — the model can answer
-plausibly with no verifiable tool call. `scripts/classify-agent-run.sh` reads a
-Responses API response and classifies the run (secret-free; exit `0`/`1`/`2`):
+plausibly with no verifiable tool call. `scripts/verify-agent-run.sh` reads a
+Responses API response and returns a verdict on the run (secret-free; exit `0`/`1`/`2`):
 
 - **pass** — an `mcp_call` returned output.
 - **fail** — an `mcp_call` returned an error (auth / consent / config / runtime).
@@ -122,7 +122,7 @@ Responses API response and classifies the run (secret-free; exit `0`/`1`/`2`):
   verifiable tool call (the false-confidence case).
 
 ```bash
-./scripts/classify-agent-run.sh < response.json
+./scripts/verify-agent-run.sh < response.json
 ```
 
 `scripts/create-mcp-agent.sh` runs it automatically after a run. For authoritative
