@@ -126,8 +126,8 @@ run:
   verifiable tool invocation (the false-confidence case).
 
 ```bash
-# Classify a saved response, or pipe one straight from a run:
-./scripts/classify-agent-run.sh --file response.json
+# Classify a run's response JSON:
+./scripts/classify-agent-run.sh < response.json
 # exit code: 0 = pass, 1 = fail, 2 = invalid  (CI-friendly)
 ```
 
