@@ -42,6 +42,21 @@ provision→teardown cycles you run, not by summing the rows — the data-plane 
   cycles for flow 7 (toggle, fails) and flow 12 (region), flow 5 (.NET, local, ~10s)
   and flow 9 (OIDC, CI, ~20–60s); flow 11 isn't runnable without OAuth credentials.
 
+These are **machine/Azure wall-clock only**, assuming you're already authenticated,
+consent is already granted, every flow passes first try, and no result interpretation.
+Real elapsed effort is **higher and partly unbounded**, because a run also incurs:
+
+- **Owner consent** before provisioning (a human round-trip — minutes to hours of
+  waiting, not compute).
+- **One-time interactive auth** when `az`/`azd` aren't signed in (device-code browser
+  login).
+- **Portal / Playwright flows** (8, 10 registry view, 11) — multi-step navigate →
+  snapshot → review, realistically **minutes each**, not the API-call seconds listed.
+- **Result interpretation** per flow, and **failure investigation** when something
+  deviates (re-runs, root-causing) — unbounded by nature.
+
+Treat the minute figures as a **floor**, not an ETA.
+
 | # | Flow | E2E check | Time | Status / notes |
 | --- | --- | --- | --- | --- |
 | 1 | Baseline provision (`azd up` → account + project + model) | provision succeeds; outputs populated | ~150s | ✅ easy |
