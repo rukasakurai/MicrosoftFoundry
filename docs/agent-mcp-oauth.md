@@ -240,10 +240,11 @@ lifetime is provider-dependent, and it is the most common place the connection
 - **Non-expiring tokens (e.g. GitHub OAuth Apps):** user tokens do **not** expire
   by default (GitHub offers no `offline_access` scope), so the connection stays
   valid until the user revokes the app or the OAuth app is deleted. This is why
-  the GitHub example here does **not** reproduce a daily-expiry failure — the
-  breakage class simply doesn't apply unless you opt into *expiring user tokens*
-  on the app (in which case you must configure the refresh URL). A **GitHub App** —
-  GitHub's recommended app type — issues expiring user tokens by default; with
+  the GitHub example here does **not** reproduce a daily-expiry failure: an
+  **OAuth App** issues non-expiring user tokens and has no setting to make them
+  expire, so the breakage class simply doesn't apply. Expiring user tokens (with a
+  `refresh_token`) are a **GitHub App** feature instead — GitHub's recommended app
+  type issues them by default (`ghu_`/`ghr_` tokens, `refresh_token` grant); with
   `offline_access` and the refresh URL configured, the direct path was verified
   (2026-07-03) to refresh them silently past expiry, with no re-consent.
 
