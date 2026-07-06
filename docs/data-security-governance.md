@@ -37,9 +37,7 @@ and [Use Microsoft Purview to manage data security & compliance for Microsoft Fo
 A toggle that connects Foundry **interaction data** (prompts and responses) to your
 tenant's Microsoft Purview (DSPM for AI), so Purview can classify that data by
 **sensitive-information-type** and act on it. The two outcomes worth describing —
-**audit** and **DLP block** — are detailed under *Use cases*. (The toggle also
-surfaces other Purview solutions over AI interactions, e.g. Insider Risk Management
-and eDiscovery; those are out of scope here.)
+**audit** and **DLP block** — are detailed under *Use cases*.
 
 ### Use cases
 
