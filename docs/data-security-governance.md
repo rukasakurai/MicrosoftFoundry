@@ -93,3 +93,71 @@ Running these as experiments is tracked separately as issues, not in this refere
   query-time enforcement in Azure AI Search — see the linked Microsoft Learn pages
   above. (The Foundry Account Owner role requirement and preview status are stated
   in the portal itself.)
+
+<!-- BEGIN governance use-case groups (candidate scope expansion; may be excised) -->
+## Governance use cases, grouped by profile
+
+Candidate experiments for exploring Foundry governance, grouped so that use cases
+sharing a **required-privilege**, **cost**, and **purpose** profile sit together.
+The grouping matters because it predicts *who* can run an experiment and *what* it
+costs before any work starts. Status tags (Verified / Documented / Untested) carry
+the same meaning as the controls map above.
+
+### Group 1 — Interaction governance via Microsoft Purview
+- **Purpose:** govern the *interaction* (prompts/responses) for compliance.
+- **Privilege:** tenant admin — Entra Compliance/Global Admin or Purview Compliance
+  Admin to turn on DSPM, plus billing rights; DLP also needs Graph admin consent and
+  Security & Compliance PowerShell. Not self-serviceable by a developer.
+- **Cost:** Microsoft Purview pay-as-you-go meters (distinct, less predictable);
+  the DLP block test also stands up a serverless app (Functions + Cosmos DB + Static
+  Web App + Azure OpenAI).
+- Purview DLP: block a prompt by sensitive-information-type (needs an instrumented
+  Entra-registered app). *Documented; behavior Untested.*
+- Purview audit/monitoring of AI interactions (DSPM for AI Activity Explorer).
+  *Documented; behavior Untested.*
+
+### Group 2 — Per-user knowledge (RAG) governance
+- **Purpose:** control which retrieved documents a specific user may see.
+- **Privilege:** mostly developer-doable, but the *test* needs a second Entra
+  identity (service principal) and possibly group management; app-registration may be
+  restricted in locked-down tenants. No tenant-compliance admin required for the
+  ACL/RBAC path.
+- **Cost:** an Azure AI Search service (free tier + free agentic-retrieval token
+  allocation available for POC) plus inference tokens.
+- Foundry IQ per-user retrieval trimming and knowledge grounding, via Azure AI Search
+  document-level ACL/RBAC (Purview-free) or Purview sensitivity labels. *Documented.*
+
+### Group 3 — Authorization & posture (elevated Azure RBAC, free)
+- **Purpose:** control-plane authorization and posture enforcement.
+- **Privilege:** beyond plain Contributor — role assignments need Owner or User
+  Access Administrator; policy assignment needs Owner or Resource Policy Contributor.
+- **Cost:** effectively free (assignments/assessments, no billable resource).
+- Foundry RBAC boundary: management-vs-use, not a data tier (User & Project Manager
+  have full data-plane; Account Owner has none). *Verified (role definitions).*
+- Azure Policy compliance for `Microsoft.CognitiveServices` (backs the portal's
+  Defender recommendations). *Verified availability.*
+
+### Group 4 — Resource hardening (developer / Contributor, config-only)
+- **Purpose:** harden the Foundry resource itself.
+- **Privilege:** Contributor on the resource is enough (exception: *loosening*
+  default content filters requires a Microsoft approval process).
+- **Cost:** config-only or minor (Key Vault for CMK; Log Analytics ingestion by
+  volume — the workspace already exists in this repo).
+- Disable local/key auth to enforce Entra-only (`disableLocalAuth`). *Verified mechanism.*
+- Diagnostic/audit logging to Log Analytics (`Audit`, `RequestResponse`, `Trace`,
+  `AzureOpenAIRequestUsage`). *Verified categories.*
+- Content filtering / responsible-AI policy on the deployment (`accounts/raiPolicies`).
+  *Documented mechanism; Untested.*
+- Customer-managed key encryption. *Documented mechanism; Untested.*
+
+### Group 5 — Network perimeter
+- **Purpose:** control whether the data plane is reachable from the public internet.
+- **Privilege:** Contributor can flip `publicNetworkAccess`, but real private-endpoint
+  isolation usually needs a central networking team (shared VNet / private DNS zones).
+- **Cost:** a private endpoint (hourly + data processing), typically plus a VNet and a
+  vantage host to verify the private round-trip.
+- Network isolation: disable public access + add a private endpoint. *Verified default
+  (`Enabled`); isolation Untested.*
+
+<!-- END governance use-case groups -->
+
