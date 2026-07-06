@@ -35,29 +35,35 @@ Notes:
 
 ### Use cases
 
-Things you can do *with the Data security and governance pane* (all Microsoft
-Purview / DSPM for AI). Both are **preview**; status tags mark how far each is
-confirmed (Documented = Microsoft Learn only; behavior not yet exercised end-to-end).
+All of these run on **one detection engine**: with the pane on, Microsoft Purview
+classifies Foundry interaction data (prompts and responses) by
+**sensitive-information-type** (SSN, credit card, My Number, …). What differs is the
+**outcome** you attach to a match — *audit* it or *block* it. Both are **preview**,
+and neither is yet exercised end-to-end here (blocked by tenant licensing — see
+`purview-dspm-access.md`). Both need **tenant-admin** setup (privileges below) and are
+enabled mostly **off ARM**: the Foundry→Purview toggle is a portal (private BFF)
+action and the policy/onboarding live on the **Purview/compliance plane**, so none of
+it is settable in Bicep.
 
-- **Block a prompt by sensitive-information-type (DLP).** A Purview DLP policy that
-  stops prompts matching a sensitive-information-type. *Documented; behavior Untested.*
-  - *Privilege:* tenant admin — Entra Compliance/Global Admin or Purview Compliance
-    Admin to turn on DSPM, plus billing rights; also Graph admin consent and Security
-    & Compliance PowerShell. Not self-serviceable by a developer.
-  - *Cost:* Microsoft Purview pay-as-you-go meters; the block test also stands up an
-    instrumented app (Functions + Cosmos DB + Static Web App + Azure OpenAI).
-  - *Enablement plane:* mostly **off ARM** — DSPM onboarding and DLP policy on the
-    **Purview/compliance plane**; app registration + admin consent on the **Entra
-    plane**; the app calls `processContent` on the **data plane** (Microsoft Graph).
-    The Foundry→Purview toggle is a portal (private BFF) action, **not** an ARM
-    property, so it can't be set in Bicep.
-- **Audit / monitor AI interactions.** Prompts/responses captured in the unified
-  audit log and DSPM for AI Activity Explorer, plus insider-risk detection over AI
-  usage. *Documented; behavior Untested.*
-  - *Privilege:* tenant admin (DSPM turn-on + billing), as above.
-  - *Cost:* Microsoft Purview pay-as-you-go meters.
-  - *Enablement plane:* **Purview/compliance plane** (portal toggle + Purview config);
-    ARM only associates a subscription for PAYG billing.
+- **Audit the match** *(visibility — record it)*. The prompt/response is captured in
+  the unified audit log and DSPM for AI Activity Explorer. Included in the
+  **Microsoft Purview license** (no pay-as-you-go), works for **all** authentication
+  scenarios, and needs no per-app setup. Nothing is stopped.
+- **Block the prompt (DLP)** *(prevention — stop it)*. A Purview DLP policy stops
+  prompts matching a sensitive-information-type. Adds requirements over audit:
+  **pay-as-you-go billing**; only fires on API calls carrying a **user-context
+  token**; and per-app wiring — a PowerShell cmdlet scoped to an Entra-registered AI
+  app, whose app calls `processContent` (Microsoft Graph) to honor the verdict.
+  - *Purview DLP vs. Azure AI Language PII:* both recognize SSN-type data via
+    **independent** engines — choose by operating model, not by "who can spot an SSN."
+    Use **Azure AI Language PII** for a developer API your app calls to detect/redact
+    PII, where the app owns the action (per-app, in code, no org policy or audit).
+    Use **Purview DLP** (this pane) for an admin-defined, tenant-wide compliance
+    policy with centralized enforcement and an audit trail.
+
+A sensitivity **label** on retrieved content is only ever **audited/classified** by
+this pane — it is never used to block a prompt. Preventing *labeled* data from being
+returned is a different mechanism entirely (see *What it is not*, below).
 
 ### Testing: privileges required
 
