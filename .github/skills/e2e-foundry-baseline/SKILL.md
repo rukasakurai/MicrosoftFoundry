@@ -177,19 +177,32 @@ agent is created (2xx), and the run returns HTTP 200 with the expected text.
 
 ## Teardown and state restore (always)
 
-Teardown is not instant: `azd down --force --purge` takes ~**3 min** (observed
-2m48s–3m07s) because it deletes the resource group and purges the soft-deleted
-Cognitive Services account. Wait for it to finish before considering the run done.
+Teardown is slow (~**3 min**: `azd down --force --purge` deletes the resource group
+and purges the soft-deleted Cognitive Services account — and the Log Analytics
+workspace, if observability was on). **Don't block on it.** Once the run is green,
+the *verdict is already known*, so start teardown in the **background** and use the
+wait to do useful work (commit, open/update the PR, write the summary):
 
 ```bash
-azd down --force --purge                     # delete + purge the throwaway resources (~3 min)
+# Kick off teardown detached; capture its log so you can confirm success later.
+nohup azd down --force --purge > /tmp/azd-down-$ENVNAME.log 2>&1 &
+# ... now continue with commit / PR / reporting while Azure deletes ...
+```
+
+Then, **before merging**, confirm teardown actually finished cleanly (a teardown
+failure — e.g. a purge that needs a fix — is merge-relevant, so it must be checked,
+just not blocked on):
+
+```bash
+grep -E 'SUCCESS|ERROR' /tmp/azd-down-$ENVNAME.log   # expect SUCCESS, no ERROR
 azd env select <your-default-env>            # restore the previous default env
 rm -rf ".azure/$ENVNAME"                      # remove the local throwaway env
 azd config unset auth.useAzCliAuth           # revert the auth config change
 ```
 
-Leave the workspace exactly as found: no leftover resource groups, azd envs, or
-config changes.
+If you must run teardown synchronously (e.g. no background support), it still takes
+~3 min; wait for `SUCCESS` before considering the run done. Either way, leave the
+workspace exactly as found: no leftover resource groups, azd envs, or config changes.
 
 ## Gotchas worth knowing
 
