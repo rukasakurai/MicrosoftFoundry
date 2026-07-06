@@ -162,7 +162,7 @@ resource cognitiveServicesProject 'Microsoft.CognitiveServices/accounts/projects
 // the Foundry portal's Traces view. Foundry does not provision an observability
 // sink by default, so out of the box the Traces view is empty and prompts the
 // user to connect an Application Insights resource. This wires that up.
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (enableObservability) {
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2026-03-01' = if (enableObservability) {
   name: '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
   location: location
   tags: tags
