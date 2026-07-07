@@ -108,15 +108,7 @@ azd down
 
 ## Creating and Publishing Agents
 
-This template provisions **infrastructure only** (account, project, model deployment). Agents are created and published as a **separate step after `azd up`**:
-
-| Step | Action | How |
-|------|--------|-----|
-| 1 | Provision infrastructure | `azd up` (this template) |
-| 2 | Create an agent | Foundry portal → Agents → Create agent, or via SDK / REST |
-| 3 | Publish the agent | Foundry portal → Publish Agent, or via REST API |
-
-Agents live in the **data plane** (created via the project endpoint's `/agents` API), not as ARM/Bicep resources. Publishing an agent (portal or REST) automatically creates the underlying application and agent-deployment resources; this template does not pre-provision them. See [agent-creation.md](agent-creation.md).
+This template provisions **infrastructure only** (account, project, model deployment). Agents live in the **data plane** (created via the project endpoint's `/agents` API), not as ARM/Bicep resources — so they're created and published as a separate step after `azd up`. Publishing an agent (portal or REST) auto-creates the underlying application/agent-deployment resources; this template does not pre-provision them. See [agent-creation.md](agent-creation.md).
 
 ## Additional Resources
 

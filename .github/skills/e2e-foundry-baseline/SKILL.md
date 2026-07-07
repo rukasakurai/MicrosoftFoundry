@@ -140,12 +140,10 @@ portal over direct `az rest` for nested management resources.
 ## Documentation coverage (README + docs/)
 
 The E2E goal isn't only "the infra provisions" — it's **"every runnable step in the
-docs actually works when followed, and no doc is stale."** Each doc maps to one or more
-flows above (or to a docs-accuracy check). *Verifying a doc* means: follow its steps
-top-to-bottom, confirm each produces the documented result, and **execute GUI steps with
-Playwright MCP** (see the `foundry-ui-playwright` skill) rather than skipping them.
-Record the outcome in that doc's own **Documentation Test History** section — a dated
-`PASS` / `PASS with fixes` / `FAIL` entry plus what you changed.
+docs actually works when followed, and no doc is stale."** Each doc below maps to one or
+more flows above (or to a docs-accuracy check); the **How an AI verifies a doc** runbook
+after the table says how, and the outcome goes in that doc's own **Documentation Test
+History** section.
 
 The **content-verify time** column below is the wall-clock for a *content staleness pass*
 (read the doc; check internal/external links, API-version currency, and claim accuracy
