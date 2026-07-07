@@ -32,7 +32,7 @@
 
 Per-user retrieval trimming (returning only the documents a given caller may see) —
 the "control that does per-user retrieval trimming" in
-[data-security-governance.md](data-security-governance.md) — is **not generally
+[data-security-governance.md](operate/data-security-governance.md) — is **not generally
 available** for Foundry IQ.
 
 - **Identity-native enforcement is preview only.** Azure AI Search
