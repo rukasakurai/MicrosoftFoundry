@@ -11,8 +11,7 @@
 
 References:
 [Manage compliance and security](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security),
-[Guardrails overview](https://learn.microsoft.com/azure/foundry/guardrails/guardrails-overview),
-[Foundry "Policies"](policies.md).
+[Guardrails overview](https://learn.microsoft.com/azure/foundry/guardrails/guardrails-overview).
 
 The Microsoft Foundry portal exposes **two different "Guardrails" surfaces**. The
 Compliance one is easy to over-trust because it uses the same label as the Build
