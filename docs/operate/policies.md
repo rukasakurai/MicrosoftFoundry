@@ -85,6 +85,14 @@ After scan results arrive, the **Policies** tab shows one row per policy (for ex
 shows one row per `(asset, policy)` pair; two model deployments evaluated against two
 policies appear as four **No violations** rows.
 
+**Dated observation (2026-07-08): raw Azure Policy state can be noisier than the portal
+summary.** A Spotlighting policy produced a raw Azure Policy `NonCompliant` member state
+for the parent `Microsoft.CognitiveServices/accounts` resource, but the Foundry
+**Policies** tab still showed **No violations**, total assets `2`, assets in violation
+`0`, and the inner **Assets** tab showed only model-deployment rows. Treat the Foundry
+table as the portal's model-deployment asset projection, not a complete dump of every raw
+Azure Policy state record for the assignment.
+
 ## What it is not
 
 It is **not** a way to apply controls at a Foundry-resource, project, deployment, or
