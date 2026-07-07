@@ -253,6 +253,33 @@ resource searchIndexDataReaderRoleAssignment 'Microsoft.Authorization/roleAssign
   }
 }
 
+// Grant the deploying principal the two Search data-plane roles the
+// post-provisioning hook (scripts/foundry-iq-setup.sh) needs to build the
+// knowledge base substrate keylessly (Entra token, no admin key):
+//   Search Service Contributor (7ca78c08-252a-4471-8644-bb5ff32d4ba0) — create
+//     the index, knowledge source, and knowledge base definitions.
+//   Search Index Data Contributor (8ebe5a00-799e-43f5-93ac-243d3dce84a7) —
+//     upload the sample documents.
+resource searchServiceContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableFoundryIq && !empty(principalId)) {
+  scope: searchService
+  name: guid(searchService.id, principalId, '7ca78c08-252a-4471-8644-bb5ff32d4ba0')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7ca78c08-252a-4471-8644-bb5ff32d4ba0')
+    principalId: principalId
+    principalType: principalType
+  }
+}
+
+resource searchIndexDataContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableFoundryIq && !empty(principalId)) {
+  scope: searchService
+  name: guid(searchService.id, principalId, '8ebe5a00-799e-43f5-93ac-243d3dce84a7')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7')
+    principalId: principalId
+    principalType: principalType
+  }
+}
+
 // Grant the deploying principal the Foundry User role on the account so the
 // azd up baseline is usable end-to-end: building agents and consuming
 // tools/toolboxes requires this data-plane role, which control-plane roles
