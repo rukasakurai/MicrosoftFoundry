@@ -21,9 +21,12 @@
 > **Not an ARM/Bicep provisioning surface.** A Foundry IQ knowledge base and its knowledge
 > sources are **Azure AI Search data-plane** objects (`Microsoft.Search`), created via the AI
 > Search REST API / SDK / portal — not ARM/Bicep and not the `CognitiveServices` provider.
-> Foundry reaches them through a **connection**. Whether — and how far — this repo provisions
-> any of this is an open scope decision ([#31](https://github.com/rukasakurai/MicrosoftFoundry/issues/31)),
-> not yet made. See the [Technology Reference](../AGENTS.md#technology-reference).
+> Foundry reaches them through a **connection**. This repo treats the **Foundry IQ**
+> path (the managed knowledge base) as in scope and the plain `azure_ai_search` tool as
+> out of scope (see the last section); **how far** it provisions the Foundry IQ
+> substrate — e.g. a Foundry→AI Search connection — is still open
+> ([#31](https://github.com/rukasakurai/MicrosoftFoundry/issues/31)). See the
+> [Technology Reference](../AGENTS.md#technology-reference).
 
 ## Per-user data governance is not GA (verified 2026-07-07)
 
