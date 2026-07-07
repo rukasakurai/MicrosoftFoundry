@@ -26,9 +26,8 @@ The Foundry portal's **Create policy** page is an
 configuration-governance surface: creating or editing policies requires the **Resource
 Policy Contributor** or **Owner** role, and the selected controls map to built-in Azure
 Policy definitions. Microsoft Learn says deleting a Foundry policy removes the underlying
-Azure Policy assignment; that assignment object did not appear in `az policy assignment
-list` during this PR's observation window, so treat the exact assignment materialization
-as unverified here.
+Azure Policy assignment; live testing confirmed that the portal-created policy appears as
+an assignment of the built-in guardrail initiative.
 
 **Scope is subscription or resource group only.** The scope step offers just
 **Subscription** and **Resource group** — you *cannot* target an individual Foundry
@@ -60,6 +59,31 @@ cycle can take up to **24 hours**. Treat **No scan results** shortly after creat
 Reference:
 [Azure Policy built-in initiatives — Cognitive Services](https://learn.microsoft.com/azure/governance/policy/samples/built-in-initiatives#cognitive-services)
 and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-services/policy-reference#foundry-tools).
+
+### Example: Hate / User input
+
+For **Hate** at the **User input** intervention point, the two action choices map to
+different configuration requirements:
+
+| Portal action | Requirement on the deployment's content filter |
+| --- | --- |
+| **Annotate and block** | Hate prompt filter is enabled, and `blocking` must be `true` |
+| **Annotate only** | Hate prompt filter is enabled; `blocking` may be `true` or `false` |
+
+In Azure Policy parameters, that distinction appears as:
+
+| Portal action | Relevant parameters |
+| --- | --- |
+| **Annotate and block** | `allowedHateEnabledForPrompt = ["true"]`, `allowedHateBlockingForPrompt = ["true"]` |
+| **Annotate only** | `allowedHateEnabledForPrompt = ["true"]`, `allowedHateBlockingForPrompt = ["true", "false"]` |
+
+A deployment using `Microsoft.DefaultV2` has the Hate prompt filter enabled with
+`blocking=true`, so both example policies evaluate as compliant.
+
+After scan results arrive, the **Policies** tab shows one row per policy (for example,
+**No violations**, total assets `2`, assets in violation `0`). The inner **Assets** tab
+shows one row per `(asset, policy)` pair; two model deployments evaluated against two
+policies appear as four **No violations** rows.
 
 ## What it is not
 
