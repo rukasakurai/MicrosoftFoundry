@@ -77,7 +77,9 @@ Note: a workspace `.vscode/mcp.json` is usually committed and shared, so a hardc
 
 ## Keep artifacts out of the repo (`PLAYWRIGHT_MCP_OUTPUT_DIR`)
 
-Playwright MCP writes snapshots/screenshots/PDFs to an output directory that **defaults to `./.playwright-mcp` in the server's working directory** — which is your repo root, so it shows up as untracked clutter. Redirect it out of the repo with the **`PLAYWRIGHT_MCP_OUTPUT_DIR`** env var (or `--output-dir <path>`), as shown in the configs above. With this set, no artifacts ever land in the repo — preferred over deleting them each session or adding a `.gitignore` entry. Use `/tmp/playwright-mcp` for throwaway output, or `~/.cache/playwright-mcp` if you want it to survive reboots.
+Playwright MCP writes snapshots/screenshots/PDFs to an output directory that **defaults to `./.playwright-mcp` in the server's working directory** — which is your repo root, so it shows up as untracked clutter. Redirect it out of the repo with the **`PLAYWRIGHT_MCP_OUTPUT_DIR`** env var (or `--output-dir <path>`), as shown in the configs above. This keeps the auto-generated snapshots out of the repo — preferred over deleting them each session or adding a `.gitignore` entry. Use `/tmp/playwright-mcp` for throwaway output, or `~/.cache/playwright-mcp` if you want it to survive reboots.
+
+For an **explicit `browser_take_screenshot`**, pass a **filename that is an absolute path under that output directory** (e.g. `/tmp/playwright-mcp/operate-assets.png`) to be sure it lands there; a bare relative filename resolves against the server's working directory. Verifying a screenshot's final path once (and moving it out of the repo if needed) keeps the working tree clean.
 
 ## Headless-Linux launch settings
 

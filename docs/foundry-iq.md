@@ -74,3 +74,30 @@ Same substrate (`Microsoft.Search`, data-plane, reached via a connection), but
 different retrieval mechanisms — not just a rename. See
 [Connect an Azure AI Search index to Foundry agents](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/ai-search)
 and [Connect agents to Foundry IQ knowledge bases](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect).
+
+## Applying the Foundry IQ connect guidance to CognitiveServices projects (verified 2026-07-07)
+
+Microsoft's
+[Foundry IQ connect guidance](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+writes its connection examples for **hub/workspace** projects
+(`Microsoft.MachineLearningServices/workspaces`). This repo uses **Microsoft Foundry**
+(`Microsoft.CognitiveServices`) projects instead, and two things are worth recording
+from adapting the guidance to that project type (the doc isn't wrong for its own
+context — these are observations specific to the `CognitiveServices` form):
+
+- **The connection also works on a `CognitiveServices` project.** The doc's examples
+  create the connection under
+  `Microsoft.MachineLearningServices/workspaces/.../connections` (api-version
+  `2025-10-01-preview`). The same `RemoteTool` / `ProjectManagedIdentity` connection
+  works as `Microsoft.CognitiveServices/accounts/projects/connections` (api-version
+  `2026-05-01`), which is what this repo provisions in Bicep.
+- **On the `CognitiveServices` connection, `audience` must have _no_ trailing slash.**
+  The doc's (hub/workspace) example uses `"audience": "https://search.azure.com/"`. On
+  the `CognitiveServices` form, that trailing slash makes the agent fail at run time
+  with `Missing required query parameter 'audience'`; `https://search.azure.com` (no
+  slash) works. We didn't test whether the slash matters on the hub/workspace form, so
+  this is a `CognitiveServices`-specific note, not a claim about the doc's example.
+  (Also noted inline in `infra/main.bicep`.)
+
+
+Both are preview-era observations and may change; re-verify against the live docs.

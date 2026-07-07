@@ -2,5 +2,6 @@
   "resourcesResourceGroups": "rg-",
   "cognitiveServicesAccounts": "cog-",
   "operationalInsightsWorkspaces": "log-",
-  "insightsComponents": "appi-"
+  "insightsComponents": "appi-",
+  "searchSearchServices": "srch-"
 }

@@ -6,3 +6,10 @@ infra:
   provider: bicep
   path: infra
   module: main
+hooks:
+  postprovision:
+    posix:
+      shell: sh
+      run: ./scripts/foundry-iq-setup.sh
+      interactive: false
+      continueOnError: false

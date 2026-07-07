@@ -13,6 +13,9 @@
     },
     "principalType": {
       "value": "${AZURE_PRINCIPAL_TYPE=User}"
+    },
+    "enableFoundryIq": {
+      "value": "${ENABLE_FOUNDRY_IQ=false}"
     }
   }
 }

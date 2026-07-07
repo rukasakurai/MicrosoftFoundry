@@ -43,6 +43,29 @@ time below: `azd provision` ~**2.5 min** and, at the end, `azd down --force --pu
 ~**6 min minimum** even for a 2-second data-plane check. Batch multiple data-plane
 flows into one provisioned environment rather than paying that overhead per flow.
 
+**Keeping Foundry IQ E2E fast (`enableFoundryIq=true`).** The `~2.5 min` provision
+figure above is the *fast* case; with Foundry IQ the provision includes an **Azure AI
+Search service whose allocation time is highly variable — observed 6s to ~13 min on the
+`basic` SKU in the same region**. That variance is Azure-side allocation, not a hang, so:
+
+- **Reuse a warm env for data-plane iteration.** The Search allocation is paid once.
+  Most Foundry IQ iteration is on the *scripts* (`scripts/foundry-iq-setup.sh`,
+  `scripts/create-foundry-iq-agent.sh`) and data-plane objects, not Bicep — re-run
+  those against an already-provisioned env (seconds). Do a clean `azd up` only when
+  `infra/` changes or as the final pre-merge gate.
+- **Keep Search at `basic`.** Basic is the *minimum* tier that supports agentic
+  retrieval (Free doesn't), and it's sufficient for this baseline, so a higher tier
+  (Standard) only adds cost with no benefit here. (Whether a higher tier allocates any
+  faster or slower was not measured — only `basic` was used — so don't bump the SKU
+  expecting a speed change either way.)
+- **Drop what you're not testing.** `enableFoundryIq` is off by default, so the
+  standard baseline never pays this cost; likewise set `enableObservability=false` when
+  observability isn't under test (drops the Log Analytics + App Insights resources,
+  each ~20-25s to provision — though they run in parallel and Search usually dominates
+  the critical path, so the wall-clock saving is often small).
+- **A slow Search create is variance, not failure.** Don't abort a run that's still
+  provisioning Search; region-hopping is a last resort only (it adds a variable).
+
 **Regression budget (wall clock, incl. teardown).** Total time is driven by how many
 provision→teardown cycles you run, not by summing the rows — the data-plane flows
 (2, 3, 4, 6, 10) share **one** provisioned env (~40s combined after provision):
@@ -150,6 +173,14 @@ reference from a `general-purpose` subagent on a **fixed model** (`claude-sonnet
 self-timed) — the fixed model is what keeps them roughly repeatable. Treat as a floor;
 GUI/Playwright and live provisioning are extra.
 
+> **Each time is tied to the doc's content at the moment it was measured — it goes stale
+> the instant that doc changes.** So whenever you edit a doc in this table (in any PR),
+> the old number no longer applies: **re-run the timed content pass** (same fixed-model,
+> self-timed subagent) **and update that row in the same change.** Never cite an existing
+> row's time for a doc you just edited without re-measuring — that's how a stale figure
+> ships. (If you edit the doc but not its verification surface, still re-measure; link
+> and claim counts drive the time.)
+
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
 | `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~55s | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
@@ -160,7 +191,7 @@ GUI/Playwright and live provisioning are extra.
 | `docs/entra-agent-registry.md` | flow 10 | ~30s | ❌ **registration retired 2026-06-15**: `POST /beta/agentRegistry/agentInstances` returns `503` ("use the Microsoft Agent 365 registration API"), though `GET` still returns `200` — the doc's core register flow is broken and it's stale until rewritten |
 | `docs/agent-mcp-oauth.md` | flow 11 | ~35s | ⚠️ needs a real OAuth app (client id/secret) |
 | `docs/data-security-governance.md` | docs-accuracy check (no provisioning flow) | ~15s | ✅ verify the claims against Microsoft Learn + the live portal pane with Playwright; it's a **preview** feature, so confirm the caveats still hold and date the result |
-| `docs/foundry-iq.md` | docs-accuracy check (no provisioning flow; the API/trace claims need a Foundry IQ env, `enableFoundryIq=true`) | ~50s | ✅ verify claims vs Microsoft Learn (GA/preview split, document-level access, MCP per-user limits); **partly preview**, so confirm the caveats still hold and date the result |
+| `docs/foundry-iq.md` | docs-accuracy check (no provisioning flow; the API/trace claims need a Foundry IQ env, `enableFoundryIq=true`) | ~85s | ✅ verify claims vs Microsoft Learn (GA/preview split, document-level access, MCP per-user limits); **partly preview**, so confirm the caveats still hold and date the result |
 
 ## How an AI verifies a doc (runbook)
 
