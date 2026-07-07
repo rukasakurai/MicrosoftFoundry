@@ -9,18 +9,15 @@
 > policy** page says:
 > *"Setting a policy does not automatically enforce guardrails."* To
 > actually block unsafe prompts or outputs, configure a guardrail/content filter on the
-> deployment in **Build → Guardrails** (backed by
-> [Azure AI Content Safety](https://learn.microsoft.com/azure/ai-services/content-safety/overview),
-> which is **GA**) — not this tab.
+> deployment in **Build → Guardrails** (not the
+> [Compliance Guardrails tab](guardrails.md)); that runtime layer is backed by
+> [Azure AI Content Safety](https://learn.microsoft.com/azure/ai-services/content-safety/overview)
+> and is **GA**.
 
 References:
 [Manage compliance and security](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security),
 [Create a guardrail policy](https://learn.microsoft.com/azure/foundry/control-plane/quickstart-create-guardrail-policy),
 [Guardrails overview](https://learn.microsoft.com/azure/foundry/guardrails/guardrails-overview).
-
-Sibling notes cover the neighboring Compliance tabs:
-[Guardrails](guardrails.md) and
-[Data security and governance](data-security-governance.md).
 
 ## What it is
 
