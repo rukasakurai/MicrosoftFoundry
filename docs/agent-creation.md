@@ -215,22 +215,10 @@ curl -X POST \
 
 ## Publishing Agents to Applications
 
-Once you've created and tested an agent, you can publish it to an application for external access:
+Once you've created and tested an agent, you can publish it so external consumers can call it through a stable endpoint. Publishing creates the underlying **application** and **agent-deployment** resources for you (they are not provisioned by this template):
 
-**Via REST API:**
-   ```bash
-   # Update the agent deployment with agent reference
-   curl -X PATCH \
-     "${ENDPOINT}/api/projects/${PROJECT_NAME}/applications/${APPLICATION_NAME}/agentDeployments/${DEPLOYMENT_NAME}?api-version=2025-10-01-preview" \
-     -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "agents": [{
-         "agentName": "my-agent",
-         "agentVersion": "1"
-       }]
-     }'
-   ```
+- **Foundry portal**: open the agent in the Agent Builder and select **Publish Agent**.
+- **REST API**: use the [agent publishing API](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/migrate-agent-applications) to create/update an application and its deployment with the target `agentName`/`agentVersion`.
 
 ## Documentation Test History
 

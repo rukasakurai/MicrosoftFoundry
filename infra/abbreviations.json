@@ -1,8 +1,6 @@
 {
   "resourcesResourceGroups": "rg-",
   "cognitiveServicesAccounts": "cog-",
-  "cognitiveServicesApplications": "app-",
-  "cognitiveServicesAgentDeployments": "agentdep-",
   "operationalInsightsWorkspaces": "log-",
   "insightsComponents": "appi-"
 }
