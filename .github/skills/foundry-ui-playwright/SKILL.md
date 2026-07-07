@@ -41,12 +41,6 @@ just the landing view**):
 | Quota | `/operate/quota` | **Token per minute** / **Provisioned throughput unit** / **Managed compute** |
 | Admin | `/operate/manage` | **All projects** (parent resource + region) / **AI Gateway** (preview) |
 
-**Lead with the sub-tab most relevant to the change under test.** For a RAG / Foundry IQ
-change, that's usually **Assets → Tools** (the knowledge-base MCP connection) and
-**Compliance → Data security and governance** (the Purview data-governance pane this
-repo documents in [`docs/data-security-governance.md`](../../../docs/data-security-governance.md)).
-Breadth-only screenshots of each pane's landing view miss the point of a targeted demo.
-
 **Reach a Compliance/Quota sub-tab by clicking its tab** from the pane, not by guessing a
 URL slug. The slugs are not uniform — e.g. Compliance is `/policies`, `/guardrails`,
 `/security-posture`, and `/dataSecurityGovernance` (camelCase). Clicking the tab lands the

@@ -55,8 +55,10 @@ SKU-tunable, so:
   those against an already-provisioned env (seconds). Do a clean `azd up` only when
   `infra/` changes or as the final pre-merge gate.
 - **Keep Search at `basic`.** Basic is the *minimum* tier that supports agentic
-  retrieval (Free doesn't; Standard is slower and costlier with no benefit here). Don't
-  bump the SKU to go faster — there's no faster Search tier for this.
+  retrieval (Free doesn't), and it's sufficient for this baseline, so a higher tier
+  (Standard) only adds cost with no benefit here. Provisioning time is variable
+  regardless of tier (only Basic was measured), so a higher SKU is not a way to
+  provision faster.
 - **Drop what you're not testing.** `enableFoundryIq` is off by default, so the
   standard baseline never pays this cost; likewise set `enableObservability=false` when
   observability isn't under test (saves the Log Analytics + App Insights ~45s).
