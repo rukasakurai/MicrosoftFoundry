@@ -1,26 +1,33 @@
 ---
 name: e2e-foundry-baseline
-description: Run an end-to-end (E2E) test of this repo's Microsoft Foundry baseline and its documentation/runbooks (README + docs/) before merging to main — provision an isolated azd environment, verify the model deploys and serves a response and that an agent can be created, walk each doc's runnable steps (including browser/GUI steps via Playwright MCP), then tear it down. Use when validating an infra/, scripts/, docs/, or agent-flow change against the E2E-before-merge policy, or when deciding how much regression to run for a PR.
+description: Run end-to-end (E2E) verification of this repo's Microsoft Foundry baseline and its documentation/runbooks (README + docs/) before merging to main — provision an isolated azd environment, verify the model deploys and serves a response and that an agent can be created, walk each doc's runnable steps (including browser/GUI steps via Playwright MCP) and confirm the docs aren't stale, then tear it down. Use when validating an infra/, scripts/, docs/, or agent-flow change against the E2E-before-merge policy, or when deciding how much regression to run for a PR.
 ---
 
-# E2E-testing the Microsoft Foundry baseline
+# E2E verification of the Microsoft Foundry baseline
 
 ## When to Use
 
 - A PR touches `infra/`, `scripts/`, or a documented agent flow and must satisfy the
-  **E2E-testing-before-merge** expectation (see `AGENTS.md` → Development & Deployment).
+  **E2E-before-merge** expectation (see `AGENTS.md` → Development & Deployment).
 - A PR touches `README.md` or `docs/` and you need to confirm the documented steps
-  actually work when followed. Historically a human ran the runbook; Copilot can now
-  execute it too — including GUI steps, via Playwright MCP (see the coverage map below).
-- You need to decide *how much* to test for a given PR (regression scope is a
+  actually work when followed and that the docs aren't **stale**. Historically a human
+  ran the runbook; Copilot can now execute it too — including GUI steps, via Playwright
+  MCP (see the coverage map below).
+- You need to decide *how much* to verify for a given PR (regression scope is a
   per-PR judgment call).
 - You need a repeatable, isolated way to prove the baseline actually runs — not just
   that Bicep compiles.
 
+This skill covers two kinds of verification: **executing** the baseline and its
+runbooks (run it, observe the result), and **checking documents against reality**
+(does the markdown still match the live portal/API/Learn — i.e. is it stale). Both
+must stay concrete: a verification is only a PASS if you *observed* the result — see
+"blocked ≠ pass" below.
+
 This skill assumes the **Microsoft Foundry resource** architecture
 (`Microsoft.CognitiveServices/accounts`, kind `AIServices`) provisioned by this repo.
 
-## Testable surfaces, feasibility, and reference times
+## Verifiable surfaces, feasibility, and reference times
 
 Pick the smallest set that covers the changed behavior; escalate to more of the list
 only when the change warrants it.
@@ -32,7 +39,7 @@ grounded.
 
 Budget the **fixed overhead** any provisioning flow carries, on top of the per-flow
 time below: `azd provision` ~**2.5 min** and, at the end, `azd down --force --purge`
-~**3 min** (observed 2m48s–3m07s). So a clean provision→test→teardown cycle is
+~**3 min** (observed 2m48s–3m07s). So a clean provision→verify→teardown cycle is
 ~**6 min minimum** even for a 2-second data-plane check. Batch multiple data-plane
 flows into one provisioned environment rather than paying that overhead per flow.
 
@@ -133,32 +140,32 @@ portal over direct `az rest` for nested management resources.
 ## Documentation coverage (README + docs/)
 
 The E2E goal isn't only "the infra provisions" — it's **"every runnable step in the
-docs actually works when followed."** Each doc maps to one or more flows above (or to a
-docs-accuracy check). *Testing a doc* means: follow its steps top-to-bottom, confirm each
-produces the documented result, and **execute GUI steps with Playwright MCP** (see the
-`foundry-ui-playwright` skill) rather than skipping them. Record the outcome in that
-doc's own **Documentation Test History** section — a dated `PASS` / `PASS with fixes` /
-`FAIL` entry plus what you changed.
+docs actually works when followed, and no doc is stale."** Each doc maps to one or more
+flows above (or to a docs-accuracy check). *Verifying a doc* means: follow its steps
+top-to-bottom, confirm each produces the documented result, and **execute GUI steps with
+Playwright MCP** (see the `foundry-ui-playwright` skill) rather than skipping them.
+Record the outcome in that doc's own **Documentation Test History** section — a dated
+`PASS` / `PASS with fixes` / `FAIL` entry plus what you changed.
 
-| Doc | Covered by | AI-testable now? |
+| Doc | Covered by | AI-verifiable now? |
 | --- | --- | --- |
 | `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
 | `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ✅ |
 | `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ✅ (flow 8 publish: REST is scriptable; the portal path uses Playwright) |
 | `docs/azure-oidc-setup.md` | flow 9 | ⚠️ needs an Entra federated-identity credential set up out-of-band |
-| `docs/entra-agent-identity.md` | flow 10 | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is testable |
+| `docs/entra-agent-identity.md` | flow 10 | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
 | `docs/entra-agent-registry.md` | flow 10 | ❌ **Agent Registry API retired 2026-06-15** (a live call returns `503`, "use the Microsoft Agent 365 registration API") — the doc is stale and a run will FAIL until it's rewritten |
 | `docs/agent-mcp-oauth.md` | flow 11 | ⚠️ needs a real OAuth app (client id/secret) |
 | `docs/data-security-governance.md` | docs-accuracy check (no provisioning flow) | ✅ verify the claims against Microsoft Learn + the live portal pane with Playwright; it's a **preview** feature, so confirm the caveats still hold and date the result |
 
-## How an AI tests a doc (runbook)
+## How an AI verifies a doc (runbook)
 
 1. **Read the whole doc first**, then run the steps in order in an isolated env
    (reuse the provisioned baseline for data-plane docs; see the procedure below).
 2. **Execute every runnable step**, including GUI ones — drive the portal with
    Playwright MCP (`foundry-ui-playwright`), don't just assert the docs *say* to click.
 3. **Fix small drift in place** (stale API version, renamed portal label, wrong
-   endpoint) as part of the test, exactly as the historical human testers did.
+   endpoint) as part of the verification, exactly as the historical human testers did.
 4. **Append a dated entry** to that doc's *Documentation Test History* (PASS / PASS
    with fixes / FAIL + what changed). Keep it **public-safe**: status + HTTP codes +
    short replies, never tokens, subscription/tenant IDs, or endpoints.
