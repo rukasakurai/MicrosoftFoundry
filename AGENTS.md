@@ -78,6 +78,7 @@ The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. Th
 | **Azure AI Foundry (Project)** | `Microsoft.MachineLearningServices/workspaces` (kind: `Project`) |
 | **Azure Machine Learning** | `Microsoft.MachineLearningServices/workspaces` (kind: `Default`) |
 | **Microsoft Agent SDK (.NET)** | NuGet: `Microsoft.Agents.AI.*` |
+| **Foundry IQ (knowledge base / RAG)** | Azure AI Search agentic retrieval (`Microsoft.Search`), data-plane; reached from Foundry via a connection |
 
 ### Key Distinctions
 
@@ -85,3 +86,4 @@ The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. Th
 - **Azure AI Foundry**: Uses `Microsoft.MachineLearningServices` ARM resource provider with Hub/Project architecture (kind: `Hub` or `Project`).
 - **Azure Machine Learning**: Uses `Microsoft.MachineLearningServices` ARM resource provider with kind: `Default`. Traditional ML workspace for model training and MLOps.
 - These are **separate products** with different ARM providers, resource kinds, APIs, and deployment patterns despite similar branding.
+- **Foundry IQ / RAG**: Perceived as a Foundry feature (the portal **Knowledge** tab), but a knowledge base and its knowledge sources are **Azure AI Search data-plane objects** (`Microsoft.Search`), created via the AI Search REST API / SDK / portal — **not** ARM/Bicep and **not** the `CognitiveServices` provider. Foundry reaches them through a **connection**, the same architectural shape as connecting to Storage, Cosmos, or a third-party system. Provisioning a knowledge base is therefore **out of this repo's scope**; the repo owns only the Foundry side (account/project, and optionally the connection). Agentic retrieval is GA in the AI Search `2026-04-01` REST API; the Foundry and Azure portal surfaces are preview.
