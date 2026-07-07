@@ -53,10 +53,21 @@ Bottom line: to enforce per-user document access **GA** today, do security-filte
 trimming in your own retrieval code (Responses API), not through a managed Foundry IQ
 agent; the identity-native, turnkey enforcement is preview.
 
-<!-- TODO: Elaborate on the difference between the "Plain Azure AI Search" approach
-(the single-shot `azure_ai_search` agent tool: the agent's model issues one query
-against a search index) and the "Foundry IQ" approach (a managed knowledge base that
-performs server-side agentic retrieval — query planning/decomposition, parallel
-keyword/vector/hybrid search, semantic reranking — reached by the agent via the
-`knowledge_base_retrieve` MCP tool). Only the Foundry IQ approach is (partially) in
-this repo's scope; the plain AI Search tool is out of scope. -->
+## How Foundry IQ retrieval differs from the plain Azure AI Search tool
+
+Two ways an agent can ground on Azure AI Search; only the first is in this repo's scope.
+
+- **Foundry IQ (in scope)** — a managed **knowledge base** performs *server-side
+  agentic retrieval*: it plans and decomposes the query into subqueries, runs them
+  in parallel (keyword / vector / hybrid), semantically reranks, and returns a
+  unified, cited result. The agent reaches it via the generic `mcp` tool
+  (`knowledge_base_retrieve`). Trace: `mcp_list_tools → knowledge-base → message`.
+- **Plain Azure AI Search (out of scope)** — the native `azure_ai_search` agent
+  tool: the agent's model issues a **single** query against one search index and
+  synthesizes the `top_k` results itself, with no server-side planning or reranking.
+  Trace: `azure_ai_search_call → message`.
+
+Same substrate (`Microsoft.Search`, data-plane, reached via a connection), but
+different retrieval mechanisms — not just a rename. See
+[Connect an Azure AI Search index to Foundry agents](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/ai-search)
+and [Connect agents to Foundry IQ knowledge bases](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect).
