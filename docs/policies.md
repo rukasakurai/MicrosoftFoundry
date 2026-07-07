@@ -48,19 +48,6 @@ Reference:
 [Azure Policy built-in initiatives — Cognitive Services](https://learn.microsoft.com/azure/governance/policy/samples/built-in-initiatives#cognitive-services)
 and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-services/policy-reference#foundry-tools).
 
-## What it is not
-
-Not the thing that blocks unsafe prompts or responses at inference — that is a
-**guardrail** (content filter / prompt shield) on the deployment, configured in
-**Build → Guardrails**. The wizard's **Action → "Annotate and block"** is a *compliance
-criterion, not an action the policy performs*: it makes the policy **check** whether each
-deployment's content filter has blocking enabled
-(`raiPolicy.contentFilters[].blocking`) and **Audit** the result. The blocking itself is
-done by that content filter at inference, only if it's configured in Build → Guardrails.
-The definitions expose only `Audit` / `Disabled` (no `Deny`), so creating a policy — even
-with "Annotate and block" — never blocks a prompt or denies a deployment; it only records
-whether a deployment *has* such a guardrail.
-
 ### The GA alternatives
 
 Two GA controls do the real work — use these, not the preview Policies tab:
