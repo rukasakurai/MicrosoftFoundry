@@ -28,9 +28,8 @@ Azure Policy assignment).
 
 **Scope is subscription or resource group only.** The scope step offers just
 **Subscription** and **Resource group** — you *cannot* target an individual Foundry
-resource (the Cognitive Services account) or an agent. That is inherent to Azure Policy:
-an assignment applies to a management group / subscription / resource group, never a
-single resource or sub-resource.
+resource (the Cognitive Services account) or an agent from this Foundry portal page. This
+is a limit of the portal surface described here, not a general Azure Policy rule.
 
 It *resembles* Azure AI Content Safety because its inputs describe required content-filter
 configuration —
