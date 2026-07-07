@@ -19,13 +19,34 @@ References:
 
 ## What it is
 
-A **Create policy** wizard that writes an **Azure Policy** assignment requiring a
-*minimum* guardrail control — a **risk**, an **intervention point** (user input / output),
-and an **action** (annotate-and-block or annotate-only) — for model deployments across a
-subscription or resource group, then **reports** each deployment's compliance on the
-**Policies** / **Assets** tabs. The content-filtering definitions expose only `Audit`
-(and `Disabled`) — verified via `az policy definition list` — so a policy **flags**
-non-compliant deployments; it never denies them or filters content.
+The **Create policy** wizard is a front-end over
+**[Azure Policy](https://learn.microsoft.com/azure/governance/policy/overview)**:
+submitting it creates an Azure Policy **assignment** (creating or deleting one needs the
+**Resource Policy Contributor** role; deleting the Foundry policy removes the underlying
+Azure Policy assignment).
+
+**Scope is subscription or resource group only.** The wizard's scope step offers just
+**Subscription** and **Resource group** — you *cannot* target an individual Foundry
+resource (the Cognitive Services account) or an agent. That is inherent to Azure Policy:
+an assignment applies to a management group / subscription / resource group, never a
+single resource or sub-resource.
+
+It *resembles* Azure AI Content Safety because its inputs **are** content-filter settings —
+a **risk** (the Content Safety categories: hate, sexual, violence, self-harm, jailbreak,
+profanity, indirect prompt injection, spotlighting, protected material), an **intervention
+point** (user input / output), and an **action** (annotate-and-block / annotate-only). But
+it doesn't configure a filter — it assigns the built-in **initiative** *[Preview]:
+Guardrail for Cognitive Services Deployments*
+(`policySetDefinition 5207647b-3e83-4e28-b836-c382cb5e2a2e`), which bundles the `[Preview]
+Cognitive Services Deployments should only use allowed prompt / completion content
+filtering` (plus `allowed control` / `control mode`) definitions — every one effect
+**`Audit` / `Disabled`** (verified via `az policy set-definition show`). So it **audits**
+whether each deployment's content filter meets that minimum and reports compliance on the
+**Policies** / **Assets** tabs; it never applies a filter or blocks a deployment.
+
+Reference:
+[Azure Policy built-in initiatives — Cognitive Services](https://learn.microsoft.com/azure/governance/policy/samples/built-in-initiatives#cognitive-services)
+and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-services/policy-reference#foundry-tools).
 
 ## What it is not
 
