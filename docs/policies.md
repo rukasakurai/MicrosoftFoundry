@@ -47,3 +47,16 @@ whether each deployment's content filter meets that minimum and reports complian
 Reference:
 [Azure Policy built-in initiatives — Cognitive Services](https://learn.microsoft.com/azure/governance/policy/samples/built-in-initiatives#cognitive-services)
 and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-services/policy-reference#foundry-tools).
+
+## What it is not
+
+It is **not** a way to apply controls at a Foundry-resource, project, deployment, or
+agent scope. The wizard assigns policy only at **subscription** or **resource group**
+scope. To configure controls on a specific model deployment or agent, use
+**Build → Guardrails** instead.
+
+It is also **not** the runtime blocker for unsafe input or output. The policy can require
+that a deployment's guardrail is configured to annotate or block, then audit whether the
+deployment meets that requirement. The guardrail/content filter does the actual blocking
+at inference time. For app-level enforcement outside Foundry guardrails, call
+**Azure AI Content Safety** from the application.
