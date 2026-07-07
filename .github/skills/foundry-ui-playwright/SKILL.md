@@ -29,15 +29,29 @@ The portal has two experiences, switched by a **toggle in the top toolbar** (ari
 
 > **"Control Plane" is a docs-only term — the GUI calls it "Operate".** The learn.microsoft.com articles brand this surface *Microsoft Foundry Control Plane*, but the live portal never uses that label for the feature: the menu is **Operate** and the panes are Overview/Assets/Compliance/Quota/Admin. The string "control plane" appears only once in the UI, lowercase, inside an *Ask AI* suggested-prompt chip on the Overview pane. So when a doc says "Control Plane", look for **Operate** in the portal. (Verified live 2026-06-15.)
 
-When the new experience is on, the left nav shows **Operate**, containing:
+When the new experience is on, the left nav shows **Operate**, containing (each pane
+lands on a default sub-tab; **"demo/verify Operate" means covering every sub-tab, not
+just the landing view**):
 
-| Pane | Path suffix | Notes |
+| Pane | Path suffix | Sub-tabs (landing first) |
 | --- | --- | --- |
-| Overview | `/operate/overview` | Fleet health, alerts, compliance summary |
-| Assets | `/operate/assets` | Sub-tabs: **Agents / Models / Tools**; **Register asset** button |
-| Compliance | `/operate/compliance` | Policy / guardrails |
-| Quota | `/operate/quota` | Model deployment quota; **Show all** toggle |
-| Admin | `/operate/manage` | Projects, users, connected resources |
+| Overview | `/operate/overview` | — (fleet health: alerts, running agents, cost, success rate, token usage, run-volume chart) |
+| Assets | `/operate/assets` | **Agents** / **Models** / **Tools** (subscription-wide); **Register asset** button |
+| Compliance | `/operate/compliance` | **Policies** / **Guardrails** / **Security posture** (Microsoft Defender for Cloud) / **Data security and governance** (Microsoft Purview) |
+| Quota | `/operate/quota` | **Token per minute** / **Provisioned throughput unit** / **Managed compute** |
+| Admin | `/operate/manage` | **All projects** (parent resource + region) / **AI Gateway** (preview) |
+
+**Lead with the sub-tab most relevant to the change under test.** For a RAG / Foundry IQ
+change, that's usually **Assets → Tools** (the knowledge-base MCP connection) and
+**Compliance → Data security and governance** (the Purview data-governance pane this
+repo documents in [`docs/data-security-governance.md`](../../../docs/data-security-governance.md)).
+Breadth-only screenshots of each pane's landing view miss the point of a targeted demo.
+
+**Reach a Compliance/Quota sub-tab by clicking its tab** from the pane, not by guessing a
+URL slug. The slugs are not uniform — e.g. Compliance is `/policies`, `/guardrails`,
+`/security-posture`, and `/dataSecurityGovernance` (camelCase). Clicking the tab lands the
+correct slug and renders; a hand-built kebab guess can load an empty shell. (Verified live
+2026-07-07.)
 
 Assets aggregates **subscription-wide across all projects** (columns like Status,
 Version, Error rate, Estimated cost, Token usage on the Agents sub-tab; endpoint on
