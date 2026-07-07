@@ -173,6 +173,14 @@ reference from a `general-purpose` subagent on a **fixed model** (`claude-sonnet
 self-timed) — the fixed model is what keeps them roughly repeatable. Treat as a floor;
 GUI/Playwright and live provisioning are extra.
 
+> **Each time is tied to the doc's content at the moment it was measured — it goes stale
+> the instant that doc changes.** So whenever you edit a doc in this table (in any PR),
+> the old number no longer applies: **re-run the timed content pass** (same fixed-model,
+> self-timed subagent) **and update that row in the same change.** Never cite an existing
+> row's time for a doc you just edited without re-measuring — that's how a stale figure
+> ships. (If you edit the doc but not its verification surface, still re-measure; link
+> and claim counts drive the time.)
+
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
 | `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~55s | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
