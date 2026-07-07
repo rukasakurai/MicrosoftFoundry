@@ -1,5 +1,13 @@
 # Microsoft Entra Agent Registry Guide
 
+> ⚠️ **Retired API (2026-06-15).** The Microsoft Graph beta Agent Registry API this guide
+> uses (`/beta/agentRegistry/agentInstances`) is retired: registration (`POST`) returns
+> **HTTP 503** ("use the Microsoft Agent 365 registration API"), though read (`GET`) still
+> works. **Do not follow the registration steps below as-is.** The registry has converged
+> into [Agent Registry APIs powered by Microsoft Agent 365](https://learn.microsoft.com/en-us/microsoft-agent-365/admin/graph-api);
+> see [Agent Registry convergence with Microsoft Agent 365](https://learn.microsoft.com/en-us/entra/agent-id/agent-registry-convergence).
+> This guide is pending a rewrite against the new API.
+
 This guide explains how to register AI agents in the **Microsoft Entra Agent Registry** for visibility and governance. This makes your agents discoverable and manageable in the Microsoft Entra admin center.
 
 > **Looking for Agent Identity?** If you want your agent to authenticate as itself (get tokens, access resources), see [entra-agent-identity.md](./entra-agent-identity.md) instead.

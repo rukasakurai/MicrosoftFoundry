@@ -20,8 +20,6 @@ The deployment provisions:
 - **Resource Group**: Container for all resources
 - **Azure AI Services (Cognitive Services)**: Multi-service resource of kind `AIServices`
 - **Cognitive Services Project**: Project for organizing AI solutions
-- **Cognitive Services Application** (optional): Application container for agent deployments
-- **Agent Deployment** (optional): Agent deployment resource for operationalizing AI agents
 
 ## Quick Start
 
@@ -62,7 +60,6 @@ This command will:
 | `location` | `japaneast` | Azure region for deployment |
 | `cognitiveServicesSku` | `S0` | SKU for Azure AI Services |
 | `projectDisplayName` | `Microsoft Foundry Project` | Display name for the project |
-| `enableAgentDeployments` | `false` | Enable application and agent deployment resources |
 
 ### Customizing Parameters
 
@@ -74,22 +71,6 @@ azd up --parameter location=eastus
 
 Or edit the `infra/main.parameters.json` file before deployment.
 
-#### Enabling Agent Deployments
-
-To enable the application and agent deployment resources:
-
-```bash
-azd up --parameter enableAgentDeployments=true
-```
-
-#### Using Hosted Deployment Type
-
-For hosted deployments with custom scaling:
-
-```bash
-azd up --parameter enableAgentDeployments=true --parameter agentDeploymentType=Hosted --parameter agentDeploymentMinReplicas=2 --parameter agentDeploymentMaxReplicas=5
-```
-
 ### Environment Variables
 
 After deployment, the following outputs are available as environment variables:
@@ -99,8 +80,6 @@ After deployment, the following outputs are available as environment variables:
 - `COGNITIVE_SERVICES_NAME`: AI Services account name
 - `COGNITIVE_SERVICES_ENDPOINT`: AI Services endpoint URL
 - `PROJECT_NAME`: Project name
-- `APPLICATION_NAME`: Application name (when `enableAgentDeployments` is true)
-- `AGENT_DEPLOYMENT_NAME`: Agent deployment name (when `enableAgentDeployments` is true)
 
 Access these values with:
 
@@ -127,66 +106,9 @@ azd env get-values
 azd down
 ```
 
-## Agent Deployments
+## Creating and Publishing Agents
 
-### Overview
-
-Agent deployments (`Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments`) provide infrastructure to **publish and host** AI agents you've already built. This resource type is part of the Azure AI Services hierarchy:
-
-```
-accounts
-  └── projects
-        └── applications          ← Provides stable endpoint, identity, and governance
-              └── agentDeployments ← Running instance that routes traffic to an agent version
-```
-
-> **Important**: These resources do NOT create AI agents. They create the infrastructure to publish/host agents you've built in the Foundry portal or via SDK.
-
-### Understanding the Workflow
-
-| Step | Action | How |
-|------|--------|-----|
-| 1 | Provision infrastructure | `azd up` (this template) |
-| 2 | Create an agent | Foundry portal → Agents → Create agent, or via SDK |
-| 3 | Publish the agent | Foundry portal → Publish Agent, or via REST API |
-
-When you publish an agent from the Foundry portal, it automatically creates an application and deployment. The `enableAgentDeployments` parameter in this template pre-provisions empty application/deployment resources that can be updated later.
-
-### When to Use Agent Applications
-
-Publishing an agent to an application enables:
-
-- **External sharing**: Share with teammates or customers without granting project access
-- **Stable endpoint**: Update agent versions without changing the endpoint URL
-- **Distinct identity**: Separate RBAC rules and audit trail from the project
-- **User data isolation**: Each user's interactions are isolated from others
-- **Azure Policy integration**: Govern the application as an ARM resource
-
-### Deployment Types
-
-- **Managed**: Azure manages the deployment infrastructure automatically
-- **Hosted**: You control scaling with `minReplicas` and `maxReplicas` parameters
-
-### Limitations
-
-- Agent deployments require the `enableAgentDeployments` parameter to be set to `true`
-- The resource type is in preview (`2025-10-01-preview` API version)
-- Bicep type validation may not be available for this resource type until it reaches general availability
-- **Agent logic/behavior must be created separately** (via the [Foundry portal](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/quickstart?view=foundry), SDK, or [REST API](https://learn.microsoft.com/en-us/rest/api/azureai/agents)) - Bicep provisions the hosting infrastructure and can register agent resources, but does not define the agent's code or instructions. See the [Azure AI Foundry Agents documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview?view=foundry) for details. *(As of December 2025; this may change as the service evolves.)*
-
-### Example Usage
-
-1. **Basic deployment with agent deployments enabled:**
-   ```bash
-   azd up --parameter enableAgentDeployments=true
-   ```
-
-2. **Custom application and deployment names:**
-   ```bash
-   azd up --parameter enableAgentDeployments=true \
-          --parameter applicationName=my-ai-app \
-          --parameter agentDeploymentName=my-agent-deployment
-   ```
+This template provisions **infrastructure only** (account, project, model deployment). Agents live in the **data plane** (created via the project endpoint's `/agents` API), not as ARM/Bicep resources — so they're created and published as a separate step after `azd up`. Publishing an agent (portal or REST) auto-creates the underlying application/agent-deployment resources; this template does not pre-provision them. See [agent-creation.md](agent-creation.md).
 
 ## Additional Resources
 
@@ -194,8 +116,6 @@ Publishing an agent to an application enables:
 - [Bicep Documentation](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/)
 - [Azure AI Services Documentation](https://learn.microsoft.com/en-us/azure/ai-services/)
 - [Microsoft.CognitiveServices/accounts Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts)
-- [Microsoft.CognitiveServices/accounts/projects/applications Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications)
-- [Microsoft.CognitiveServices/accounts/projects/applications/agentDeployments Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts/projects/applications/agentdeployments)
 
 ## Documentation Test History
 

@@ -1,23 +1,33 @@
 ---
 name: e2e-foundry-baseline
-description: Run an end-to-end (E2E) test of this repo's Microsoft Foundry baseline before merging to main — provision an isolated azd environment, verify the model deploys and serves a response and that an agent can be created, then tear it down. Use when validating an infra/, scripts/, or agent-flow change against the E2E-before-merge policy, or when deciding how much regression to run for a PR.
+description: Run end-to-end (E2E) verification of this repo's Microsoft Foundry baseline and its documentation/runbooks (README + docs/) before merging to main — provision an isolated azd environment, verify the model deploys and serves a response and that an agent can be created, walk each doc's runnable steps (including browser/GUI steps via Playwright MCP) and confirm the docs aren't stale, then tear it down. Use when validating an infra/, scripts/, docs/, or agent-flow change against the E2E-before-merge policy, or when deciding how much regression to run for a PR.
 ---
 
-# E2E-testing the Microsoft Foundry baseline
+# E2E verification of the Microsoft Foundry baseline
 
 ## When to Use
 
 - A PR touches `infra/`, `scripts/`, or a documented agent flow and must satisfy the
-  **E2E-testing-before-merge** expectation (see `AGENTS.md` → Development & Deployment).
-- You need to decide *how much* to test for a given PR (regression scope is a
+  **E2E-before-merge** expectation (see `AGENTS.md` → Development & Deployment).
+- A PR touches `README.md` or `docs/` and you need to confirm the documented steps
+  actually work when followed and that the docs aren't **stale**. Historically a human
+  ran the runbook; Copilot can now execute it too — including GUI steps, via Playwright
+  MCP (see the coverage map below).
+- You need to decide *how much* to verify for a given PR (regression scope is a
   per-PR judgment call).
 - You need a repeatable, isolated way to prove the baseline actually runs — not just
   that Bicep compiles.
 
+This skill covers two kinds of verification: **executing** the baseline and its
+runbooks (run it, observe the result), and **checking documents against reality**
+(does the markdown still match the live portal/API/Learn — i.e. is it stale). Both
+must stay concrete: a verification is only a PASS if you *observed* the result — see
+"blocked ≠ pass" below.
+
 This skill assumes the **Microsoft Foundry resource** architecture
 (`Microsoft.CognitiveServices/accounts`, kind `AIServices`) provisioned by this repo.
 
-## Testable surfaces, feasibility, and reference times
+## Verifiable surfaces, feasibility, and reference times
 
 Pick the smallest set that covers the changed behavior; escalate to more of the list
 only when the change warrants it.
@@ -29,7 +39,7 @@ grounded.
 
 Budget the **fixed overhead** any provisioning flow carries, on top of the per-flow
 time below: `azd provision` ~**2.5 min** and, at the end, `azd down --force --purge`
-~**3 min** (observed 2m48s–3m07s). So a clean provision→test→teardown cycle is
+~**3 min** (observed 2m48s–3m07s). So a clean provision→verify→teardown cycle is
 ~**6 min minimum** even for a 2-second data-plane check. Batch multiple data-plane
 flows into one provisioned environment rather than paying that overhead per flow.
 
@@ -38,9 +48,10 @@ provision→teardown cycles you run, not by summing the rows — the data-plane 
 (2, 3, 4, 6, 10) share **one** provisioned env (~40s combined after provision):
 
 - **Core happy-path** (provision → flows 2, 3, 4, 6, 10 → teardown): ~**6–7 min**.
-- **Full regression**: ~**20–25 min** — the core cycle plus separate provision→teardown
-  cycles for flow 7 (toggle, fails) and flow 12 (region), flow 5 (.NET, local, ~10s)
-  and flow 9 (OIDC, CI, ~20–60s); flow 11 isn't runnable without OAuth credentials.
+- **Full regression**: ~**20–25 min** — the core cycle plus a separate provision→teardown
+  cycle for flow 12 (region), plus flow 5 (.NET, local, ~10s) and flow 9 (OIDC, CI,
+  ~20–60s); flow 7 is a ~5s static check (no provisioning), and flow 11 isn't runnable
+  without OAuth credentials.
 
 These are **machine/Azure wall-clock only**, assuming you're already authenticated,
 consent is already granted, every flow passes first try, and no result interpretation.
@@ -65,8 +76,8 @@ Treat the minute figures as a **floor**, not an ETA.
 | 4 | Agent run step (documented flow) | run → 200 | ~2s | ✅ old `…/responses?api-version=` returns 404; use `/openai/v1/responses` |
 | 5 | Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | ~17s (warm; first run adds restore+build) | ✅ builds and creates an agent. Uses `AzureCliCredential` (not `DefaultAzureCredential`, which stalls ~3 min probing IMDS locally). Pins stable `Azure.AI.Projects` 2.0.1 / `Azure.AI.Projects.Agents` 2.0.0 |
 | 6 | MCP agent + evidence-safe validation (`scripts/verify-agent-run.sh`) | create + run; return a **pass/fail/invalid** verdict from the output items (not just prose). `mcp_call` with output → `pass`; message-only → `invalid` | ~15s | ✅ easy with an auth-free MCP. `pass` + `invalid` are testable here; the `fail`/consent branch needs an OAuth connection (flow 11). `create-mcp-agent.sh` runs it automatically |
-| 7 | `enableAgentDeployments=true` path | provision with the toggle on | ~180s to fail | ❌ fails: `Agents cannot be null or empty` — [known bug #34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34); supplying `agents:[…]` via ARM does **not** fix it |
-| 8 | Agent publish → application/deployment update | agent deployed to an application | ~50s (ARM attempt) | ⚠️ ARM path fails (same as flow 7, [#34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34)); the **portal Publish** action works — use it (Playwright) |
+| 7 | `enableAgentDeployments` toggle removed (#34) | compiled ARM has no `enableAgentDeployments` param and no `applications`/`agentDeployments` resources (`az bicep build` + `jq`) | ~5s | ✅ resolves #34: the toggle always failed (`Agents cannot be null or empty`) because agents are data-plane only (created via `/agents`, flows 3/5) and published via portal/REST (flow 8) — it was removed rather than fixed |
+| 8 | Agent publish → application/deployment | agent published to an application | ~50s | ⚠️ not an ARM/Bicep path; use **portal Publish** (Playwright) or the publish REST API — publishing auto-creates the application + deployment |
 | 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~20–60s (runner queue) | ⚠️ triggers via `gh workflow run`; green needs an Entra federated-identity credential matching the branch ref (`AADSTS700213` otherwise) |
 | 10 | Entra agent identity / registry | `instance_identity` present; agent visible in portal | ~5s | ✅ identity auto-created (agent API); agent also visible in the nextgen portal project view (Playwright) |
 | 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy: needs a real OAuth app (client id/secret). Portal "Connect a tool → MCP" dialog exists (Playwright); a working OAuth connection can't be created without those credentials |
@@ -125,6 +136,44 @@ REST URLs (nested `accounts/.../projects/.../applications?...`) with `HTTP 400
 Invalid URL`, while short URLs, ARM template deployments, and data-plane
 (`*.services.ai.azure.com`) calls succeed. Prefer `azd`/ARM deployments or the
 portal over direct `az rest` for nested management resources.
+
+## Documentation coverage (README + docs/)
+
+Each doc below maps to one or more flows above (or a docs-accuracy check); the **How an
+AI verifies a doc** runbook after the table says how, and results go in that doc's own
+**Documentation Test History**.
+
+The **content-verify time** is the wall-clock for a *content staleness pass* (links,
+API-version currency, and claim accuracy vs the repo and Microsoft Learn) — **not** a
+full runnable pass (that adds the ~6 min provision→teardown). Each is a single-run
+reference from a `general-purpose` subagent on a **fixed model** (`claude-sonnet-4.5`,
+self-timed) — the fixed model is what keeps them roughly repeatable. Treat as a floor;
+GUI/Playwright and live provisioning are extra.
+
+| Doc | Covered by | Content-verify time | AI-verifiable now? |
+| --- | --- | --- | --- |
+| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~55s | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
+| `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ~15s | ✅ |
+| `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~30s | ✅ (flow 8 publish: REST is scriptable; the portal path uses Playwright) |
+| `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
+| `docs/entra-agent-identity.md` | flow 10 | ~30s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
+| `docs/entra-agent-registry.md` | flow 10 | ~30s | ❌ **registration retired 2026-06-15**: `POST /beta/agentRegistry/agentInstances` returns `503` ("use the Microsoft Agent 365 registration API"), though `GET` still returns `200` — the doc's core register flow is broken and it's stale until rewritten |
+| `docs/agent-mcp-oauth.md` | flow 11 | ~35s | ⚠️ needs a real OAuth app (client id/secret) |
+| `docs/data-security-governance.md` | docs-accuracy check (no provisioning flow) | ~15s | ✅ verify the claims against Microsoft Learn + the live portal pane with Playwright; it's a **preview** feature, so confirm the caveats still hold and date the result |
+
+## How an AI verifies a doc (runbook)
+
+1. **Read the whole doc first**, then run the steps in order in an isolated env
+   (reuse the provisioned baseline for data-plane docs; see the procedure below).
+2. **Execute every runnable step**, including GUI ones — drive the portal with
+   Playwright MCP (`foundry-ui-playwright`), don't just assert the docs *say* to click.
+3. **Fix small drift in place** (stale API version, renamed portal label, wrong
+   endpoint) as part of the verification, exactly as the historical human testers did.
+4. **Append a dated entry** to that doc's *Documentation Test History* (PASS / PASS
+   with fixes / FAIL + what changed). Keep it **public-safe**: status + HTTP codes +
+   short replies, never tokens, subscription/tenant IDs, or endpoints.
+5. **Blocked ≠ pass.** If a step needs a credential/role/consent you don't have, mark
+   that step ⚠️ and say what's required — don't record a PASS you didn't observe.
 
 ## Prerequisites and the auth gotcha
 

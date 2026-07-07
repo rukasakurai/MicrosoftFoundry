@@ -11,7 +11,6 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 - Foundry project configuration
 - A default model deployment so the baseline is runnable out of the box
 - Observability (Log Analytics + Application Insights) connected to the project so agent runs are traceable in the portal (optional, on by default via `enableObservability`)
-- Application and agent deployment resources for operationalizing AI agents
 - Azure Developer CLI (azd) integration for streamlined deployment
 - Human and AI collaboration guidance (AGENTS.md)
 
