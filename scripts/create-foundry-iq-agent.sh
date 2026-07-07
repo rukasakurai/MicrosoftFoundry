@@ -30,12 +30,14 @@ AGENT_NAME="iq-agent"
 MODEL_ID="${MODEL_DEPLOYMENT_NAME:-gpt-5.4}"
 PROMPT="What is the uptime SLA of Contoso Cloud, and how much storage does the Enterprise tier include? Cite your sources."
 INSTRUCTIONS="You must use the knowledge base to answer every question. Never answer from your own knowledge. If the answer is not in the knowledge base, respond \"I don't know\". Always cite sources."
+CREATE_ONLY=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     --agent-name) AGENT_NAME="$2"; shift 2;;
     --model) MODEL_ID="$2"; shift 2;;
     --prompt) PROMPT="$2"; shift 2;;
+    --create-only) CREATE_ONLY=true; shift;;
     --help|-h) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     *) echo "Unknown option: $1 (use --help)"; exit 1;;
   esac
@@ -64,6 +66,11 @@ jq -n --arg m "$MODEL_ID" --arg i "$INSTRUCTIONS" --arg u "$MCP_ENDPOINT" --arg 
     project_connection_id:$c}]}
 }' | curl -fsS -X POST "${PROJECT_ENDPOINT}/agents/${AGENT_NAME}/versions?api-version=v1" \
   -H "Authorization: Bearer ${TOKEN}" -H "Content-Type: application/json" -d @- | jq '{name,version,status}'
+
+if [ "$CREATE_ONLY" = true ]; then
+  echo "Agent '${AGENT_NAME}' created. Ask it a question by re-running this script without --create-only."
+  exit 0
+fi
 sleep 3
 
 echo "Running agent..."

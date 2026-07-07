@@ -95,4 +95,14 @@ jq -n --arg n "$KB_NAME" --arg ks "$KS_NAME" '{
   -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d @- >/dev/null
 
 echo "Foundry IQ knowledge base '${KB_NAME}' is ready."
-echo "Create and run an agent against it with: scripts/create-foundry-iq-agent.sh"
+
+# Create the agent too, so `azd up` leaves a ready-to-query Foundry IQ agent with
+# no manual steps. Reuse the agent script (single source of truth) in create-only
+# mode. Needs the connection outputs from Bicep; skip gracefully if unset.
+if [ -n "${KNOWLEDGE_BASE_CONNECTION_NAME:-}" ] && [ -n "${PROJECT_ENDPOINT:-}" ]; then
+  echo "Creating the Foundry IQ agent..."
+  "$(dirname "$0")/create-foundry-iq-agent.sh" --create-only
+  echo "Ask it a question with: scripts/create-foundry-iq-agent.sh"
+else
+  echo "Set KNOWLEDGE_BASE_CONNECTION_NAME and PROJECT_ENDPOINT, then create an agent with: scripts/create-foundry-iq-agent.sh"
+fi
