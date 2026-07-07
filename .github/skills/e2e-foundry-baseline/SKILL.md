@@ -147,16 +147,25 @@ Playwright MCP** (see the `foundry-ui-playwright` skill) rather than skipping th
 Record the outcome in that doc's own **Documentation Test History** section — a dated
 `PASS` / `PASS with fixes` / `FAIL` entry plus what you changed.
 
-| Doc | Covered by | AI-verifiable now? |
-| --- | --- | --- |
-| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
-| `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ✅ |
-| `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ✅ (flow 8 publish: REST is scriptable; the portal path uses Playwright) |
-| `docs/azure-oidc-setup.md` | flow 9 | ⚠️ needs an Entra federated-identity credential set up out-of-band |
-| `docs/entra-agent-identity.md` | flow 10 | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
-| `docs/entra-agent-registry.md` | flow 10 | ❌ **Agent Registry API retired 2026-06-15** (a live call returns `503`, "use the Microsoft Agent 365 registration API") — the doc is stale and a run will FAIL until it's rewritten |
-| `docs/agent-mcp-oauth.md` | flow 11 | ⚠️ needs a real OAuth app (client id/secret) |
-| `docs/data-security-governance.md` | docs-accuracy check (no provisioning flow) | ✅ verify the claims against Microsoft Learn + the live portal pane with Playwright; it's a **preview** feature, so confirm the caveats still hold and date the result |
+The **content-verify time** column below is the wall-clock for a *content staleness pass*
+(read the doc; check internal/external links, API-version currency, and claim accuracy
+against the repo and Microsoft Learn) — **not** a full runnable/provisioning pass, which
+adds the ~6 min provision→teardown overhead for the flows a doc maps to. Times are a
+single-run reference measured by a `general-purpose` subagent on a **fixed model**
+(`claude-sonnet-4.5`, self-timed via `date`); the fixed model is what makes them roughly
+repeatable. Treat them as a floor — GUI/Playwright steps and any live provisioning are
+extra.
+
+| Doc | Covered by | Content-verify time | AI-verifiable now? |
+| --- | --- | --- | --- |
+| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~55s | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
+| `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ~15s | ✅ |
+| `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~30s | ✅ (flow 8 publish: REST is scriptable; the portal path uses Playwright) |
+| `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
+| `docs/entra-agent-identity.md` | flow 10 | ~30s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
+| `docs/entra-agent-registry.md` | flow 10 | ~30s | ❌ **registration retired 2026-06-15**: `POST /beta/agentRegistry/agentInstances` returns `503` ("use the Microsoft Agent 365 registration API"), though `GET` still returns `200` — the doc's core register flow is broken and it's stale until rewritten |
+| `docs/agent-mcp-oauth.md` | flow 11 | ~35s | ⚠️ needs a real OAuth app (client id/secret) |
+| `docs/data-security-governance.md` | docs-accuracy check (no provisioning flow) | ~15s | ✅ verify the claims against Microsoft Learn + the live portal pane with Playwright; it's a **preview** feature, so confirm the caveats still hold and date the result |
 
 ## How an AI verifies a doc (runbook)
 
