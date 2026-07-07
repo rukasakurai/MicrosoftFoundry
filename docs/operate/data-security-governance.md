@@ -32,6 +32,9 @@ it makes an agent withhold confidential documents from users who shouldn't see t
 during RAG.* It does not do that. This note draws the boundary so you can pick the
 right control for your goal.
 
+Sibling notes cover the neighboring Compliance tabs:
+[Policies](policies.md) and [Guardrails](guardrails.md).
+
 For the authoritative references, see
 [Manage compliance and security in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security)
 and [Use Microsoft Purview to manage data security & compliance for Microsoft Foundry](https://learn.microsoft.com/purview/ai-azure-foundry).

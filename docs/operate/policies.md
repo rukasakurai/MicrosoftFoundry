@@ -18,6 +18,10 @@ References:
 [Create a guardrail policy](https://learn.microsoft.com/azure/foundry/control-plane/quickstart-create-guardrail-policy),
 [Guardrails overview](https://learn.microsoft.com/azure/foundry/guardrails/guardrails-overview).
 
+Sibling notes cover the neighboring Compliance tabs:
+[Guardrails](guardrails.md) and
+[Data security and governance](data-security-governance.md).
+
 ## What it is
 
 The Foundry portal's **Create policy** page is an

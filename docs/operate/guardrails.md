@@ -18,6 +18,10 @@ The Microsoft Foundry portal exposes **two different "Guardrails" surfaces**. Th
 Compliance one is easy to over-trust because it uses the same label as the Build
 authoring surface. This note draws that boundary.
 
+Sibling notes cover the neighboring Compliance tabs:
+[Policies](policies.md) and
+[Data security and governance](data-security-governance.md).
+
 ## What it is
 
 The **Operate → Compliance → Guardrails** tab is a preview, read-only comparison view
