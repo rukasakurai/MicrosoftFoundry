@@ -50,6 +50,13 @@ configuration compliance** — whether each deployment's content filter is confi
 meet that minimum — and reports that status on the **Policies** / **Assets** tabs; it
 doesn't inspect runtime prompts/responses, apply a filter, or block a deployment.
 
+**Scan results are not immediate.** After creating or editing a policy, the Policies
+table can show **No scan results** before Azure Policy evaluates the scope. Expect
+**tens of minutes**, not seconds: Microsoft Learn says to allow up to **30 minutes** for
+a guardrail policy to appear in the Foundry portal, and Azure Policy's normal compliance
+cycle can take up to **24 hours**. Treat **No scan results** shortly after creation as
+"not evaluated yet," not as compliant or noncompliant.
+
 Reference:
 [Azure Policy built-in initiatives — Cognitive Services](https://learn.microsoft.com/azure/governance/policy/samples/built-in-initiatives#cognitive-services)
 and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-services/policy-reference#foundry-tools).
