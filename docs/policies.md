@@ -55,12 +55,11 @@ and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-se
 
 It is **not** a way to apply controls at a Foundry-resource, project, deployment, or
 agent scope. The Foundry portal assigns policy only at **subscription** or **resource group**
-scope. To configure controls on a specific model deployment or agent, use
-**Build → Guardrails** instead.
+scope.
 
 It is also **not** an audit log or runtime blocker for unsafe input or output. It can
 require that a deployment's guardrail is configured to annotate or block, then audit
-whether the deployment's **configuration** meets that requirement. The guardrail/content
-filter does the actual detection and blocking at inference time. For app-level
-enforcement outside Foundry guardrails, call **Azure AI Content Safety** from the
-application.
+whether the deployment's **configuration** meets that requirement. For controls at a
+specific deployment, agent, app, or request boundary, use the runtime enforcement layer
+instead: **Build → Guardrails** for Foundry-managed models/agents, or **Azure AI Content
+Safety** directly from application code when you own the enforcement path.
