@@ -39,6 +39,39 @@ When the new experience is on, the left nav shows **Operate**, containing:
 | Quota | `/operate/quota` | Model deployment quota; **Show all** toggle |
 | Admin | `/operate/manage` | Projects, users, connected resources |
 
+Assets aggregates **subscription-wide across all projects** (columns like Status,
+Version, Error rate, Estimated cost, Token usage on the Agents sub-tab; endpoint on
+the Tools sub-tab), which makes it the place to confirm a fleet-wide view of what a
+provisioning change produced. (Verified live 2026-07-07: a Bicep-provisioned Foundry IQ
+`RemoteTool` connection appears under **Assets → Tools** with its knowledge-base MCP
+endpoint, and its agent under **Assets → Agents**.)
+
+### Build (authoring) panes
+
+The **Build** menu is where you author and test. Its panes (verified live 2026-07-07):
+
+| Pane | Path suffix | Notes |
+| --- | --- | --- |
+| Agents | `/build/agents` | Agent list; open one for the **Playground** (chat + Tools/Knowledge bindings), Details, Traces |
+| Models | `/build/models` | Model deployments |
+| Tools | `/build/tools` | Connected tools (MCP, etc.) |
+| Knowledge | `/build/knowledge` | Labeled **"Knowledge (Foundry IQ)"**; tabs **Knowledge bases / Indexes** |
+| Guardrails | `/build/guardrails` | |
+| Memory | `/build/memory` | |
+| Data | `/build/data` | |
+
+**Navigate Build sub-panes by clicking the left-nav link from `/build`** (or from any
+Build pane). The click-through navigation is reliable; the project-root deep link in the
+next section lands you correctly, and from there the in-app links do the rest.
+
+**Foundry IQ in the portal (verified 2026-07-07).** An agent's Playground shows its bound
+knowledge base under **Knowledge** (e.g. `kb-foundry-iq`), and a grounded query renders
+inline citations with the trace `mcp_list_tools → knowledge-base → message` — the
+signature of the `knowledge_base_retrieve` MCP tool. To *browse* a knowledge base under
+**Build → Knowledge**, select a Foundry IQ (Azure AI Search) resource and choose **Connect**;
+the portal creates its own browse connection for that pane (default auth **API Key**),
+which is separate from any connection your IaC provisions for an agent's runtime use.
+
 ### Building a deep link from azd outputs
 
 You can jump straight to a project workspace instead of clicking through. Get the values with `azd env get-values`, then construct:
@@ -59,6 +92,7 @@ The portal redirects this to the appropriate `/foundryProject/...` or `/nextgen/
 - **Enumerate nav cheaply with `browser_evaluate`** instead of dumping huge snapshots, e.g. collect `button/a/[role=tab]` `innerText` + `href` and test for the pane you care about. This is far smaller than a full snapshot of the Foundry portal (which is large).
 - **`browser_evaluate(... .click())` is a reliable fallback** when `browser_click` rejects its target/ref argument. Match the element by trimmed text or aria-label.
 - **The browser stays open across tool calls** until `browser_close`. Close it when done to free the session.
+- **Read-only navigation and inspection are what this signed-in session does reliably** — walking panes, reading labels, running an existing agent in the Playground, and capturing screenshots. Actions that *write Azure resources* (e.g. **Connect**/create/delete a connection under Build → Knowledge) go through ARM and may require interactive MFA that the browser session doesn't carry; if you need to create such a resource, provision it via IaC/CLI and use the portal to confirm it appears.
 - **Docs vs reality flow:** read the doc text first via `web_fetch` on the docs API (`https://learn.microsoft.com/api/article/body?pathname=/en/azure/foundry/...`) for clean markdown; then use Playwright to confirm the exact live labels/panes. Note any drift (label renames, preview gating, toggle requirements) with the date, since the portal changes often.
 - **Inspecting what a pane actually loads:** the `/nextgen` portal calls a private internal BFF (`ai.azure.com/nextgen/api/...Resolver`, no `api-version`), **not** public ARM (`management.azure.com`). When you need to confirm a feature is real from its network traffic, or to understand the docs' "available through the Foundry portal only" wording, see **[references/portal-backend-api.md](references/portal-backend-api.md)**.
 
