@@ -20,11 +20,14 @@ References:
 
 ## What it is
 
-The Foundry portal's **Create policy** page is a front-end over
-**[Azure Policy](https://learn.microsoft.com/azure/governance/policy/overview)**:
-submitting it creates an Azure Policy **assignment** (creating or deleting one needs the
-**Resource Policy Contributor** role; deleting the Foundry policy removes the underlying
-Azure Policy assignment).
+The Foundry portal's **Create policy** page is an
+**[Azure Policy](https://learn.microsoft.com/azure/governance/policy/overview)**-backed
+configuration-governance surface: creating or editing policies requires the **Resource
+Policy Contributor** or **Owner** role, and the selected controls map to built-in Azure
+Policy definitions. Microsoft Learn says deleting a Foundry policy removes the underlying
+Azure Policy assignment; that assignment object did not appear in `az policy assignment
+list` during this PR's observation window, so treat the exact assignment materialization
+as unverified here.
 
 **Scope is subscription or resource group only.** The scope step offers just
 **Subscription** and **Resource group** — you *cannot* target an individual Foundry
