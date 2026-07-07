@@ -45,9 +45,8 @@ flows into one provisioned environment rather than paying that overhead per flow
 
 **Keeping Foundry IQ E2E fast (`enableFoundryIq=true`).** The `~2.5 min` provision
 figure above is the *fast* case; with Foundry IQ the provision includes an **Azure AI
-Search service whose allocation time is highly variable — observed 6s to ~13 min for
-the same SKU and region**. That variance is Azure-side allocation, not a hang and not
-SKU-tunable, so:
+Search service whose allocation time is highly variable — observed 6s to ~13 min on the
+`basic` SKU in the same region**. That variance is Azure-side allocation, not a hang, so:
 
 - **Reuse a warm env for data-plane iteration.** The Search allocation is paid once.
   Most Foundry IQ iteration is on the *scripts* (`scripts/foundry-iq-setup.sh`,
@@ -56,12 +55,14 @@ SKU-tunable, so:
   `infra/` changes or as the final pre-merge gate.
 - **Keep Search at `basic`.** Basic is the *minimum* tier that supports agentic
   retrieval (Free doesn't), and it's sufficient for this baseline, so a higher tier
-  (Standard) only adds cost with no benefit here. Provisioning time is variable
-  regardless of tier (only Basic was measured), so a higher SKU is not a way to
-  provision faster.
+  (Standard) only adds cost with no benefit here. (Whether a higher tier allocates any
+  faster or slower was not measured — only `basic` was used — so don't bump the SKU
+  expecting a speed change either way.)
 - **Drop what you're not testing.** `enableFoundryIq` is off by default, so the
   standard baseline never pays this cost; likewise set `enableObservability=false` when
-  observability isn't under test (saves the Log Analytics + App Insights ~45s).
+  observability isn't under test (drops the Log Analytics + App Insights resources,
+  each ~20-25s to provision — though they run in parallel and Search usually dominates
+  the critical path, so the wall-clock saving is often small).
 - **A slow Search create is variance, not failure.** Don't abort a run that's still
   provisioning Search; region-hopping is a last resort only (it adds a variable).
 

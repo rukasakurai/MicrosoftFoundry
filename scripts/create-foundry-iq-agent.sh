@@ -12,8 +12,10 @@
 #   - scripts/foundry-iq-setup.sh (azd postprovision hook) created the index,
 #     documents, knowledge source, and knowledge base (KNOWLEDGE_BASE_NAME).
 #
-# This script only creates the agent and runs it; it does not create the
-# connection or the knowledge base.
+# This script creates the agent and (by default) runs it once to show a grounded,
+# cited answer; it does not create the connection or the knowledge base. Pass
+# --create-only to create the agent without running it — the postprovision hook
+# (scripts/foundry-iq-setup.sh) uses that mode so `azd up` leaves a ready agent.
 #
 # Prerequisites:
 #   - azd up with enableFoundryIq=true, then: eval $(azd env get-values)
@@ -22,7 +24,8 @@
 #
 # Usage:
 #   set -a; eval "$(azd env get-values)"; set +a
-#   ./scripts/create-foundry-iq-agent.sh
+#   ./scripts/create-foundry-iq-agent.sh                # create + ask a sample question
+#   ./scripts/create-foundry-iq-agent.sh --create-only  # create only (used by the hook)
 
 set -euo pipefail
 
