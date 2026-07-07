@@ -62,21 +62,27 @@ param enableObservability bool = true
 @minValue(30)
 param logAnalyticsRetentionInDays int = 30
 
-@description('Enable the Azure AI Search RAG substrate: a Search service and a keyless (Entra ID) Foundry->Search connection, so an agent can be given the Azure AI Search tool for retrieval-augmented generation. The search index, documents, and the agent itself are data-plane objects created outside Bicep (see scripts/create-rag-agent.sh). Off by default.')
-param enableAiSearch bool = false
+@description('Enable the Foundry IQ substrate: an Azure AI Search service, a keyless (project managed identity) RemoteTool connection to the knowledge base MCP endpoint, and the Search role the project needs to run retrieval. The index, documents, knowledge source, knowledge base, and agent are Azure AI Search / Foundry data-plane objects created post-provisioning (see scripts/foundry-iq-setup.sh, wired as an azd postprovision hook). Off by default.')
+param enableFoundryIq bool = false
 
-@description('Name of the Azure AI Search service (only used when enableAiSearch is true)')
+@description('Name of the Azure AI Search service (only used when enableFoundryIq is true)')
 param searchServiceName string = ''
 
-@description('SKU name for the Azure AI Search service')
+@description('SKU name for the Azure AI Search service. Basic or higher is required for agentic retrieval with a managed identity.')
 @allowed([
   'basic'
   'standard'
 ])
 param searchServiceSku string = 'basic'
 
-@description('Name of the Foundry project connection to Azure AI Search')
-param searchConnectionName string = 'aisearch'
+@description('Name of the Foundry IQ knowledge base. The RemoteTool connection targets this knowledge base MCP endpoint; scripts/foundry-iq-setup.sh must create a knowledge base with this same name.')
+param knowledgeBaseName string = 'kb-foundry-iq'
+
+@description('Azure AI Search REST API version used in the knowledge base MCP endpoint. 2026-04-01 is the generally available, extractive agentic-retrieval API; 2026-05-01-preview adds server-side answer synthesis but then requires an Azure OpenAI model on the knowledge base.')
+param searchApiVersion string = '2026-04-01'
+
+@description('Name of the Foundry project RemoteTool connection to the knowledge base MCP endpoint')
+param knowledgeBaseConnectionName string = 'foundry-iq-kb'
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
@@ -185,14 +191,14 @@ resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/co
   }
 }
 
-// Azure AI Search RAG substrate (conditional). Bicep can provision the Search
-// service, a keyless Foundry->Search connection, and the role assignments the
-// project's managed identity needs to query the index. The index schema, the
-// documents, and the agent that binds the azure_ai_search tool to this
-// connection are Azure AI Search / Foundry *data-plane* objects and are created
-// outside Bicep by scripts/create-rag-agent.sh. This split is inherent: a
-// knowledge base / index is not an ARM resource.
-resource searchService 'Microsoft.Search/searchServices@2025-05-01' = if (enableAiSearch) {
+// Foundry IQ substrate (conditional). Bicep can provision the Azure AI Search
+// service, the RemoteTool connection the project uses to reach the knowledge
+// base's MCP endpoint, and the Search role the project's managed identity needs
+// to run retrieval. The index, documents, knowledge source, knowledge base, and
+// the agent are Azure AI Search / Foundry *data-plane* objects created after
+// provisioning by scripts/foundry-iq-setup.sh (an azd postprovision hook). This
+// split is inherent: a knowledge base is not an ARM resource.
+resource searchService 'Microsoft.Search/searchServices@2025-05-01' = if (enableFoundryIq) {
   name: !empty(searchServiceName) ? searchServiceName : '${abbrs.searchSearchServices}${resourceToken}'
   location: location
   tags: tags
@@ -209,41 +215,40 @@ resource searchService 'Microsoft.Search/searchServices@2025-05-01' = if (enable
   }
 }
 
-// Keyless (Entra ID) connection from the Foundry project to the Search service.
-resource searchConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = if (enableAiSearch) {
+// Keyless RemoteTool connection from the Foundry project to the knowledge base's
+// MCP endpoint, authenticated by the project's managed identity. The target is a
+// URL string, so this connection can be created before the knowledge base
+// exists (the knowledge base is created post-provisioning).
+// Note: `audience` must be https://search.azure.com with NO trailing slash, or
+// the agent's runtime token fetch fails with "Missing required query parameter
+// 'audience'".
+// This wires the generally available, extractive path (searchApiVersion
+// 2026-04-01). Server-side answer synthesis (2026-05-01-preview) would also
+// require the Search service to have a managed identity with Cognitive Services
+// OpenAI User on the Foundry account, plus a model on the knowledge base.
+resource knowledgeBaseConnection 'Microsoft.CognitiveServices/accounts/projects/connections@2026-05-01' = if (enableFoundryIq) {
   parent: cognitiveServicesProject
-  name: searchConnectionName
+  name: knowledgeBaseConnectionName
   properties: {
-    category: 'CognitiveSearch'
-    target: enableAiSearch ? 'https://${searchService.name}.search.windows.net' : ''
-    authType: 'AAD'
+    category: 'RemoteTool'
+    authType: 'ProjectManagedIdentity'
+    target: enableFoundryIq ? 'https://${searchService.name}.search.windows.net/knowledgebases/${knowledgeBaseName}/mcp?api-version=${searchApiVersion}' : ''
+    audience: 'https://search.azure.com'
     isSharedToAll: true
     metadata: {
       ApiType: 'Azure'
-      ResourceId: enableAiSearch ? searchService.id : ''
     }
   }
 }
 
-// Grant the project's managed identity the roles it needs to query the index
-// keylessly. Role: Search Index Data Contributor (8ebe5a00-799e-43f5-93ac-243d3dce84a7).
-resource searchIndexDataRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableAiSearch) {
+// Grant the project's managed identity the role it needs to run knowledge base
+// retrieval keylessly. Role: Search Index Data Reader (1407120a-92aa-4202-b7e9-c0e197c71c8f).
+resource searchIndexDataReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableFoundryIq) {
   scope: searchService
-  name: guid(searchService.id, cognitiveServicesProject.id, '8ebe5a00-799e-43f5-93ac-243d3dce84a7')
+  name: guid(searchService.id, cognitiveServicesProject.id, '1407120a-92aa-4202-b7e9-c0e197c71c8f')
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7')
-    principalId: enableAiSearch ? cognitiveServicesProject.identity.principalId : ''
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Role: Search Service Contributor (7ca78c08-252a-4471-8644-bb5ff32d4ba0).
-resource searchServiceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableAiSearch) {
-  scope: searchService
-  name: guid(searchService.id, cognitiveServicesProject.id, '7ca78c08-252a-4471-8644-bb5ff32d4ba0')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7ca78c08-252a-4471-8644-bb5ff32d4ba0')
-    principalId: enableAiSearch ? cognitiveServicesProject.identity.principalId : ''
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '1407120a-92aa-4202-b7e9-c0e197c71c8f')
+    principalId: enableFoundryIq ? cognitiveServicesProject.identity.principalId : ''
     principalType: 'ServicePrincipal'
   }
 }
@@ -273,7 +278,9 @@ output PROJECT_NAME string = cognitiveServicesProject.name
 output PROJECT_ENDPOINT string = 'https://${cognitiveServices.name}.services.ai.azure.com/api/projects/${cognitiveServicesProject.name}'
 output APPLICATION_INSIGHTS_NAME string = enableObservability ? applicationInsights.name : ''
 output LOG_ANALYTICS_WORKSPACE_NAME string = enableObservability ? logAnalytics.name : ''
-output SEARCH_SERVICE_NAME string = enableAiSearch ? searchService.name : ''
-output SEARCH_ENDPOINT string = enableAiSearch ? 'https://${searchService.name}.search.windows.net' : ''
-output SEARCH_CONNECTION_NAME string = enableAiSearch ? searchConnectionName : ''
-output SEARCH_CONNECTION_ID string = enableAiSearch ? searchConnection.id : ''
+output SEARCH_SERVICE_NAME string = enableFoundryIq ? searchService.name : ''
+output SEARCH_ENDPOINT string = enableFoundryIq ? 'https://${searchService.name}.search.windows.net' : ''
+output ENABLE_FOUNDRY_IQ bool = enableFoundryIq
+output KNOWLEDGE_BASE_NAME string = enableFoundryIq ? knowledgeBaseName : ''
+output KNOWLEDGE_BASE_CONNECTION_NAME string = enableFoundryIq ? knowledgeBaseConnectionName : ''
+output SEARCH_API_VERSION string = enableFoundryIq ? searchApiVersion : ''
