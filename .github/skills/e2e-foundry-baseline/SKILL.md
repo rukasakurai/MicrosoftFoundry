@@ -139,20 +139,16 @@ portal over direct `az rest` for nested management resources.
 
 ## Documentation coverage (README + docs/)
 
-The E2E goal isn't only "the infra provisions" — it's **"every runnable step in the
-docs actually works when followed, and no doc is stale."** Each doc below maps to one or
-more flows above (or to a docs-accuracy check); the **How an AI verifies a doc** runbook
-after the table says how, and the outcome goes in that doc's own **Documentation Test
-History** section.
+Each doc below maps to one or more flows above (or a docs-accuracy check); the **How an
+AI verifies a doc** runbook after the table says how, and results go in that doc's own
+**Documentation Test History**.
 
-The **content-verify time** column below is the wall-clock for a *content staleness pass*
-(read the doc; check internal/external links, API-version currency, and claim accuracy
-against the repo and Microsoft Learn) — **not** a full runnable/provisioning pass, which
-adds the ~6 min provision→teardown overhead for the flows a doc maps to. Times are a
-single-run reference measured by a `general-purpose` subagent on a **fixed model**
-(`claude-sonnet-4.5`, self-timed via `date`); the fixed model is what makes them roughly
-repeatable. Treat them as a floor — GUI/Playwright steps and any live provisioning are
-extra.
+The **content-verify time** is the wall-clock for a *content staleness pass* (links,
+API-version currency, and claim accuracy vs the repo and Microsoft Learn) — **not** a
+full runnable pass (that adds the ~6 min provision→teardown). Each is a single-run
+reference from a `general-purpose` subagent on a **fixed model** (`claude-sonnet-4.5`,
+self-timed) — the fixed model is what keeps them roughly repeatable. Treat as a floor;
+GUI/Playwright and live provisioning are extra.
 
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
