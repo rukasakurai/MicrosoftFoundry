@@ -5,7 +5,7 @@
 > **Operate → Compliance** workspace shows a **"Preview"** badge, and every guardrail
 > policy definition behind this tab is `[Preview]`, `Audit`-only (no `Deny`).
 >
-> **A "policy" here *audits*; it does not *enforce*.** The Create-policy wizard's own
+> **A "policy" here *audits*; it does not *enforce*.** The **Create policy** flow's own
 > footer says: *"Setting a policy does not automatically enforce guardrails."* To
 > actually block unsafe content, configure a content filter / prompt shield on the
 > deployment in **Build → Guardrails** (backed by
@@ -19,13 +19,13 @@ References:
 
 ## What it is
 
-The **Create policy** wizard is a front-end over
+The **Create policy** flow is a front-end over
 **[Azure Policy](https://learn.microsoft.com/azure/governance/policy/overview)**:
 submitting it creates an Azure Policy **assignment** (creating or deleting one needs the
 **Resource Policy Contributor** role; deleting the Foundry policy removes the underlying
 Azure Policy assignment).
 
-**Scope is subscription or resource group only.** The wizard's scope step offers just
+**Scope is subscription or resource group only.** The scope step offers just
 **Subscription** and **Resource group** — you *cannot* target an individual Foundry
 resource (the Cognitive Services account) or an agent. That is inherent to Azure Policy:
 an assignment applies to a management group / subscription / resource group, never a
@@ -51,7 +51,7 @@ and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-se
 ## What it is not
 
 It is **not** a way to apply controls at a Foundry-resource, project, deployment, or
-agent scope. The wizard assigns policy only at **subscription** or **resource group**
+agent scope. The **Create policy** flow assigns policy only at **subscription** or **resource group**
 scope. To configure controls on a specific model deployment or agent, use
 **Build → Guardrails** instead.
 
