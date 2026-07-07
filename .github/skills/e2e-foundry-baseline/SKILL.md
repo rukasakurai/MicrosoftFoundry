@@ -43,6 +43,26 @@ time below: `azd provision` ~**2.5 min** and, at the end, `azd down --force --pu
 ~**6 min minimum** even for a 2-second data-plane check. Batch multiple data-plane
 flows into one provisioned environment rather than paying that overhead per flow.
 
+**Keeping Foundry IQ E2E fast (`enableFoundryIq=true`).** The `~2.5 min` provision
+figure above is the *fast* case; with Foundry IQ the provision includes an **Azure AI
+Search service whose allocation time is highly variable — observed 6s to ~13 min for
+the same SKU and region**. That variance is Azure-side allocation, not a hang and not
+SKU-tunable, so:
+
+- **Reuse a warm env for data-plane iteration.** The Search allocation is paid once.
+  Most Foundry IQ iteration is on the *scripts* (`scripts/foundry-iq-setup.sh`,
+  `scripts/create-foundry-iq-agent.sh`) and data-plane objects, not Bicep — re-run
+  those against an already-provisioned env (seconds). Do a clean `azd up` only when
+  `infra/` changes or as the final pre-merge gate.
+- **Keep Search at `basic`.** Basic is the *minimum* tier that supports agentic
+  retrieval (Free doesn't; Standard is slower and costlier with no benefit here). Don't
+  bump the SKU to go faster — there's no faster Search tier for this.
+- **Drop what you're not testing.** `enableFoundryIq` is off by default, so the
+  standard baseline never pays this cost; likewise set `enableObservability=false` when
+  observability isn't under test (saves the Log Analytics + App Insights ~45s).
+- **A slow Search create is variance, not failure.** Don't abort a run that's still
+  provisioning Search; region-hopping is a last resort only (it adds a variable).
+
 **Regression budget (wall clock, incl. teardown).** Total time is driven by how many
 provision→teardown cycles you run, not by summing the rows — the data-plane flows
 (2, 3, 4, 6, 10) share **one** provisioned env (~40s combined after provision):
