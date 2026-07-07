@@ -13,6 +13,9 @@
     },
     "principalType": {
       "value": "${AZURE_PRINCIPAL_TYPE=User}"
+    },
+    "enableAiSearch": {
+      "value": "${ENABLE_AI_SEARCH=false}"
     }
   }
 }
