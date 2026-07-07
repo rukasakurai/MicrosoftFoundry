@@ -47,16 +47,3 @@ whether each deployment's content filter meets that minimum and reports complian
 Reference:
 [Azure Policy built-in initiatives — Cognitive Services](https://learn.microsoft.com/azure/governance/policy/samples/built-in-initiatives#cognitive-services)
 and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-services/policy-reference#foundry-tools).
-
-### The GA alternatives
-
-Two GA controls do the real work — use these, not the preview Policies tab:
-
-- **Block unsafe content →** configure a **content filter / Prompt Shields** on the
-  deployment in **Build → Guardrails** (Azure AI Content Safety, GA). This enforces at
-  inference: a harmful or jailbreak prompt is blocked outright.
-- **Restrict which models can be deployed →** assign the GA Azure Policy
-  **`Foundry model deployments should only use approved models`** (`Deny`). Caveat: it
-  targets the **data-plane** type (`Microsoft.CognitiveServices.Data/accounts/deployments`),
-  so it stops portal/data-plane deploys but **ARM/Bicep (control-plane) deploys bypass it**
-  (verified: a non-approved model blocked in the portal still deployed via Bicep).
