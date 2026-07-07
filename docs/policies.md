@@ -5,8 +5,9 @@
 > **Operate → Compliance** workspace shows a **"Preview"** badge, and every guardrail
 > policy definition behind this tab is `[Preview]`, `Audit`-only (no `Deny`).
 >
-> **A "policy" here *audits*; it does not *enforce*.** The **Create policy** flow's own
-> footer says: *"Setting a policy does not automatically enforce guardrails."* To
+> **A "policy" here *audits*; it does not *enforce*.** The Foundry portal's **Create
+> policy** page says:
+> *"Setting a policy does not automatically enforce guardrails."* To
 > actually block unsafe content, configure a content filter / prompt shield on the
 > deployment in **Build → Guardrails** (backed by
 > [Azure AI Content Safety](https://learn.microsoft.com/azure/ai-services/content-safety/overview),
@@ -19,7 +20,7 @@ References:
 
 ## What it is
 
-The **Create policy** flow is a front-end over
+The Foundry portal's **Create policy** page is a front-end over
 **[Azure Policy](https://learn.microsoft.com/azure/governance/policy/overview)**:
 submitting it creates an Azure Policy **assignment** (creating or deleting one needs the
 **Resource Policy Contributor** role; deleting the Foundry policy removes the underlying
@@ -51,7 +52,7 @@ and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-se
 ## What it is not
 
 It is **not** a way to apply controls at a Foundry-resource, project, deployment, or
-agent scope. The **Create policy** flow assigns policy only at **subscription** or **resource group**
+agent scope. The Foundry portal assigns policy only at **subscription** or **resource group**
 scope. To configure controls on a specific model deployment or agent, use
 **Build → Guardrails** instead.
 
