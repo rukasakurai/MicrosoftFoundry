@@ -41,4 +41,7 @@ records whether a deployment *has* such a guardrail; it does not apply one.
   Guardrails** (Azure AI Content Safety).
 - **Govern a fleet via Azure Policy (GA, but narrow):** the only GA built-in for Foundry
   deployments is `Foundry model deployments should only use approved models` (`Deny`) —
-  it governs *which models* may deploy, **not** content-safety guardrails.
+  it governs *which models* may deploy, **not** content-safety guardrails. It targets the
+  **data-plane** type (`Microsoft.CognitiveServices.Data/accounts/deployments`), so `Deny`
+  only stops portal/data-plane deploys — **ARM/Bicep (control-plane) deploys bypass it**
+  (verified: a non-approved model blocked in the portal still deployed via Bicep).
