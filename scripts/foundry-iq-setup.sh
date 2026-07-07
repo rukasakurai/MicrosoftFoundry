@@ -74,8 +74,8 @@ done
 echo "Uploading sample documents..."
 jq -n '{value:[
   {"@search.action":"mergeOrUpload",id:"1",title:"CloudNimbus SLA",url:"https://example.com/cloudnimbus/sla",content:"CloudNimbus guarantees a 99.95% uptime SLA for all paid tiers."},
-  {"@search.action":"mergeOrUpload",id:"2",title:"CloudNimbus Aurora tier",url:"https://example.com/cloudnimbus/aurora",content:"The CloudNimbus Aurora tier includes 5 TB of included storage and priority support."},
-  {"@search.action":"mergeOrUpload",id:"3",title:"CloudNimbus support",url:"https://example.com/cloudnimbus/support",content:"CloudNimbus Aurora tier support responds within 2 business hours."}
+  {"@search.action":"mergeOrUpload",id:"2",title:"CloudNimbus Enterprise tier",url:"https://example.com/cloudnimbus/enterprise",content:"The CloudNimbus Enterprise tier includes 5 TB of included storage and priority support."},
+  {"@search.action":"mergeOrUpload",id:"3",title:"CloudNimbus support",url:"https://example.com/cloudnimbus/support",content:"CloudNimbus Enterprise tier support responds within 2 business hours."}
 ]}' | curl -fsS -X POST "$SEARCH_ENDPOINT/indexes/${INDEX_NAME}/docs/index?api-version=${API_VERSION}" \
   -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d @- | jq '{uploaded:[.value[]|{key,status}]}'
 

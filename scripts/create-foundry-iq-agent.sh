@@ -28,7 +28,7 @@ set -euo pipefail
 
 AGENT_NAME="iq-agent"
 MODEL_ID="${MODEL_DEPLOYMENT_NAME:-gpt-5.4}"
-PROMPT="What is the uptime SLA of CloudNimbus, and how much storage does the Aurora tier include? Cite your sources."
+PROMPT="What is the uptime SLA of CloudNimbus, and how much storage does the Enterprise tier include? Cite your sources."
 INSTRUCTIONS="You must use the knowledge base to answer every question. Never answer from your own knowledge. If the answer is not in the knowledge base, respond \"I don't know\". Always cite sources."
 
 while [[ $# -gt 0 ]]; do
