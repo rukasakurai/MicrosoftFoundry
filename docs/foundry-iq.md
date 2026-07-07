@@ -74,3 +74,23 @@ Same substrate (`Microsoft.Search`, data-plane, reached via a connection), but
 different retrieval mechanisms — not just a rename. See
 [Connect an Azure AI Search index to Foundry agents](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/ai-search)
 and [Connect agents to Foundry IQ knowledge bases](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect).
+
+## Where the docs and reality diverge (verified 2026-07-07)
+
+Building the automated setup surfaced two gaps between Microsoft's
+[Foundry IQ connect guidance](https://learn.microsoft.com/azure/foundry/agents/how-to/foundry-iq-connect)
+and what actually works against this repo's Microsoft Foundry
+(`Microsoft.CognitiveServices`) projects:
+
+- **The knowledge-base connection works on a `CognitiveServices` project.** The doc
+  only shows the hub/workspace form —
+  `Microsoft.MachineLearningServices/workspaces/.../connections` (api-version
+  `2025-10-01-preview`). The same `RemoteTool` / `ProjectManagedIdentity` connection
+  also works as `Microsoft.CognitiveServices/accounts/projects/connections`
+  (api-version `2026-05-01`), which is what this repo provisions in Bicep.
+- **`audience` must have _no_ trailing slash.** The doc's example uses
+  `"audience": "https://search.azure.com/"`. With the trailing slash the agent fails at
+  run time with `Missing required query parameter 'audience'`; `https://search.azure.com`
+  (no slash) works. (Also noted inline in `infra/main.bicep`.)
+
+Both are preview-era observations and may change; re-verify against the live docs.
