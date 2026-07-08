@@ -5,35 +5,38 @@ description: Use when analyzing Microsoft Foundry cost impact for this repo.
 
 ## Focus
 
-Turn this repo's Bicep/azd declarations into a Foundry cost view:
+Use this skill for issue #55's problem: the repo shows **what** Microsoft Foundry
+resources it provisions, but not **what they cost** or where the cost traps are.
 
-- **pre-flight estimate** before `azd up`;
-- **architecture cost model** for readers;
-- **marginal cost delta** for PR review.
+Keep the problem broad. The answer might be a skill, doc, script, review checklist,
+or some combination. Do not treat "an IaC-derived workflow" as the issue; that is
+only one possible implementation.
 
-Do not duplicate a generic pricing calculator. Use the repo's IaC as the source of
-truth for what gets provisioned, then add live pricing and explicit workload
-assumptions where the IaC cannot know usage.
+The cost blind spot matters in three repo uses:
+
+- **Deploying:** `azd up` has cost-relevant knobs but no pre-flight cost context.
+- **Reading:** the repo teaches Foundry architecture without the cost model a reader
+  would adopt, including hidden/non-obvious meters.
+- **Extending:** PRs can add cost drivers without a clear way to discuss marginal
+  cost impact.
 
 ## Procedure
 
-1. **Derive the bill of materials from IaC.** Read `infra/main.bicep`, `azure.yaml`,
-   and the active azd params/env values. List resources and conditionals without
-   requiring a deployed environment.
-2. **Map each resource to meters.** Assemble the split Foundry cost model manually:
-   model tokens/PTUs/GPU-style capacity, Azure AI Search/agentic retrieval, Azure
-   Monitor/Log Analytics, hosted-agent/container compute if introduced, memory if
-   introduced, and tool/IQ connection licensing where relevant.
-3. **Separate provisioned cost from workload cost.** IaC can identify SKUs,
-   regions, model names, and toggles; it cannot infer tokens, runs, retrieval
-   volume, telemetry GB, or user/tool license counts.
-4. **Fetch fresh pricing or date the estimate.** Prefer live pricing sources when
-   possible; otherwise use the Azure Pricing Calculator and record the date, region,
-   SKU, meter name, and assumptions. Never silently bake in stale prices.
-5. **For PRs, compare base vs head.** Diff the IaC/azd surface and report only the
-   marginal cost drivers added, removed, or changed.
-6. **For real spend, use Cost Management.** Calculator output is not evidence of
-   incurred cost; use `ActualCost` with scope and time range.
+1. Identify which use is in scope: deployer estimate, reader cost explanation, or
+   contributor/PR cost delta.
+2. Read the repo surface that drives cost: `infra/main.bicep`, `azure.yaml`, active
+   azd params/env values, and relevant scripts/docs for data-plane features.
+3. Explain the cost model implied by that surface. Foundry pricing is fragmented:
+   model tokens, PTUs, GPU-hours, hosted-agent container compute, separately billed
+   memory, Azure AI Search / agentic retrieval, Azure Monitor / Log Analytics, and
+   tool/IQ connection licenses can all matter depending on the feature.
+4. Separate what the repo can know from what it cannot know. IaC can reveal resources,
+   SKUs, regions, model choices, and toggles; it cannot infer workload volumes such
+   as tokens, runs, retrieval calls, telemetry GB, Search hours, or license counts.
+5. If giving numbers, use fresh pricing or date the estimate. Do not silently bake
+   in prices that will go stale.
+6. If reviewing a PR, compare base vs head and name the added/removed/changed cost
+   risks. Do not require a specific implementation unless the issue/PR does.
 
 ## Repo cost-driver map
 
@@ -43,22 +46,19 @@ assumptions where the IaC cannot know usage.
 | `modelName` / `modelVersion` / `modelSkuName` | model tokens, PTUs, or GPU-style capacity depending on SKU/model family | Major trade-off: standard token billing vs reserved/provisioned capacity. For standard token-based deployments, `modelCapacity` is throughput/quota, not a monthly bill by itself. |
 | `enableObservability=true` | Log Analytics ingestion/retention plus Application Insights telemetry | Default on. Estimate from expected telemetry GB and retention, not from resource existence alone. |
 | `enableFoundryIq=true` | Azure AI Search service hours/SKU plus agentic retrieval workload | Default off. `searchServiceSku=basic` is the baseline minimum used here; higher SKUs are a cost decision. |
-| Agents and MCP/tool use | underlying model, tool, search, hosted compute, memory, or license meters | Agents are data-plane artifacts. If a PR adds hosted agents, external tools, memory, or paid connections, add those meters even when Bicep only shows the connection. |
+| Agents, tools, memory, hosted compute | underlying model/tool/search/compute/license meters | Agents are data-plane artifacts. If a PR adds hosted agents, external tools, memory, or paid connections, include those meters even when Bicep only shows a connection. |
 
-## Required output shape
+## Output shape
 
-When reporting cost impact, use this shape:
+Use the smallest shape that answers the scenario:
 
-- **Bill of materials:** enabled resources, params, region, SKU/model/version, and
-  whether each came from default IaC or an override.
-- **Meter map:** the Azure product/meter family for each resource; call out hidden
-  or indirect meters.
-- **Assumptions required:** tokens, PTUs, runs, retrieval volume, telemetry GB,
-  Search hours, hosted compute hours, memory, license/user counts, or "not provided".
-- **Estimate:** dated, sourced, and assumption-bound. If assumptions are missing,
-  say what cannot be priced instead of inventing a dollar amount.
-- **PR delta:** for review, added/removed/changed cost drivers vs the base branch.
-- **Actual spend:** only from Cost Management `ActualCost`, with scope and time range.
+- **Deployer:** enabled resources, cost-driving params, required usage assumptions,
+  and a dated estimate if assumptions are available.
+- **Reader:** the cost model implied by the architecture, especially hidden meters
+  and standard-vs-PTU/provisioned-capacity trade-offs.
+- **Contributor/reviewer:** marginal cost drivers introduced or removed by the diff,
+  plus any assumptions needed before a dollar estimate is meaningful.
+- **Actual spend:** Cost Management `ActualCost` only, with scope and time range.
 
 ## Gotchas
 
