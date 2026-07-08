@@ -21,7 +21,7 @@ surrounding Microsoft security stack. For each risk it records:
   See the [`foundry-ui-playwright`](../../.github/skills/foundry-ui-playwright/SKILL.md) skill for the
   navigation procedure and re-verification steps.
 - **Environment:** a non-production Foundry resource (`Microsoft.CognitiveServices/accounts`, kind
-  `AIServices`) in `japaneast`. No environment identifiers are recorded here by design.
+  `AIServices`). No environment identifiers are recorded here by design.
 - **Last verified:** 2026-06-15.
 - **Caveat:** Several of the strongest Foundry controls are in **Preview**, and **Evaluations** was
   RBAC-gated in the test account. Re-confirm before relying on any single cell.
