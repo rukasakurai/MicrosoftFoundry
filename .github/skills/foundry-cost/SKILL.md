@@ -38,8 +38,13 @@ description: Use when analyzing Microsoft Foundry cost impact for this repo.
 ## Official pricing links
 
 - [Microsoft Foundry pricing](https://azure.microsoft.com/pricing/details/microsoft-foundry/)
+- [Azure AI Content Safety pricing](https://azure.microsoft.com/pricing/details/content-safety/)
 - [Azure AI Search pricing](https://azure.microsoft.com/pricing/details/search/)
 - [Azure Monitor pricing](https://azure.microsoft.com/pricing/details/monitor/)
+- [Microsoft Defender for Cloud pricing](https://azure.microsoft.com/pricing/details/defender-for-cloud/)
+- [Microsoft Purview pricing](https://azure.microsoft.com/pricing/details/purview/)
+- [Microsoft Entra pricing](https://www.microsoft.com/security/business/microsoft-entra-pricing)
+- [Azure API Management pricing](https://azure.microsoft.com/pricing/details/api-management/)
 - [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/)
 
 For Azure Pricing Calculator UI navigation, see

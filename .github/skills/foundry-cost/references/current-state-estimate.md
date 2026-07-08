@@ -31,7 +31,8 @@ workload inputs into fake precision.
    - Content Safety/guardrails: any runtime content-safety resource or usage?
 4. Separate **idle/provisioned** costs from **workload** costs. The repo can usually
    identify resources and SKUs; it cannot infer tokens, runs, retrieval calls,
-   telemetry GB, Search uptime, hosted-compute hours, memory usage, or license counts.
+   telemetry GB, Search service hours or serverless compute/storage, hosted-compute
+   hours, memory usage, or license counts.
 
 ## Pricing and actuals
 
