@@ -39,10 +39,9 @@ of duplicating their guidance:
   Calculator navigation).
 - `foundry-cost` — cost impact checks, pricing-meter mapping, Azure Pricing
   Calculator caveats, and Cost Management `ActualCost` observations.
-The operator may also have adjacent user-scoped skills installed, such as
-`microsoft-foundry-resources` for ARM provider/type/kind distinctions and
-`latest-stable-version` for API/package version checks. Use them when available, but
-don't treat them as repo-baseline files unless they exist under `.github/skills/`.
+The operator may also have adjacent user-scoped skills installed. Use them when
+available, but don't treat them as repo-baseline files unless they exist under
+`.github/skills/`.
 
 For a skills-only PR, use a lightweight skills verification pass instead of a clean
 `azd up` unless the changed skill affects provisioning/runtime behavior:
