@@ -18,12 +18,6 @@ description: Use when analyzing Microsoft Foundry cost impact for this repo.
 | Entra agent identity, registry, OIDC, OAuth | Microsoft Entra licensing or app/governance dependencies | App registrations and RBAC are usually not usage meters, but premium Entra features or tenant licenses can matter. |
 | API gateways / remote tools | Azure API Management or external service charges | Not in the baseline Bicep today; include if scripts/docs/PRs add gateway, MCP, or API front-door infrastructure. |
 
-## Output
-
-Keep reports short and assumption-bound. For the current repo baseline or an azd
-environment, use the output shape in
-[current-state-estimate.md](references/current-state-estimate.md#output-shape).
-
 ## Gotchas
 
 - The Azure Pricing Calculator is not IaC-aware. It will not read this repo's
