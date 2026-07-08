@@ -17,17 +17,12 @@ in a PR.
 
 ## How to analyze
 
-1. Read the relevant repo surface first: `infra/main.bicep`, `azure.yaml`, active
-   azd params/env values, and any scripts/docs that create data-plane artifacts.
-2. List only enabled or changed cost drivers. For PRs, compare base vs head.
-3. Separate repo-known facts from workload assumptions. The repo can show resources,
-   regions, SKUs, model names, capacity settings, and feature toggles; it cannot know
-   token volume, runs, retrieval calls, telemetry GB, Search uptime, hosted-compute
-   hours, memory usage, or license counts unless the user provides them.
-4. Use fresh pricing when giving numbers, or clearly date the estimate. Do not bake
-   in prices without a freshness note.
-5. Use Cost Management `ActualCost` only for already-incurred spend. Do not present
-   calculator output as actual spend.
+1. Use the cost-driver map below as the checklist; do not silently skip adjacent
+   tenant, compliance, identity, or gateway surfaces.
+2. For the current repo baseline or an azd environment, follow
+   [current-state-estimate.md](references/current-state-estimate.md).
+3. For PRs, compare base vs head and report only added, removed, or changed cost
+   drivers plus any missing usage assumptions.
 
 ## Cost-driver map
 
