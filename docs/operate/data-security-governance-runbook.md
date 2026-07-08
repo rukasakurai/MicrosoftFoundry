@@ -8,6 +8,54 @@ for that boundary.
 Use only synthetic data. Do not use customer data, Microsoft confidential data, or a
 production tenant.
 
+> **Estimated total latency: TBC.** The hands-on steps include several async gates
+> (role propagation, provider registration, PAYG provisioning, Audit enablement, and
+> Purview reporting). Keep this value as **TBC** until repeated runs establish a
+> reliable end-to-end range.
+
+## Draft prerequisites
+
+> **Draft list.** This is based on one live lab plus current Microsoft Learn pages.
+> It is likely incomplete. Microsoft Foundry, Purview, Defender, and DSPM surfaces are
+> moving quickly, and some prerequisites only appear after earlier gates are cleared.
+
+| Area | Requirement | Confidence |
+| --- | --- | --- |
+| Tenant | Microsoft 365 / Purview-capable tenant, not just an Azure-only tenant | High |
+| User license | A Microsoft 365 license that includes the relevant Purview/Audit/DSPM capabilities | Medium |
+| Azure subscription | Active Azure subscription in the same tenant as Purview | High |
+| Azure RBAC | Foundry tester has **Foundry Account Owner** to enable the Foundry → Purview toggle | High |
+| Foundry lab | Microsoft Foundry resource (`Microsoft.CognitiveServices/accounts`, kind `AIServices`), project, and model deployment | High |
+| Global admin | Global Administrator or equivalent tenant admin path for PAYG and role-group setup | High |
+| Purview roles | Compliance Administrator or Purview Compliance Administrator to use DSPM surfaces | High |
+| Purview content viewing | **Data Security AI Content Viewers** for viewing AI interaction prompt/response content | Medium |
+| Audit activation | Exchange/Purview role groups listed by the DSPM permissions doc; Exchange org customization may need to be enabled first | Medium |
+| PAYG | Purview pay-as-you-go linked to an Azure subscription and dedicated resource group | High |
+| Defender | Defender for Cloud AI plan enabled (`Microsoft.Security/pricings/AI`, `Standard`) | High |
+| Defender → Purview capture | `AIPromptSharingWithPurview` enabled for data security for AI interactions | High |
+| Tooling | Azure CLI, azd, Bash, `jq`, browser access to Foundry/Purview/Defender portals | High |
+| Optional PowerShell | Exchange Online PowerShell for `Get/Set-AdminAuditLogConfig` and `Enable-OrganizationCustomization` | Medium |
+
+Least-confident areas:
+
+- Whether Audit activation is strictly required for every Foundry → Purview capture
+  path, or only for Audit/search/reporting surfaces.
+- The minimum Exchange role-group set needed after Global Administrator is present.
+- How long unified DSPM, Activity Explorer, and Audit take to show Foundry
+  interactions after setup; the portal says 24 hours or more.
+- Whether unified DSPM setup always creates the same collection policies in every
+  tenant, or whether it varies by license, region, and prior Purview state.
+- Whether regional eligibility and backend provisioning behavior differ for tenants
+  outside the tested geography.
+
+Known unknown unknowns:
+
+- Portal/API drift between classic DSPM for AI and unified DSPM.
+- Hidden tenant commerce/licensing gates that only appear after PAYG is linked.
+- Defender/Purview backend failures that surface as generic HTTP 500 errors.
+- Propagation delays for Entra roles, Purview role groups, provider registration, and
+  Purview data pipelines.
+
 ## What this enables
 
 The path has several separate layers:
@@ -56,7 +104,12 @@ for actual spend.
 
 ## Enablement order
 
+Durations are rough. Portal auth, role propagation, provider registration, and Purview
+data pipelines can dominate the elapsed time.
+
 ### 1. Deploy a minimal Foundry lab
+
+Estimate: **5-15 minutes** after Azure CLI / azd authentication is ready.
 
 Provision only what the test needs:
 
@@ -70,6 +123,8 @@ data ingestion unless the test needs them.
 
 ### 2. Enable the Foundry → Purview toggle
 
+Estimate: **2-5 minutes** if the Foundry portal session is already authenticated.
+
 As an account with **Foundry Account Owner**:
 
 1. Open `https://ai.azure.com`.
@@ -81,6 +136,9 @@ Expected result after success: the pane changes from "not protected" to a Purvie
 coverage message for the subscription.
 
 ### 3. Establish tenant admin authority
+
+Estimate: **5-15 minutes** if a Global Admin can complete MFA; longer if role
+propagation is slow.
 
 Use Global Administrator only for the tenant/Purview setup steps that require it.
 Either switch to a Global Admin account, or temporarily elevate the Foundry tester and
@@ -96,6 +154,9 @@ Live note: temporarily granting Global Administrator to the tester unlocked Purv
 role-group management in the existing browser session.
 
 ### 4. Fix Purview roles
+
+Estimate: **5-20 minutes** for a small number of role groups; allow additional time
+for role propagation.
 
 As Global Administrator or an account that can manage Purview role groups:
 
@@ -117,6 +178,9 @@ scopes → Role groups** unlocked, and adding the tester to **Data Security AI C
 Viewers** increased that role group's user count from 0 to 1.
 
 ### 5. Link PAYG billing
+
+Estimate: **10-30 minutes** for the happy path; provider registration and Purview
+account provisioning can add more time.
 
 As Global Administrator:
 
@@ -153,6 +217,10 @@ subscription was successfully linked to the tenant. Azure reported the
 
 ### 6. Activate Purview Audit
 
+Estimate: **5-10 minutes** if the tenant is already customized and roles are correct;
+up to **60 minutes** after enabling for audit ingestion to take effect. In a
+dehydrated tenant, add time for Exchange Online setup.
+
 As an account with the required Purview/Exchange roles:
 
 1. Open **Purview → DSPM for AI (classic) → Overview**.
@@ -166,8 +234,25 @@ takes **24 hours or more**.
 Live note: after PAYG was linked and the tester had temporary Global Administrator,
 the final **Activate Purview Audit** action still failed. The browser console showed
 `POST /api/adminauditlogconfig/EnableUnifiedAuditLogIngestion` returning HTTP `500`.
+Opening the standalone **Audit → Search** page showed **Start recording user and admin
+activity**, but attempting it failed with:
+`Microsoft.Exchange.Configuration.Tasks.InvalidOperationInDehydratedContextException`.
+The error said the organization must first run `Enable-OrganizationCustomization`.
+
+Working hypothesis: Exchange is involved because Purview Audit depends on the
+Microsoft 365 unified audit log / compliance substrate, not because the Foundry test
+case is email-related. The supporting signals are: Microsoft Learn tells admins to
+verify/enable audit ingestion with Exchange Online PowerShell
+(`Get/Set-AdminAuditLogConfig`), the DSPM permissions doc lists Exchange role groups
+for the **Activate Audit** step, and the live portal error came from an Exchange
+`InvalidOperationInDehydratedContextException`. This might not block every
+Foundry-to-Purview data-capture surface, but it does appear to block the Purview
+Audit portion of the full experience.
 
 ### 7. Create the enterprise AI app capture path
+
+Estimate: **10-30 minutes** for Defender/Purview setup clicks or API calls; Purview
+reporting after setup can take **24 hours or more**.
 
 In **Purview → DSPM for AI (classic) → Recommendations**, use the recommendations in
 this order:
@@ -218,6 +303,8 @@ turned on later. After approval, setup completed and showed **Congrats, you've
 completed your setup tasks**.
 
 ### 8. Generate synthetic Foundry activity
+
+Estimate: **2-5 minutes** once the model deployment and agent APIs are working.
 
 Use the repo's existing Foundry-native agent creation path, then the documented
 conversation/response flow:
@@ -299,6 +386,9 @@ returned a completed response. `scripts/verify-agent-run.sh --expect-text` retur
 
 ### 9. Observe Purview
 
+Estimate: **5-15 minutes** for an immediate surface check; **24 hours or more** for
+conclusive DSPM/Audit/Activity Explorer data.
+
 Check:
 
 - **DSPM for AI → Reports**
@@ -313,6 +403,18 @@ Immediate live observation after setup and one post-capture synthetic response:
 unified DSPM **Activity explorer** still showed **0 items / No data available**.
 This is expected to be inconclusive because the portal itself says detection/reporting
 can take 24 hours or more.
+
+Other immediate observation surfaces:
+
+- **Reports** loaded and showed 12 report cards, including **AI Usage & Risk** and
+  **Policies with AI workloads**, but no populated Foundry data yet.
+- **AI observability** showed **Agent inventory is getting ready...** and said agents
+  can take up to 24 hours to appear.
+- **Apps and agents (preview)** showed monitored families such as Microsoft 365
+  Copilot, Copilot in Fabric, Security Copilot, Copilot Studio, and ChatGPT
+  Enterprise, but no Azure AI / Foundry app row immediately after setup.
+- The separate **Agents** nav opened **Security Copilot Agents**, which showed no
+  agent activity. Do not assume this is the Foundry agent inventory.
 
 ## DLP blocking path
 
@@ -368,6 +470,10 @@ before assuming it replaces the app-layer Graph integration.
 - A successful PAYG link can still leave **Activate Purview Audit** failing with a
   backend HTTP `500`; treat Audit activation as a separate service gate, not proof
   that PAYG failed.
+- In a new / lightly used Microsoft 365 tenant, Audit activation can fail because
+  Exchange Online organization customization has not been enabled. The portal error
+  names `Enable-OrganizationCustomization`; this is an Exchange Online prerequisite,
+  separate from Purview PAYG and Defender.
 - Classic DSPM for AI recommendations can redirect to unified DSPM. Treat that as a
   product-surface migration, not a Foundry-specific issue.
 - The unified DSPM **Secure data in Azure AI apps and agents** action routes through
@@ -379,6 +485,9 @@ before assuming it replaces the app-layer Graph integration.
 - Unified DSPM setup can complete even while Audit activation remains blocked; the
   setup dialog explicitly says Audit can be turned on later if the current account
   lacks audit permissions.
+- Unified DSPM has several similar-looking observation surfaces. **AI observability**
+  and **Apps and agents** are useful, but the left-nav **Agents** entry is for
+  Security Copilot Agents and is not the same as Foundry agent telemetry.
 - Do **not** use **Cognitive Services OpenAI User** as a shortcut for Microsoft
   Foundry access. Microsoft Learn explicitly says not to assign built-in roles that
   start with **Cognitive Services** for Foundry scenarios; use **Foundry User** /
@@ -394,6 +503,9 @@ before assuming it replaces the app-layer Graph integration.
   `--expect-text` or `--expect-regex`.
 - The Purview portal welcome / classic-portal popups can block the page and may need
   to be dismissed before continuing.
+- Even if you keep the browser open, Purview/Azure portal sessions can expire during
+  multi-hour waits. Budget time for re-authentication before checking delayed reports
+  or Activity Explorer again.
 
 ## Stop conditions
 

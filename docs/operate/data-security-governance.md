@@ -107,7 +107,10 @@ one doesn't reveal the next:
 5. **Purview Audit activation** in the Purview portal before DSPM for AI reports
    Microsoft Copilot/agent interactions. In the live lab, the activation action
    failed with a generic retry-later error; after PAYG was linked, the backing
-   `EnableUnifiedAuditLogIngestion` call still returned HTTP `500`.
+   `EnableUnifiedAuditLogIngestion` call still returned HTTP `500`. The standalone
+   Audit page exposed the underlying Exchange Online gate:
+   `InvalidOperationInDehydratedContextException` requiring
+   `Enable-OrganizationCustomization`.
 6. **Role Management / Global Administrator** to assign the missing Purview and
    Exchange role groups. Entra Compliance Administrator alone can view DSPM for AI,
    but can't manage role groups in the Purview portal. Temporary Global
