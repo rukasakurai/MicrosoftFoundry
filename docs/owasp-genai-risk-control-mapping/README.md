@@ -77,7 +77,7 @@ compliance assignments.
 | ASI02 | Tool Misuse & Exploitation | Guardrails Task adherence (tool call) + PII (tool call/response); tool auth | 🟡 | Gap | **API Management** + Foundry | Entra, Defender, Azure API Center (vetted tool/MCP registry + allow-listing) |
 | ASI03 | Agent Identity & Privilege Abuse | Build → Tools auth (OAuth Passthrough/Entra) + Operate → Admin RBAC | 🟡 | Out of scope | **Entra** | Sentinel (UEBA), Defender for Identity |
 | ASI04 | Agentic Supply Chain Compromise | Assets registry + Security posture (Defender) + connection governance | 🟡 | Shared | **Azure API Center** (MCP/tool registry, allow-listing) + **Defender for Cloud** + Other (GHAS, Azure Policy) | Foundry, APIM |
-| ASI05 | Unexpected Code Execution | No user-facing knob (sandboxing is platform-internal) | 🔴 | Out of scope | **Foundry** (sandbox) + Defender | Other (container/network isolation) |
+| ASI05 | Unexpected Code Execution | Platform-managed sandbox; no operator config observed | 🔴 | Shared | **Foundry** (sandbox) + Defender | Other (container/network isolation) |
 | ASI06 | Memory & Context Poisoning | Indirect prompt injection guardrail (tool-response ingestion); Memory feature has no poisoning control | 🟡 | Gap | **Foundry** | Azure AI Search (retrieved-context provenance/partitioning), Purview, Other |
 | ASI07 | Insecure Inter-Agent Communication | No dedicated control observed for A2A channel security | 🔴 | Gap (emerging) | **API Management + Entra** | Other (Private Link, mTLS), Foundry, Azure API Center (A2A/MCP endpoint inventory) |
 | ASI08 | Cascading Agent Failures | Monitoring only: Operate → Overview (health/alerts/anomalies) + Quota | 🟡 | Gap | **API Management** + Foundry | Sentinel, Azure Monitor |
@@ -134,12 +134,16 @@ Use these deeper notes for inspiration only:
 > so do not apply the analysis naively; re-check the product behavior and threat model for the specific
 > deployment.
 
-## Open questions to iterate
+## Known unknowns
 
-- For each **Out of scope** row, capture the concrete config required in the owning product
-  (e.g., the exact Entra Conditional Access / PIM setup for ASI03) so the end-to-end story is auditable.
-- Confirm whether the Foundry **gaps** have a REST/Azure Policy equivalent not surfaced in the portal.
-- Re-verify the **Preview** controls (Spotlighting, Indirect prompt injections on tool response, PII,
-  Task adherence) at GA and update the coverage cells.
-- Validate the official **ASI01–ASI10** wording against the OWASP PDF (press release uses
-  "Agent Behavior Hijacking" for ASI01; this table uses "Agent Goal Hijack").
+- Do any "no dedicated control observed" / Gap rows have documented public REST, SDK, ARM/Bicep, or
+  Azure Policy controls not visible in the portal? Verify only against public docs and authorized
+  non-production resources.
+- Are the ASI01–ASI10 names aligned with the final OWASP Agentic Applications list? If the OWASP names
+  are still draft, cite the draft source rather than treating the labels as final.
+- Are the RBAC-gated or Preview Foundry controls still represented accurately, especially Evaluations,
+  Spotlighting, indirect prompt injection, PII, and Task adherence?
+
+When validating these, use synthetic data and sanitized evidence only. Do not publish tenant-specific
+policy names, privileged role assignments, exception groups, break-glass paths, private-preview details,
+customer data, raw logs, system prompts, secrets, or real tool responses.
