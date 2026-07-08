@@ -92,7 +92,8 @@ showed **No violations**, total assets `2`, assets in violation `0`. The inner *
 tab showed model-deployment rows only. This was observed for **Spotlighting** and
 **Protected material for code** policies. This might be a portal aggregation issue, a
 preview limitation, or a misunderstanding of how this surface maps raw policy state to
-Foundry assets. Public feedback issue: **TODO: add link after filing**.
+Foundry assets. Public feedback issue:
+[microsoft-foundry/new-foundry-portal#133](https://github.com/microsoft-foundry/new-foundry-portal/issues/133).
 
 ## What it is not
 
