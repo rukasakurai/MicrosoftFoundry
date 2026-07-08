@@ -39,10 +39,10 @@ of duplicating their guidance:
   Calculator navigation).
 - `foundry-cost` — cost impact checks, pricing-meter mapping, Azure Pricing
   Calculator caveats, and Cost Management `ActualCost` observations.
-- `microsoft-foundry-resources` — ARM provider/type/kind distinctions for Foundry,
-  Azure AI Foundry hub/project, Azure ML, and Foundry IQ substrate.
-- `latest-stable-version` — verify latest stable ARM API/package versions before
-  pinning or changing Bicep/NuGet/npm/etc. versions.
+The operator may also have adjacent user-scoped skills installed, such as
+`microsoft-foundry-resources` for ARM provider/type/kind distinctions and
+`latest-stable-version` for API/package version checks. Use them when available, but
+don't treat them as repo-baseline files unless they exist under `.github/skills/`.
 
 ## Verifiable surfaces, feasibility, and reference times
 
