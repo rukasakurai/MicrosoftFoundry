@@ -1,6 +1,6 @@
 ---
 name: foundry-cost
-description: Use when analyzing Microsoft Foundry cost impact for this repo.
+description: Guidance for analyzing Microsoft Foundry related cost drivers, hidden billing surfaces, and pricing-source gotchas. Use when asked to estimate or explain costs, and estimate cost impact of changes.
 ---
 
 ## Cost-driver map
