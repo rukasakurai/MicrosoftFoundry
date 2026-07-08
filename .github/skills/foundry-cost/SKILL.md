@@ -68,7 +68,6 @@ Keep reports short and assumption-bound:
 
 ## Official pricing links
 
-- [Azure OpenAI pricing](https://azure.microsoft.com/pricing/details/azure-openai/)
 - [Azure AI Search pricing](https://azure.microsoft.com/pricing/details/search/)
 - [Azure Monitor pricing](https://azure.microsoft.com/pricing/details/monitor/)
 - [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/)
