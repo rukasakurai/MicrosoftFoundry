@@ -38,7 +38,7 @@ workload inputs into fake precision.
 
 - Use live pricing sources where practical, or date the estimate and list sources.
 - The Retail Prices API can expose Foundry model meters under service/product names
-  that differ from portal labels; verify meter names before using them.
+  that differ from portal labels; see [retail-prices-api.md](retail-prices-api.md).
 - Use Cost Management `ActualCost` only when the user asks for incurred spend.
   Calculator or Retail Prices output is an estimate, not actual spend.
 

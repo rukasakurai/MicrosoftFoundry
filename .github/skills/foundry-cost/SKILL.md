@@ -24,8 +24,9 @@ description: Use when analyzing Microsoft Foundry cost impact for this repo.
   Bicep or infer usage from `azd` parameters.
 - "Microsoft Foundry" is not one billing line. Expect several product/meter families.
 - Product names differ across surfaces. Billing data can show model usage under
-  `Foundry Models`; the Retail Prices API can still expose AI Search under
-  `Azure Cognitive Search`.
+  `Foundry Models`; Retail Prices API labels can still say `Azure OpenAI` under
+  `Foundry Models`, and expose AI Search under `Azure Cognitive Search`. See
+  [retail-prices-api.md](references/retail-prices-api.md).
 - For standard token-based model deployments, Bicep `capacity` is not a monthly
   bill by itself. The cost-driving inputs are workload assumptions such as
   input/output tokens, retrieval tokens, telemetry GB, and Search service hours.
