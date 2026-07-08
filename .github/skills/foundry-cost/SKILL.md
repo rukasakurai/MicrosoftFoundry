@@ -68,6 +68,7 @@ Keep reports short and assumption-bound:
 
 ## Official pricing links
 
+- [Microsoft Foundry pricing](https://azure.microsoft.com/pricing/details/microsoft-foundry/)
 - [Azure AI Search pricing](https://azure.microsoft.com/pricing/details/search/)
 - [Azure Monitor pricing](https://azure.microsoft.com/pricing/details/monitor/)
 - [Azure Pricing Calculator](https://azure.microsoft.com/pricing/calculator/)
