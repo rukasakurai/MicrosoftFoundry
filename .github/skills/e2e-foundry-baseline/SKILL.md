@@ -44,6 +44,14 @@ The operator may also have adjacent user-scoped skills installed, such as
 `latest-stable-version` for API/package version checks. Use them when available, but
 don't treat them as repo-baseline files unless they exist under `.github/skills/`.
 
+For a skills-only PR, use a lightweight skills verification pass instead of a clean
+`azd up` unless the changed skill affects provisioning/runtime behavior:
+
+- skill metadata, relative links, and whitespace: ~0s;
+- external pricing/Learn/OWASP reference URLs: ~36s;
+- Retail Prices API example queries: ~2s;
+- public Azure Pricing Calculator page with Playwright: ~19s.
+
 ## Verifiable surfaces, feasibility, and reference times
 
 Pick the smallest set that covers the changed behavior; escalate to more of the list
