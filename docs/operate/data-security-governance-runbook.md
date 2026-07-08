@@ -218,8 +218,10 @@ subscription was successfully linked to the tenant. Azure reported the
 ### 6. Activate Purview Audit
 
 Estimate: **5-10 minutes** if the tenant is already customized and roles are correct;
-up to **60 minutes** after enabling for audit ingestion to take effect. In a
-dehydrated tenant, add time for Exchange Online setup.
+up to **60 minutes** after enabling for audit ingestion to take effect. In a new /
+dehydrated tenant, resolving Exchange organization customization plus audit ingestion
+can take **60-90+ minutes**. First useful re-check: about **1 hour** after
+`Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true` is accepted.
 
 As an account with the required Purview/Exchange roles:
 
@@ -238,6 +240,12 @@ Opening the standalone **Audit → Search** page showed **Start recording user a
 activity**, but attempting it failed with:
 `Microsoft.Exchange.Configuration.Tasks.InvalidOperationInDehydratedContextException`.
 The error said the organization must first run `Enable-OrganizationCustomization`.
+After connecting with Exchange Online PowerShell, `Get-OrganizationConfig` showed
+`IsDehydrated:false`, so organization customization was already enabled by the time it
+was checked. `Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true` was
+accepted with a warning that the change can take up to 60 minutes, but an immediate
+`Get-AdminAuditLogConfig` still returned `UnifiedAuditLogIngestionEnabled:false` and
+the Audit portal still couldn't determine whether activity was being recorded.
 
 Working hypothesis: Exchange is involved because Purview Audit depends on the
 Microsoft 365 unified audit log / compliance substrate, not because the Foundry test
@@ -387,7 +395,9 @@ returned a completed response. `scripts/verify-agent-run.sh --expect-text` retur
 ### 9. Observe Purview
 
 Estimate: **5-15 minutes** for an immediate surface check; **24 hours or more** for
-conclusive DSPM/Audit/Activity Explorer data.
+conclusive DSPM/Audit/Activity Explorer data. Practical re-check windows: about
+**1 hour** for Audit status after enabling, **24 hours** for first DSPM data check,
+and **48 hours** before treating an empty result as a stronger signal.
 
 Check:
 
@@ -430,6 +440,33 @@ For app-layer blocking, expect:
 
 If a managed Foundry path appears in the portal, document exactly what it provisions
 before assuming it replaces the app-layer Graph integration.
+
+## Observations and insights from the live spike
+
+- The Foundry portal toggle is only the front door. The full experience spans
+  Foundry, Purview, Defender for Cloud, Exchange Online, Entra, and Azure billing.
+- Azure RBAC and Microsoft 365/Purview/Exchange permissions are separate gates.
+  **Foundry Account Owner** can enable the Foundry toggle, but it does not grant the
+  Purview, Exchange, or Defender authority needed for the rest of the flow.
+- PAYG linking is not just a tenant flag. It provisions/links an Azure
+  `Microsoft.Purview/accounts` resource, requires a non-default name in some tenants,
+  and can require resource provider registration before it completes.
+- Defender for Cloud is part of the Foundry/Purview data-security route. Unified DSPM
+  sends the **Secure data in Azure AI apps and agents** action through the Defender
+  AI workload plan and the `AIPromptSharingWithPurview` extension.
+- Audit is its own service gate. PAYG and Defender/Purview capture can be configured
+  while Purview Audit activation is still blocked or propagating.
+- The Exchange Online dependency appears to come from the Microsoft 365 unified audit
+  log substrate, not from an email use case. Treat this as a working hypothesis until
+  repeated runs confirm it.
+- Immediate "no data" is not failure. The portal repeatedly states that DSPM,
+  Activity Explorer, AI observability, and Audit can take many hours to show data.
+- Repeatability improved once the lab used the Foundry-native agent path plus a
+  deterministic marker verifier. Avoid ad hoc calls to legacy `openai.azure.com`
+  endpoints for this runbook.
+- The product is in transition: classic DSPM for AI redirects into unified DSPM, and
+  labels/routes can drift from Microsoft Learn. Record the exact portal path and date
+  for any finding.
 
 ## Gotchas observed live
 
@@ -474,6 +511,9 @@ before assuming it replaces the app-layer Graph integration.
   Exchange Online organization customization has not been enabled. The portal error
   names `Enable-OrganizationCustomization`; this is an Exchange Online prerequisite,
   separate from Purview PAYG and Defender.
+- Exchange Online can accept `Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled
+  $true` but still report `false` immediately afterward. Treat that as propagation
+  until the documented 60-minute window has elapsed.
 - Classic DSPM for AI recommendations can redirect to unified DSPM. Treat that as a
   product-surface migration, not a Foundry-specific issue.
 - The unified DSPM **Secure data in Azure AI apps and agents** action routes through

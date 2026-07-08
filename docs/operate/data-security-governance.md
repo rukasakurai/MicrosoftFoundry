@@ -110,7 +110,11 @@ one doesn't reveal the next:
    `EnableUnifiedAuditLogIngestion` call still returned HTTP `500`. The standalone
    Audit page exposed the underlying Exchange Online gate:
    `InvalidOperationInDehydratedContextException` requiring
-   `Enable-OrganizationCustomization`.
+   `Enable-OrganizationCustomization`. Later, Exchange Online PowerShell showed the
+   org was no longer dehydrated and accepted
+   `Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true`, but immediate
+   verification still returned `false`; Microsoft documents up to 60 minutes for the
+   change to take effect.
 6. **Role Management / Global Administrator** to assign the missing Purview and
    Exchange role groups. Entra Compliance Administrator alone can view DSPM for AI,
    but can't manage role groups in the Purview portal. Temporary Global
