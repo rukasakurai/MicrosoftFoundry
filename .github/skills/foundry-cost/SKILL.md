@@ -3,27 +3,6 @@ name: foundry-cost
 description: Use when analyzing Microsoft Foundry cost impact for this repo.
 ---
 
-## Focus
-
-Help the agent answer cost-impact questions about this repo's Microsoft Foundry
-baseline: what can incur cost, what usage assumptions are missing, and what changed
-in a PR.
-
-## When to use
-
-- Before someone runs `azd up` and wants cost context.
-- When explaining the cost model implied by this repo's architecture.
-- During PR review when a change adds, removes, or changes cost drivers.
-
-## How to analyze
-
-1. Use the cost-driver map below as the checklist; do not silently skip adjacent
-   tenant, compliance, identity, or gateway surfaces.
-2. For the current repo baseline or an azd environment, follow
-   [current-state-estimate.md](references/current-state-estimate.md).
-3. For PRs, compare base vs head and report only added, removed, or changed cost
-   drivers plus any missing usage assumptions.
-
 ## Cost-driver map
 
 | Repo surface | Driver | Notes |
