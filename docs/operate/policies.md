@@ -85,14 +85,14 @@ After scan results arrive, the **Policies** tab shows one row per policy (for ex
 shows one row per `(asset, policy)` pair; two model deployments evaluated against two
 policies appear as four **No violations** rows.
 
-**Dated observation (2026-07-08): portal rows can differ from raw Azure Policy state.**
-Two policy experiments produced raw Azure Policy `NonCompliant` member states for the
-parent `Microsoft.CognitiveServices/accounts` resource, while the Foundry **Policies** tab
-showed **No violations**, total assets `2`, assets in violation `0`. The inner **Assets**
-tab showed model-deployment rows only. This was observed for **Spotlighting** and
-**Protected material for code** policies. This might be a portal aggregation issue, a
-preview limitation, or a misunderstanding of how this surface maps raw policy state to
-Foundry assets. Public feedback issue:
+**Dated observation (2026-07-08): portal rows can differ across browser sessions.** For
+a **Protected material for code** policy, raw Azure Policy state showed a
+`NonCompliant` member state for the parent `Microsoft.CognitiveServices/accounts`
+resource. In the Foundry portal, one browser session showed **Violations detected**,
+total assets `2`, assets in violation `1`, while another browser session showed
+**No violations**, total assets `2`, assets in violation `0` for the same policy. This
+might be a portal refresh/cache issue, a preview limitation, or a misunderstanding of how
+this surface maps raw policy state to Foundry assets. Public feedback issue:
 [microsoft-foundry/new-foundry-portal#133](https://github.com/microsoft-foundry/new-foundry-portal/issues/133).
 
 ## What it is not
