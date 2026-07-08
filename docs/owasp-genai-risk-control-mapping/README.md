@@ -29,18 +29,8 @@ surrounding Microsoft security stack. For each risk it records:
 
 ## Legend
 
-**Coverage** (Foundry controls):
-🟢 Direct control · 🟡 Partial / monitoring-only · 🔴 No dedicated control observed
-
 **Primary owner / Supporting:** planning hypotheses for the relevant control slice, not authoritative
 compliance assignments.
-
-**Verdict** (for partial/none):
-- **Gap** — belongs to the AI-orchestration layer, but has no dedicated Foundry control today (or Preview-only).
-- **Out of scope** — correctly owned by a different layer (app code, identity, model provider, UX).
-- **Shared** — split across Foundry and another layer (typically data/supply-chain provenance).
-- **Covered** — effectively handled for the observed Foundry control slice; not a claim that the whole OWASP
-  risk is solved.
 
 ## Foundry portal controls observed (2026-06-15)
 
@@ -56,33 +46,33 @@ compliance assignments.
 
 ## OWASP Top 10 for LLM Applications (2025)
 
-| # | Risk | Foundry control | Cov | Verdict | Primary owner | Supporting |
-|---|------|---------------------|-----|---------|---------------|------------|
-| LLM01 | Prompt Injection | Guardrails: Jailbreak + Indirect prompt injections + Spotlighting; enforce via Compliance Policies | 🟢 | Covered | **Foundry** | Defender for AI, APIM |
-| LLM02 | Sensitive Information Disclosure | Guardrails: PII; Compliance: Purview DLP/sensitive-data monitoring | 🟢 | Covered | **Purview** + Foundry + Entra (access slice) | Azure AI Search (RAG trimming), Defender |
-| LLM03 | Supply Chain | Operate → Assets registry + Security posture (Defender) recs | 🟡 | Shared | **Other** (GHAS, Azure Policy) + **Defender for Cloud** (vuln) | Azure API Center (leads API/tool/MCP inventory + allow-listing), APIM (runtime), Purview (model/data lineage), Foundry |
-| LLM04 | Data and Model Poisoning | Build → Data/Knowledge governance + Purview (indirect) | 🔴 | Shared | **Purview** + Foundry | Azure AI Search (index provenance/RBAC), Other (model provider, Storage immutability) |
-| LLM05 | Improper Output Handling | Output-side guardrails reduce bad output, but downstream sanitization is app-side | 🟡 | Out of scope | **Other** (app code / GHAS) | APIM, Foundry, Entra (blast-radius containment) |
-| LLM06 | Excessive Agency | Guardrails: Task adherence; tool auth scoping | 🟡 | Gap | **Entra** + Foundry | APIM, Azure API Center (curated/approved tool catalog) |
-| LLM07 | System Prompt Leakage | No dedicated control (Jailbreak/Spotlighting help indirectly) | 🔴 | Out of scope | **Other** (architecture, Key Vault) | Entra (managed identity ⇒ no secrets in prompt), Foundry, Defender |
-| LLM08 | Vector and Embedding Weaknesses | RBAC on Knowledge/Data connections only | 🔴 | Shared | **Azure AI Search + Entra** | Purview (classification/labels), Private Link |
-| LLM09 | Misinformation | Evaluations (groundedness/relevance) — RBAC-gated in test env | 🟡 | Covered | **Foundry** | Azure AI Search (retrieval quality/provenance), Other (human review) |
-| LLM10 | Unbounded Consumption | Operate → Quota (deployment capacity) + Overview usage monitoring | 🟡 | Gap | **API Management** + Foundry | Defender/Monitor, Entra |
+| # | Risk | Foundry control | Primary owner | Supporting |
+|---|------|-----------------|---------------|------------|
+| LLM01 | Prompt Injection | Direct: Guardrails for Jailbreak, Indirect prompt injections, and Spotlighting; enforce via Compliance Policies | **Foundry** | Defender for AI, APIM |
+| LLM02 | Sensitive Information Disclosure | Direct: Guardrails PII; Compliance Purview DLP/sensitive-data monitoring | **Purview** + Foundry + Entra (access slice) | Azure AI Search (RAG trimming), Defender |
+| LLM03 | Supply Chain | Partial/shared: Operate → Assets registry + Security posture (Defender) recs | **Other** (GHAS, Azure Policy) + **Defender for Cloud** (vuln) | Azure API Center (leads API/tool/MCP inventory + allow-listing), APIM (runtime), Purview (model/data lineage), Foundry |
+| LLM04 | Data and Model Poisoning | No dedicated Foundry control observed; Build → Data/Knowledge governance + Purview are indirect | **Purview** + Foundry | Azure AI Search (index provenance/RBAC), Other (model provider, Storage immutability) |
+| LLM05 | Improper Output Handling | Partial: output-side guardrails reduce bad output; downstream validation/sanitization is app-side | **Other** (app code / GHAS) | APIM, Foundry, Entra (blast-radius containment) |
+| LLM06 | Excessive Agency | Partial: Task adherence guardrail and tool auth scoping; action authorization/rate control live elsewhere | **Entra** + Foundry | APIM, Azure API Center (curated/approved tool catalog) |
+| LLM07 | System Prompt Leakage | No dedicated control observed; Jailbreak/Spotlighting help indirectly | **Other** (architecture, Key Vault) | Entra (managed identity ⇒ no secrets in prompt), Foundry, Defender |
+| LLM08 | Vector and Embedding Weaknesses | No dedicated vector/embedding control observed beyond RBAC on Knowledge/Data connections | **Azure AI Search + Entra** | Purview (classification/labels), Private Link |
+| LLM09 | Misinformation | Partial: Evaluations for groundedness/relevance; RBAC-gated in test env | **Foundry** | Azure AI Search (retrieval quality/provenance), Other (human review) |
+| LLM10 | Unbounded Consumption | Partial/monitoring: Operate → Quota (deployment capacity) + Overview usage monitoring | **API Management** + Foundry | Defender/Monitor, Entra |
 
 ## OWASP Top 10 for Agentic Applications (2026)
 
-| # | Risk | Foundry control | Cov | Verdict | Primary owner | Supporting |
-|---|------|---------------------|-----|---------|---------------|------------|
-| ASI01 | Agent Goal Hijack | Guardrails: Indirect prompt injections + Jailbreak + Task adherence | 🟢 | Covered | **Foundry** | Defender for AI, Sentinel |
-| ASI02 | Tool Misuse & Exploitation | Guardrails Task adherence (tool call) + PII (tool call/response); tool auth | 🟡 | Gap | **API Management** + Foundry | Entra, Defender, Azure API Center (vetted tool/MCP registry + allow-listing) |
-| ASI03 | Agent Identity & Privilege Abuse | Build → Tools auth (OAuth Passthrough/Entra) + Operate → Admin RBAC | 🟡 | Out of scope | **Entra** | Sentinel (UEBA), Defender for Identity |
-| ASI04 | Agentic Supply Chain Compromise | Assets registry + Security posture (Defender) + connection governance | 🟡 | Shared | **Azure API Center** (MCP/tool registry, allow-listing) + **Defender for Cloud** + Other (GHAS, Azure Policy) | Foundry, APIM |
-| ASI05 | Unexpected Code Execution | Platform-managed sandbox; no operator config observed | 🔴 | Shared | **Foundry** (sandbox) + Defender | Other (container/network isolation) |
-| ASI06 | Memory & Context Poisoning | Indirect prompt injection guardrail (tool-response ingestion); Memory feature has no poisoning control | 🟡 | Gap | **Foundry** | Azure AI Search (retrieved-context provenance/partitioning), Purview, Other |
-| ASI07 | Insecure Inter-Agent Communication | No dedicated control observed for A2A channel security | 🔴 | Gap (emerging) | **API Management + Entra** | Other (Private Link, mTLS), Foundry, Azure API Center (A2A/MCP endpoint inventory) |
-| ASI08 | Cascading Agent Failures | Monitoring only: Operate → Overview (health/alerts/anomalies) + Quota | 🟡 | Gap | **API Management** + Foundry | Sentinel, Azure Monitor |
-| ASI09 | Human-Agent Trust Exploitation | Indirect: content-harm/groundedness reduce deceptive output | 🔴 | Out of scope | **Other** (UX, training, provenance labels) | Foundry, Purview |
-| ASI10 | Rogue / Shadow Agents | Assets inventory + Overview agent discovery + Admin + Defender detection | 🟡 | Gap | **Sentinel + Defender for Cloud** | Entra (Agent ID inventory), Foundry, Azure API Center (sanctioned-tool baseline + Dev Proxy shadow detection) |
+| # | Risk | Foundry control | Primary owner | Supporting |
+|---|------|-----------------|---------------|------------|
+| ASI01 | Agent Goal Hijack | Direct: Guardrails for Indirect prompt injections, Jailbreak, and Task adherence | **Foundry** | Defender for AI, Sentinel |
+| ASI02 | Tool Misuse & Exploitation | Partial: Task adherence guardrail on tool calls, PII on tool call/response, and tool auth | **API Management** + Foundry | Entra, Defender, Azure API Center (vetted tool/MCP registry + allow-listing) |
+| ASI03 | Agent Identity & Privilege Abuse | Partial: Build → Tools auth + Operate → Admin RBAC; identity lifecycle is Entra-owned | **Entra** | Sentinel (UEBA), Defender for Identity |
+| ASI04 | Agentic Supply Chain Compromise | Partial/shared: Assets registry, Security posture (Defender) recs, and connection governance | **Azure API Center** (MCP/tool registry, allow-listing) + **Defender for Cloud** + Other (GHAS, Azure Policy) | Foundry, APIM |
+| ASI05 | Unexpected Code Execution | Platform-managed sandbox; no operator config observed | **Foundry** (sandbox) + Defender | Other (container/network isolation) |
+| ASI06 | Memory & Context Poisoning | Partial: Indirect prompt injection guardrail for tool-response ingestion; Memory has no poisoning control observed | **Foundry** | Azure AI Search (retrieved-context provenance/partitioning), Purview, Other |
+| ASI07 | Insecure Inter-Agent Communication | No dedicated Foundry control observed for A2A channel security | **API Management + Entra** | Other (Private Link, mTLS), Foundry, Azure API Center (A2A/MCP endpoint inventory) |
+| ASI08 | Cascading Agent Failures | Monitoring only: Operate → Overview (health/alerts/anomalies) + Quota | **API Management** + Foundry | Sentinel, Azure Monitor |
+| ASI09 | Human-Agent Trust Exploitation | Indirect only: content-harm/groundedness controls reduce deceptive output; UX owns the main risk | **Other** (UX, training, provenance labels) | Foundry, Purview |
+| ASI10 | Rogue / Shadow Agents | Partial: Assets inventory, Overview agent discovery, Admin, and Defender detection | **Sentinel + Defender for Cloud** | Entra (Agent ID inventory), Foundry, Azure API Center (sanctioned-tool baseline + Dev Proxy shadow detection) |
 
 ## Product ownership — role of each layer
 
@@ -116,10 +106,11 @@ compliance assignments.
 
 **Takeaway:** a defensible governance story needs multiple planes, not just Foundry —
 Foundry (in-context safety) + Entra (agent identity) + Azure AI Search (RAG retrieval) + APIM
-(runtime traffic/cost) + Purview (data) + Sentinel/Defender (detect & respond). Most Foundry "gaps" (LLM06, LLM10, ASI02/07/08/10) are
+(runtime traffic/cost) + Purview (data) + Sentinel/Defender (detect & respond). Most missing or
+partial Foundry controls for LLM06, LLM10, ASI02, ASI07, ASI08, and ASI10 are
 **intentional hand-offs** to those layers — *provided* you have actually deployed and wired them.
 Foundry's Operate/Compliance tab covers the in-context slice; the rest of the story lives in the
-adjacent layers. The Foundry-owned gaps cluster in the **agentic-era** controls (tool agency, memory,
+adjacent layers. The Foundry-owned limitations cluster in the **agentic-era** controls (tool agency, memory,
 multi-agent comms, consumption/cost, rogue agents), which extend beyond the content-safety controls
 Foundry covers most strongly today.
 
@@ -136,7 +127,7 @@ Use these deeper notes for inspiration only:
 
 ## Known unknowns
 
-- Do any "no dedicated control observed" / Gap rows have documented public REST, SDK, ARM/Bicep, or
+- Do any "no dedicated control observed" rows have documented public REST, SDK, ARM/Bicep, or
   Azure Policy controls not visible in the portal? Verify only against public docs and authorized
   non-production resources.
 - Are the ASI01–ASI10 names aligned with the final OWASP Agentic Applications list? If the OWASP names
