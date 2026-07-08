@@ -26,9 +26,8 @@ The Foundry portal's **Create policy** page is an
 configuration-governance surface: creating or editing policies requires the **Resource
 Policy Contributor** or **Owner** role, and the selected controls map to built-in Azure
 Policy definitions. Microsoft Learn says deleting a Foundry policy removes the underlying
-Azure Policy assignment; that assignment object did not appear in `az policy assignment
-list` during this PR's observation window, so treat the exact assignment materialization
-as unverified here.
+Azure Policy assignment; live testing confirmed that the portal-created policy appears as
+an assignment of the built-in guardrail initiative.
 
 **Scope is subscription or resource group only.** The scope step offers just
 **Subscription** and **Resource group** — you *cannot* target an individual Foundry
@@ -50,9 +49,51 @@ configuration compliance** — whether each deployment's content filter is confi
 meet that minimum — and reports that status on the **Policies** / **Assets** tabs; it
 doesn't inspect runtime prompts/responses, apply a filter, or block a deployment.
 
+**Scan results are not immediate.** After creating or editing a policy, the Policies
+table can show **No scan results** before Azure Policy evaluates the scope. Expect
+**tens of minutes**, not seconds: Microsoft Learn says to allow up to **30 minutes** for
+a guardrail policy to appear in the Foundry portal, and Azure Policy's normal compliance
+cycle can take up to **24 hours**. Treat **No scan results** shortly after creation as
+"not evaluated yet," not as compliant or noncompliant.
+
 Reference:
 [Azure Policy built-in initiatives — Cognitive Services](https://learn.microsoft.com/azure/governance/policy/samples/built-in-initiatives#cognitive-services)
 and the [Foundry Tools policy reference](https://learn.microsoft.com/azure/ai-services/policy-reference#foundry-tools).
+
+### Example: Hate / User input
+
+For **Hate** at the **User input** intervention point, the two action choices map to
+different configuration requirements:
+
+| Portal action | Requirement on the deployment's content filter |
+| --- | --- |
+| **Annotate and block** | Hate prompt filter is enabled, and `blocking` must be `true` |
+| **Annotate only** | Hate prompt filter is enabled; `blocking` may be `true` or `false` |
+
+In Azure Policy parameters, that distinction appears as:
+
+| Portal action | Relevant parameters |
+| --- | --- |
+| **Annotate and block** | `allowedHateEnabledForPrompt = ["true"]`, `allowedHateBlockingForPrompt = ["true"]` |
+| **Annotate only** | `allowedHateEnabledForPrompt = ["true"]`, `allowedHateBlockingForPrompt = ["true", "false"]` |
+
+A deployment using `Microsoft.DefaultV2` has the Hate prompt filter enabled with
+`blocking=true`, so both example policies evaluate as compliant.
+
+After scan results arrive, the **Policies** tab shows one row per policy (for example,
+**No violations**, total assets `2`, assets in violation `0`). The inner **Assets** tab
+shows one row per `(asset, policy)` pair; two model deployments evaluated against two
+policies appear as four **No violations** rows.
+
+**Dated observation (2026-07-08): portal rows can differ across browser sessions.** For
+a **Protected material for code** policy, raw Azure Policy state showed a
+`NonCompliant` member state for the parent `Microsoft.CognitiveServices/accounts`
+resource. In the Foundry portal, one browser session showed **Violations detected**,
+total assets `2`, assets in violation `1`, while another browser session showed
+**No violations**, total assets `2`, assets in violation `0` for the same policy. This
+might be a portal refresh/cache issue, a preview limitation, or a misunderstanding of how
+this surface maps raw policy state to Foundry assets. Public feedback issue:
+[microsoft-foundry/new-foundry-portal#133](https://github.com/microsoft-foundry/new-foundry-portal/issues/133).
 
 ## What it is not
 
