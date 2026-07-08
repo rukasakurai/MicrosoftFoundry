@@ -27,6 +27,30 @@ must stay concrete: a verification is only a PASS if you *observed* the result �
 This skill assumes the **Microsoft Foundry resource** architecture
 (`Microsoft.CognitiveServices/accounts`, kind `AIServices`) provisioned by this repo.
 
+## Agent Skills coverage
+
+Treat Agent Skills under `.github/skills/` as part of the repo baseline: they are
+reusable runbooks whose metadata, links, and referenced resources should stay valid.
+When a PR changes a skill, verify that skill directly and use adjacent skills instead
+of duplicating their guidance:
+
+- `foundry-ui-playwright` — portal navigation, live UI checks, screenshots, and
+  reference notes under `foundry-ui-playwright/references/` (including Azure Pricing
+  Calculator navigation).
+- `foundry-cost` — cost impact checks, pricing-meter mapping, Azure Pricing
+  Calculator caveats, and Cost Management `ActualCost` observations.
+The operator may also have adjacent user-scoped skills installed. Use them when
+available, but don't treat them as repo-baseline files unless they exist under
+`.github/skills/`.
+
+For a skills-only PR, use a lightweight skills verification pass instead of a clean
+`azd up` unless the changed skill affects provisioning/runtime behavior:
+
+- skill metadata, relative links, and whitespace: ~0s;
+- external pricing/Learn/OWASP reference URLs: ~36s;
+- Retail Prices API example queries: ~2s;
+- public Azure Pricing Calculator page with Playwright: ~19s.
+
 ## Verifiable surfaces, feasibility, and reference times
 
 Pick the smallest set that covers the changed behavior; escalate to more of the list
