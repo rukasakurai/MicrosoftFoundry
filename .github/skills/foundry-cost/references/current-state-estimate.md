@@ -36,7 +36,8 @@ and explicit assumptions.
 4. Separate **idle/provisioned** costs from **workload** costs. The repo can usually
    identify resources and SKUs; it cannot infer tokens, runs, retrieval calls,
    telemetry GB, Search service hours or serverless compute/storage, hosted-compute
-   hours, memory usage, or license counts.
+   hours, memory usage, or license counts. Use
+   [workload-assumptions.md](workload-assumptions.md) as the checklist.
 
 ## Pricing and actuals
 
@@ -56,6 +57,6 @@ Keep reports short and assumption-bound:
 - **Cost drivers:** enabled/changed resources and meters, including explicit
   negative checks.
 - **Missing assumptions:** the workload inputs needed before dollar estimates are
-  meaningful.
+  meaningful; see [workload-assumptions.md](workload-assumptions.md).
 - **Estimate or actuals:** dated estimate with source, or Cost Management actuals
   with scope/time range.

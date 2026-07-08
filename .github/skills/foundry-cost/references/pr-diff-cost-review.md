@@ -48,3 +48,6 @@ Keep the review short:
 - **Missing assumptions before a dollar estimate is meaningful**
 - **Recommended follow-up**, only when the PR adds a cost surface that cannot be
   evaluated from the diff
+
+Use [workload-assumptions.md](workload-assumptions.md) when the diff changes
+volume-sensitive cost surfaces.

@@ -30,6 +30,8 @@ license counts.
   current repo baseline or an azd environment.
 - [pr-diff-cost-review.md](references/pr-diff-cost-review.md) — review marginal cost
   impact in a PR.
+- [workload-assumptions.md](references/workload-assumptions.md) — clarify the
+  workload inputs required before a dollar estimate is meaningful.
 - [risks.md](references/risks.md) — separate direct Azure meter spend from indirect
   agentic/remediation/business cost risks.
 - [governance.md](references/governance.md) — map cost controls to IaC, runtime
