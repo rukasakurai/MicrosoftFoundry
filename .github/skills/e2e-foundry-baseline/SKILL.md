@@ -27,6 +27,23 @@ must stay concrete: a verification is only a PASS if you *observed* the result �
 This skill assumes the **Microsoft Foundry resource** architecture
 (`Microsoft.CognitiveServices/accounts`, kind `AIServices`) provisioned by this repo.
 
+## Agent Skills coverage
+
+Treat Agent Skills under `.github/skills/` as part of the repo baseline: they are
+reusable runbooks whose metadata, links, and referenced resources should stay valid.
+When a PR changes a skill, verify that skill directly and use adjacent skills instead
+of duplicating their guidance:
+
+- `foundry-ui-playwright` — portal navigation, live UI checks, screenshots, and
+  reference notes under `foundry-ui-playwright/references/` (including Azure Pricing
+  Calculator navigation).
+- `foundry-cost` — cost impact checks, pricing-meter mapping, Azure Pricing
+  Calculator caveats, and Cost Management `ActualCost` observations.
+- `microsoft-foundry-resources` — ARM provider/type/kind distinctions for Foundry,
+  Azure AI Foundry hub/project, Azure ML, and Foundry IQ substrate.
+- `latest-stable-version` — verify latest stable ARM API/package versions before
+  pinning or changing Bicep/NuGet/npm/etc. versions.
+
 ## Verifiable surfaces, feasibility, and reference times
 
 Pick the smallest set that covers the changed behavior; escalate to more of the list
