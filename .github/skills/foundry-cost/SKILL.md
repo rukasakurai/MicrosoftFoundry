@@ -12,11 +12,26 @@ description: Guidance for analyzing Microsoft Foundry related cost drivers, hidd
 | `enableObservability=true` | Azure Monitor / Log Analytics | Estimate from telemetry GB and retention. Application Insights data lands in the workspace. |
 | `enableFoundryIq=true` | Azure AI Search + agentic retrieval | Default off. `searchServiceSku=basic` is the repo baseline minimum; higher SKUs are a cost decision. |
 | Agents, tools, hosted compute, memory | Indirect model/tool/search/compute/license meters | Agents are data-plane artifacts; include the services they invoke, not just the connection object. |
-| Guardrails / runtime safety | Azure AI Content Safety and Foundry model/tool meters | Compliance views can be read-only, but runtime guardrails/content safety can still create usage meters. |
+| Guardrails / runtime safety | Azure AI Content Safety and Foundry model/tool meters | Operate → Compliance views can be read-only; Build/runtime guardrails can drive usage indirectly through model, tool, and content-safety paths. |
 | Operate → Compliance → Data security and governance | Microsoft Purview / DSPM licensing and PAYG meters | Not provisioned by Bicep. Check tenant licensing, Purview enablement, and PAYG billing before assuming $0. |
 | Operate → Compliance → Security posture | Microsoft Defender for Cloud plans | Defender is subscription/security-plane, not a normal repo resource. Check plan enablement before excluding it. |
 | Entra agent identity, registry, OIDC, OAuth | Microsoft Entra licensing or app/governance dependencies | App registrations and RBAC are usually not usage meters, but premium Entra features or tenant licenses can matter. |
 | API gateways / remote tools | Azure API Management or external service charges | Not in the baseline Bicep today; include if scripts/docs/PRs add gateway, MCP, or API front-door infrastructure. |
+
+## Cannot infer from this repo alone
+
+Tokens, PTU utilization, Search query volume, agentic retrieval calls, telemetry GB,
+Purview/DSPM usage, Defender plan state, hosted compute hours, memory usage, and
+license counts.
+
+## Reference runbooks
+
+- [current-state-estimate.md](references/current-state-estimate.md) — estimate the
+  current repo baseline or an azd environment.
+- [pr-diff-cost-review.md](references/pr-diff-cost-review.md) — review marginal cost
+  impact in a PR.
+- [retail-prices-api.md](references/retail-prices-api.md) — query live public prices
+  without falling into billing-taxonomy traps.
 
 ## Gotchas
 

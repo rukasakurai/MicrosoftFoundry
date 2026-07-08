@@ -2,7 +2,9 @@
 
 Use this runbook when estimating cost for the current `azd` environment or the
 default repo baseline. Keep the estimate assumption-bound; do not turn missing
-workload inputs into fake precision.
+workload inputs into fake precision. A pre-`azd up` estimate is not a guaranteed
+deployment cost; it is a dated estimate from declared resources, pricing sources,
+and explicit assumptions.
 
 ## Inputs to read first
 
@@ -11,6 +13,8 @@ workload inputs into fake precision.
 2. `azure.yaml` for azd hooks that create post-provision data-plane artifacts.
 3. `.azure/<env>/config.json` and `.azure/<env>/.env` for environment overrides.
    Redact subscription, tenant, resource names, endpoints, and secrets in any report.
+   If no environment exists yet, use Bicep defaults plus any declared azd parameters
+   or user-provided overrides.
 4. Relevant docs/scripts for optional data-plane or tenant-plane flows, especially
    `README.md`, `docs/operate/`, and agent/tool setup docs.
 
@@ -41,6 +45,9 @@ workload inputs into fake precision.
   that differ from portal labels; see [retail-prices-api.md](retail-prices-api.md).
 - Use Cost Management `ActualCost` only when the user asks for incurred spend.
   Calculator or Retail Prices output is an estimate, not actual spend.
+- Every estimate must record region, currency, timestamp/date, pricing source, and
+  whether values came from Retail Prices API, Azure Pricing Calculator, or Cost
+  Management `ActualCost`.
 
 ## Output shape
 
