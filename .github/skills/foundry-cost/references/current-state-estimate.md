@@ -43,10 +43,11 @@ workload inputs into fake precision.
 
 ## Output shape
 
-Keep the answer short:
+Keep reports short and assumption-bound:
 
-- **Cost drivers found:** enabled resources/meters and explicit negative checks.
-- **Missing assumptions:** workload inputs needed before dollar estimates are
+- **Cost drivers:** enabled/changed resources and meters, including explicit
+  negative checks.
+- **Missing assumptions:** the workload inputs needed before dollar estimates are
   meaningful.
-- **Estimate:** dated, sourced, and formula-based when assumptions exist.
-- **Actuals:** Cost Management scope and time range, only when requested.
+- **Estimate or actuals:** dated estimate with source, or Cost Management actuals
+  with scope/time range.

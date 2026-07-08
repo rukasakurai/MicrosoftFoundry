@@ -41,13 +41,9 @@ in a PR.
 
 ## Output
 
-Keep reports short and assumption-bound:
-
-- **Cost drivers:** enabled/changed resources and meters.
-- **Missing assumptions:** the workload inputs needed before dollar estimates are
-  meaningful.
-- **Estimate or actuals:** dated estimate with source, or Cost Management actuals
-  with scope/time range.
+Keep reports short and assumption-bound. For the current repo baseline or an azd
+environment, use the output shape in
+[current-state-estimate.md](references/current-state-estimate.md#output-shape).
 
 ## Gotchas
 
