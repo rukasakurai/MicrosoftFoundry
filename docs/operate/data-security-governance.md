@@ -16,11 +16,10 @@
 > no visible preview label (verified live in the portal). Treat it as preview
 > regardless, per the docs above.
 >
-> **Live UI drift (2026-07-08).** Microsoft Learn says the Microsoft Purview toggle
-> is under **Security posture**, but the live portal still showed a separate
-> **Data security and governance** tab. **Security posture** was Microsoft Defender
-> for Cloud only, with "Microsoft Defender isn't connected yet" and **Enable in Azure
-> Portal** actions.
+> **UI drift note.** Microsoft Learn and the live portal can disagree about where this
+> toggle lives. In one live run, Learn placed Purview under **Security posture**, while
+> the portal still had a separate **Data security and governance** tab. Use the live
+> portal labels you see.
 >
 > **Want GA today? Use Azure AI Language PII instead of this pane.** To block or audit
 > sensitive info on generally-available technology, call
@@ -42,6 +41,9 @@ For the authoritative references, see
 [Manage compliance and security in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security)
 and [Use Microsoft Purview to manage data security & compliance for Microsoft Foundry](https://learn.microsoft.com/purview/ai-azure-foundry).
 
+For the hands-on enablement path, cost surfaces, live gotchas, and retry/latency
+notes, see [data-security-governance-runbook.md](data-security-governance-runbook.md).
+
 ## What it is
 
 A toggle under **Operate → Compliance** that connects Foundry interaction data
@@ -50,42 +52,6 @@ A toggle under **Operate → Compliance** that connects Foundry interaction data
 prompt (DLP). Both are preview, configured off ARM (portal toggle + Purview plane, so
 not settable in Bicep), and gated by the access layers below.
 
-In the live lab (2026-07-08), the pane said enabling the toggle sends Foundry model
-interaction data to the tenant's Purview account, that the toggle is effective only
-if Purview is present in the tenant, and that without Purview pay-as-you-go billing
-only **Audit** integration is supported. After approval, turning the toggle on changed
-the pane to "Purview covering visibility across 0 agents and 0+ daily interactions
-across 1 subscription." No PAYG prompt appeared in Foundry; PAYG remains a separate
-Purview-side gate. A synthetic model call succeeded after the toggle was enabled, but
-the Purview/DSPM surfaces still showed **Activate Microsoft Purview Audit** as a
-required next step. After approval, clicking it opened an activation panel, but the
-final **Activate Purview Audit** action failed with "An error occurred. Please try
-again later." **Activity explorer** was reachable but showed another gate: "Additional
-permissions required. Your role can't view AI Visits or user risk levels," plus "No
-data available yet" and a note that detecting activity can take 24 hours or more.
-The account had Entra **Compliance Administrator** and **Global Reader**, but not
-Global Administrator or Purview/Exchange **Role Management**; in **Settings → Roles
-and scopes → Role groups**, only **My permissions** was editable and role-group
-management tabs were disabled.
-
-The Purview **Usage center → Pay-as-you-go** page said the Azure subscription wasn't
-linked for billing. Opening **Get started** launched a billing-link dialog, but it
-remained stuck on "Loading..." while the backend returned `TenantNotFound`,
-`hasValidSubscription:false`, `hasEnterpriseAccount:false`, and US-only eligible PAYG
-locations. Microsoft Learn says only **Global Administrator** can enable the PAYG
-model. After temporary Global Administrator elevation, role-group management unlocked,
-the tester was added to **Data Security AI Content Viewers**, and PAYG setup advanced:
-the backend accepted provisioning with HTTP `202` and created a
-`Microsoft.Purview/tenantAccounts` account in `westus`. The Usage Center later
-returned to "Your Azure subscription isn't linked for billing," so tenant provisioning
-and subscription billing link are distinct gates. Retrying the link required selecting
-a dedicated resource group, replacing the default resource name (the portal rejected
-default names), and waiting for `Microsoft.Purview` / `Microsoft.Storage` provider
-registration; the portal then created a `Microsoft.Purview/accounts` resource and
-showed **Upgrading** while Azure reported it as `Creating`; once provisioning
-completed, the portal showed **Congratulations!** and Azure reported the
-`Microsoft.Purview/accounts` resource as `Succeeded`.
-
 ### Turning it on: the access gates
 
 Enabling and testing this pane is gated by **several independent layers** — clearing
@@ -93,59 +59,16 @@ one doesn't reveal the next:
 
 1. **Foundry Account Owner** (Azure RBAC on the Foundry resource) to flip the
    Foundry→Purview toggle — a portal action, not an ARM/Bicep property.
-2. **Compliance / Global / Purview Compliance Administrator** to turn on DSPM;
-   subscription **Contributor** is insufficient.
-3. **A Microsoft 365 / Purview license — the hard gate.** A tenant with only
-   Azure / Power-Platform SKUs is blocked, and **no role fixes it**. The self-serve
-   Purview Suite trial can return `NotAvailable` at the tenant/commerce level — even a
-   **Global Administrator** cannot self-serve-activate it. *(Observed on a tenant with
-   no Microsoft 365 base subscription.)*
-4. **Purview pay-as-you-go billing** for data security policies beyond Audit. The
-   live Foundry pane says billing happens in Purview and is based on pay-as-you-go
-   meters and policies created there; without PayG, only Audit integration is
-   supported.
-5. **Purview Audit activation** in the Purview portal before unified DSPM reports
-   Microsoft Copilot/agent interactions. In the live lab, the activation action
-   failed with a generic retry-later error; after PAYG was linked, the backing
-   `EnableUnifiedAuditLogIngestion` call still returned HTTP `500`. The standalone
-   Audit page exposed the underlying Exchange Online gate:
-   `InvalidOperationInDehydratedContextException` requiring
-   `Enable-OrganizationCustomization`. Later, Exchange Online PowerShell showed the
-   org was no longer dehydrated and accepted
-   `Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true`, but immediate
-   verification still returned `false`; Microsoft documents up to 60 minutes for the
-   change to take effect.
-6. **Role Management / Global Administrator** to assign the missing Purview and
-   Exchange role groups. Entra Compliance Administrator alone can view DSPM surfaces,
-   but can't manage role groups in the Purview portal. Temporary Global
-   Administrator elevation unlocked role-group management in the live lab.
-7. **Purview viewing permissions** for Activity Explorer detail such as AI Visits and
-   user risk levels. Do not add these roles casually; they can expose sensitive
-   prompt/response governance data. For prompt/response content, the narrower first
-   role is **Data Security AI Content Viewers**.
-8. **PAYG tenant registration / subscription link** before data-security policies for
-   enterprise AI apps can be configured. Learn says this requires Global
-   Administrator and an Azure subscription/resource group in the tenant. In the live
-   lab, tenant-account provisioning succeeded before the subscription billing link was
-   complete; the billing link then created a `Microsoft.Purview/accounts` Azure
-   resource with a non-default name. Successful PAYG link does not imply Audit
-   activation has succeeded.
-9. **Defender for Cloud AI workload settings** for the unified DSPM remediation
-   action **Secure data in Azure AI apps and agents**. The live panel directs users to
-   Defender for Cloud **Environment settings → Cloud Workload Protection → AI
-   workloads → Enable data security for AI interactions** and says reporting can take
-   at least 24 hours. In ARM/API terms this used `Microsoft.Security/pricings/AI`
-   with `pricingTier: Standard` and `AIPromptSharingWithPurview: True`.
-10. **Unified DSPM setup tasks**. In the live lab, unified DSPM setup completed and
-    created/activated the AI collection-policy path even though Audit activation
-    remained blocked; the setup dialog said Audit could be turned on later. A
-    post-capture synthetic Foundry response verified with
-    `verify-agent-run.sh --expect-text`, but Activity Explorer still showed no data
-    immediately afterward.
-11. **(DLP block only)** additionally: an Entra **app registration**, Microsoft Graph
-   **admin consent** for permissions such as `Content.Process.User`, **Security &
-   Compliance PowerShell**, and app code/API integration that calls Graph
-   `processContent` and honors the Purview verdict.
+2. **Microsoft 365 / Purview licensing and roles** to use the Purview/unified DSPM
+   surfaces. Azure subscription **Contributor** is not enough.
+3. **Purview PAYG** for data-security policies beyond Audit-only visibility.
+4. **Defender for Cloud AI workload settings** for the current unified-DSPM capture
+   path for Azure AI / Foundry interactions.
+5. **Audit / Exchange Online readiness** if you need the Purview Audit part of the
+   experience.
+6. **Content-viewer roles** if you need to inspect prompts/responses in Purview.
+7. **DLP block only:** app registration, Graph consent, policy setup, and app code
+   that calls `processContent` and honors the verdict.
 
 The takeaway: the highest-value governance tests are the **least** addressable from
 this repo's IaC — they hinge on tenant licensing and admin-plane actions Bicep can't
