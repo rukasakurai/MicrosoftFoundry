@@ -25,6 +25,13 @@ agent.
   targets. Validate the exact Hosted Agent shape before assuming it will produce
   scored output.
 
+## Related controls
+
+AI Red Teaming Agent is a test harness, not a runtime control. Guardrails and
+Azure AI Content Safety are controls that a red-team run can help validate.
+Some evaluator categories overlap with Content Safety categories, but the
+surfaces are not interchangeable.
+
 ## Data-plane REST API
 
 AI Red Teaming Agent artifacts used by the cloud run flow are data-plane eval
