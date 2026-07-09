@@ -45,7 +45,7 @@ and [Use Microsoft Purview to manage data security & compliance for Microsoft Fo
 ## What it is
 
 A toggle under **Operate → Compliance** that connects Foundry interaction data
-(prompts and responses) to Microsoft Purview (DSPM for AI), which classifies it by
+(prompts and responses) to Microsoft Purview / unified DSPM, which classifies it by
 **sensitive-information-type** and either **audits** the match or **blocks** the
 prompt (DLP). Both are preview, configured off ARM (portal toggle + Purview plane, so
 not settable in Bicep), and gated by the access layers below.
@@ -57,8 +57,8 @@ only **Audit** integration is supported. After approval, turning the toggle on c
 the pane to "Purview covering visibility across 0 agents and 0+ daily interactions
 across 1 subscription." No PAYG prompt appeared in Foundry; PAYG remains a separate
 Purview-side gate. A synthetic model call succeeded after the toggle was enabled, but
-Purview **DSPM for AI (classic)** still showed **Activate Microsoft Purview Audit** as
-a required next step. After approval, clicking it opened an activation panel, but the
+the Purview/DSPM surfaces still showed **Activate Microsoft Purview Audit** as a
+required next step. After approval, clicking it opened an activation panel, but the
 final **Activate Purview Audit** action failed with "An error occurred. Please try
 again later." **Activity explorer** was reachable but showed another gate: "Additional
 permissions required. Your role can't view AI Visits or user risk levels," plus "No
@@ -104,7 +104,7 @@ one doesn't reveal the next:
    live Foundry pane says billing happens in Purview and is based on pay-as-you-go
    meters and policies created there; without PayG, only Audit integration is
    supported.
-5. **Purview Audit activation** in the Purview portal before DSPM for AI reports
+5. **Purview Audit activation** in the Purview portal before unified DSPM reports
    Microsoft Copilot/agent interactions. In the live lab, the activation action
    failed with a generic retry-later error; after PAYG was linked, the backing
    `EnableUnifiedAuditLogIngestion` call still returned HTTP `500`. The standalone
@@ -116,7 +116,7 @@ one doesn't reveal the next:
    verification still returned `false`; Microsoft documents up to 60 minutes for the
    change to take effect.
 6. **Role Management / Global Administrator** to assign the missing Purview and
-   Exchange role groups. Entra Compliance Administrator alone can view DSPM for AI,
+   Exchange role groups. Entra Compliance Administrator alone can view DSPM surfaces,
    but can't manage role groups in the Purview portal. Temporary Global
    Administrator elevation unlocked role-group management in the live lab.
 7. **Purview viewing permissions** for Activity Explorer detail such as AI Visits and

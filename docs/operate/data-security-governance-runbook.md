@@ -50,7 +50,8 @@ Least-confident areas:
 
 Known unknown unknowns:
 
-- Portal/API drift between classic DSPM for AI and unified DSPM.
+- Portal/API drift during Microsoft's migration from classic DSPM for AI to unified
+  DSPM.
 - Hidden tenant commerce/licensing gates that only appear after PAYG is linked.
 - Defender/Purview backend failures that surface as generic HTTP 500 errors.
 - Propagation delays for Entra roles, Purview role groups, provider registration, and
@@ -167,7 +168,7 @@ Minimum roles to consider:
 
 | Need | Role/group |
 | --- | --- |
-| View DSPM for AI | Entra Compliance Administrator or Purview Compliance Administrator |
+| View unified DSPM AI surfaces | Entra Compliance Administrator or Purview Compliance Administrator |
 | Manage role groups | Role Management via Organization Management, or Global Administrator |
 | Activate Audit get-started step | Exchange role groups listed by the DSPM permissions doc |
 | View prompts/responses in Activity Explorer | Microsoft Purview Data Security AI Content Viewer first; Content Explorer Content Viewer only if needed |
@@ -225,9 +226,12 @@ can take **60-90+ minutes**. First useful re-check: about **1 hour** after
 
 As an account with the required Purview/Exchange roles:
 
-1. Open **Purview → DSPM for AI (classic) → Overview**.
-2. Select **Activate Microsoft Purview Audit**.
-3. Click the final **Activate Purview Audit** action.
+1. Open **Purview → Audit → Search** or the current unified DSPM setup task that
+   reports Audit as incomplete.
+2. Start recording user and admin activity / activate Audit from the current Purview
+   surface.
+3. Verify with Exchange Online PowerShell when possible:
+   `Get-AdminAuditLogConfig | Select UnifiedAuditLogIngestionEnabled`.
 
 Do this after role setup. If it fails, check the Exchange/Purview role groups from the
 DSPM permissions doc before retrying. Then wait; Activity Explorer can say detection
@@ -262,22 +266,24 @@ Audit portion of the full experience.
 Estimate: **10-30 minutes** for Defender/Purview setup clicks or API calls; Purview
 reporting after setup can take **24 hours or more**.
 
-In **Purview → DSPM for AI (classic) → Recommendations**, use the recommendations in
-this order:
+Use **Purview → DSPM** (the current unified DSPM experience), not **DSPM for AI
+(classic)**. In unified DSPM, go through **Tasks and actions → Remediation actions**
+or the relevant data-security objective and look for the Foundry/Azure-AI action:
 
-1. **Secure data in Azure AI apps and agents**
-2. **Secure interactions from enterprise AI apps**
+- **Secure data in Azure AI apps and agents**
 
-These are the Foundry-relevant recommendations. They are distinct from browser,
-endpoint, SASE, or Microsoft 365 Copilot recommendations.
+This is the Foundry-relevant action observed in the current surface. It is distinct
+from browser, endpoint, SASE, Microsoft 365 Copilot, and third-party AI-site actions.
+If the portal lands on a classic DSPM page, follow its redirect into unified DSPM and
+record the drift; do not treat classic DSPM as the planned path.
 
 This depends on PAYG being linked. If recommendations stay stuck in loading or don't
 show policy actions, return to the PAYG and role steps first.
 
-Live note: after PAYG linked, the classic Recommendations page still loaded slowly
-and then said recommendations are now in the unified DSPM experience. The page offered
-**Take me there**. Earlier, the unified DSPM prompt warned that entering it can turn
-on DLP and Insider Risk Management analytics.
+Live note: after PAYG linked, the classic recommendations page loaded slowly and then
+said recommendations are now in unified DSPM. The page offered **Take me there**.
+This is historical migration evidence, not a recommendation to use the classic
+surface.
 
 In unified DSPM, **Secure data in Azure AI apps and agents** did not create a Purview
 policy directly. It opened a remediation panel that sends you to Microsoft Defender
@@ -401,8 +407,8 @@ and **48 hours** before treating an empty result as a stronger signal.
 
 Check:
 
-- **DSPM for AI → Reports**
-- **DSPM for AI → Activity explorer**
+- **DSPM → Reports**
+- **DSPM → Activity explorer**
 - **Audit** search
 - Optional, if configured: **Data Lifecycle Management**, **eDiscovery**, or
   **Communication Compliance**
@@ -464,9 +470,9 @@ before assuming it replaces the app-layer Graph integration.
 - Repeatability improved once the lab used the Foundry-native agent path plus a
   deterministic marker verifier. Avoid ad hoc calls to legacy `openai.azure.com`
   endpoints for this runbook.
-- The product is in transition: classic DSPM for AI redirects into unified DSPM, and
-  labels/routes can drift from Microsoft Learn. Record the exact portal path and date
-  for any finding.
+- The product is in transition from classic DSPM for AI to unified DSPM, and
+  labels/routes can drift from Microsoft Learn. Use unified DSPM as the forward path
+  and record the exact portal path and date for any finding.
 
 ## Gotchas observed live
 
@@ -476,8 +482,8 @@ before assuming it replaces the app-layer Graph integration.
   actions. Do not confuse this with Purview.
 - The Foundry toggle did not prompt for PAYG. PAYG is a separate Purview Usage center
   step.
-- Entra **Compliance Administrator** could view parts of DSPM for AI but could not
-  manage Purview role groups.
+- Entra **Compliance Administrator** could view parts of the DSPM surfaces but could
+  not manage Purview role groups.
 - Purview role-group management tabs were disabled without Role Management / Global
   Admin authority.
 - Temporarily granting Global Administrator to the tester unlocked role-group
@@ -514,8 +520,8 @@ before assuming it replaces the app-layer Graph integration.
 - Exchange Online can accept `Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled
   $true` but still report `false` immediately afterward. Treat that as propagation
   until the documented 60-minute window has elapsed.
-- Classic DSPM for AI recommendations can redirect to unified DSPM. Treat that as a
-  product-surface migration, not a Foundry-specific issue.
+- Classic DSPM for AI recommendations can redirect to unified DSPM. Treat that as
+  product-surface migration evidence, not as a recommended path.
 - The unified DSPM **Secure data in Azure AI apps and agents** action routes through
   Microsoft Defender for Cloud AI workload settings. This is a Defender/security-plane
   dependency, not just a Purview configuration screen.
