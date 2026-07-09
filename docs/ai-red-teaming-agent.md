@@ -76,14 +76,15 @@ The general evaluations list can also link to eval groups and runs without the
 
 ## Cost note
 
-The public docs do not make the AI Red Teaming Agent cost model self-evident.
-Treat red-team runs as potentially spanning multiple cost surfaces:
+The [AI Red Teaming Agent overview](https://learn.microsoft.com/azure/foundry/concepts/ai-red-teaming-agent#how-ai-red-teaming-works)
+separates the adversarial side from the scoring side: an adversarial LLM and
+PyRIT attack strategies generate attacks, while Risk and Safety Evaluator LLMs
+score target responses.
 
-- target model tokens,
-- Foundry evaluator/system model usage,
-- Hosted Agent compute if used as caller or target,
-- Azure Container Apps / ACR if used as caller,
-- Application Insights / Log Analytics telemetry.
-
-Use Azure Cost Management after running tests; do not infer actual spend from
-the eval configuration alone.
+The [Observability in generative AI](https://learn.microsoft.com/azure/foundry/concepts/observability#pricing)
+docs say risk and safety evaluations are billed based on consumption. The
+public docs do not break out whether that consumption covers only scoring or the
+full red-team workflow, including adversarial generation, target calls, scoring,
+and result reporting. Could not find a public pricing page that maps AI Red
+Teaming Agent runs or generated attack items to concrete meters as of 2026-07-09
+JST.
