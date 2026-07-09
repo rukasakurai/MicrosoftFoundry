@@ -16,6 +16,11 @@
 > no visible preview label (verified live in the portal). Treat it as preview
 > regardless, per the docs above.
 >
+> **UI drift note.** Microsoft Learn and the live portal can disagree about where this
+> toggle lives. In one live run, Learn placed Purview under **Security posture**, while
+> the portal still had a separate **Data security and governance** tab. Use the live
+> portal labels you see.
+>
 > **Want GA today? Use Azure AI Language PII instead of this pane.** To block or audit
 > sensitive info on generally-available technology, call
 > [Azure AI Language PII detection](https://learn.microsoft.com/azure/ai-services/language-service/personally-identifiable-information/overview)
@@ -36,14 +41,16 @@ For the authoritative references, see
 [Manage compliance and security in Microsoft Foundry](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security)
 and [Use Microsoft Purview to manage data security & compliance for Microsoft Foundry](https://learn.microsoft.com/purview/ai-azure-foundry).
 
+For the hands-on enablement path, cost surfaces, live gotchas, and retry/latency
+notes, see [data-security-governance-runbook.md](data-security-governance-runbook.md).
+
 ## What it is
 
 A toggle under **Operate → Compliance** that connects Foundry interaction data
-(prompts and responses) to Microsoft Purview (DSPM for AI), which classifies it by
+(prompts and responses) to Microsoft Purview / unified DSPM, which classifies it by
 **sensitive-information-type** and either **audits** the match or **blocks** the
 prompt (DLP). Both are preview, configured off ARM (portal toggle + Purview plane, so
-not settable in Bicep), and gated by the access layers below. Neither is verified
-end-to-end here. For a GA alternative, see the note at the top.
+not settable in Bicep), and gated by the access layers below.
 
 ### Turning it on: the access gates
 
@@ -52,16 +59,16 @@ one doesn't reveal the next:
 
 1. **Foundry Account Owner** (Azure RBAC on the Foundry resource) to flip the
    Foundry→Purview toggle — a portal action, not an ARM/Bicep property.
-2. **Compliance / Global / Purview Compliance Administrator** to turn on DSPM;
-   subscription **Contributor** is insufficient.
-3. **A Microsoft 365 / Purview license — the hard gate.** A tenant with only
-   Azure / Power-Platform SKUs is blocked, and **no role fixes it**. The self-serve
-   Purview Suite trial can return `NotAvailable` at the tenant/commerce level — even a
-   **Global Administrator** cannot self-serve-activate it. *(Observed on a tenant with
-   no Microsoft 365 base subscription.)*
-4. **(DLP block only)** additionally: an Entra **app registration**, Microsoft Graph
-   **admin consent**, **Security & Compliance PowerShell**, and **pay-as-you-go
-   billing**.
+2. **Microsoft 365 / Purview licensing and roles** to use the Purview/unified DSPM
+   surfaces. Azure subscription **Contributor** is not enough.
+3. **Purview PAYG** for data-security policies beyond Audit-only visibility.
+4. **Defender for Cloud AI workload settings** for the current unified-DSPM capture
+   path for Azure AI / Foundry interactions.
+5. **Audit / Exchange Online readiness** if you need the Purview Audit part of the
+   experience.
+6. **Content-viewer roles** if you need to inspect prompts/responses in Purview.
+7. **DLP block only:** app registration, Graph consent, policy setup, and app code
+   that calls `processContent` and honors the verdict.
 
 The takeaway: the highest-value governance tests are the **least** addressable from
 this repo's IaC — they hinge on tenant licensing and admin-plane actions Bicep can't

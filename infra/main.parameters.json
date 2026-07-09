@@ -14,6 +14,9 @@
     "principalType": {
       "value": "${AZURE_PRINCIPAL_TYPE=User}"
     },
+    "enableObservability": {
+      "value": "${ENABLE_OBSERVABILITY=true}"
+    },
     "enableFoundryIq": {
       "value": "${ENABLE_FOUNDRY_IQ=false}"
     }
