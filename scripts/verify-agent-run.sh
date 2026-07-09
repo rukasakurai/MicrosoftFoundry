@@ -83,6 +83,8 @@ verify_file() {
         verdict:
           (if .response_status == "failed" or .response_status == "cancelled" or .tool_errors > 0 then
              "fail"
+           elif .response_status != null and .response_status != "completed" then
+             "invalid"
            elif ($require_tool_call and .tool_calls == 0) then
              "invalid"
            elif .expected_texts_matched < .expected_texts_checked then
@@ -115,6 +117,9 @@ JSON
   cat > "$tmpdir/text-invalid.json" <<'JSON'
 {"id":"resp_text_invalid","status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"No marker here."}]}]}
 JSON
+  cat > "$tmpdir/text-incomplete.json" <<'JSON'
+{"id":"resp_text_incomplete","status":"incomplete","output":[{"type":"message","content":[{"type":"output_text","text":"Synthetic marker PURVIEW-FOUNDRY-LAB-2026-07-09-001 observed."}]}]}
+JSON
 
   "$0" < "$tmpdir/tool-pass.json" >/dev/null
   if "$0" < "$tmpdir/tool-fail.json" >/dev/null; then
@@ -124,6 +129,10 @@ JSON
   "$0" --expect-text PURVIEW-FOUNDRY-LAB-2026-07-09-001 < "$tmpdir/text-pass.json" >/dev/null
   if "$0" --expect-text PURVIEW-FOUNDRY-LAB-2026-07-09-001 < "$tmpdir/text-invalid.json" >/dev/null; then
     echo "Expected text-invalid to be inconclusive" >&2
+    return 1
+  fi
+  if "$0" --expect-text PURVIEW-FOUNDRY-LAB-2026-07-09-001 < "$tmpdir/text-incomplete.json" >/dev/null; then
+    echo "Expected text-incomplete to be inconclusive" >&2
     return 1
   fi
 
