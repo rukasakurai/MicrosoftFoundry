@@ -125,17 +125,6 @@ Responses API response and returns a verdict on the run (secret-free; exit `0`/`
 ./scripts/verify-agent-run.sh < response.json
 ```
 
-For plain synthetic smoke tests where no tool is expected, assert a unique marker in
-the assistant message instead:
-
-```bash
-./scripts/verify-agent-run.sh \
-  --expect-text PURVIEW-FOUNDRY-LAB-2026-07-09-001 \
-  < response.json
-```
-
-Run `./scripts/verify-agent-run.sh --self-test` after changing the verifier.
-
 `scripts/create-mcp-agent.sh` runs it automatically after a run. For authoritative
 server-side evidence, use the Foundry portal **Traces** tab / Application Insights
 (provisioned by `infra/` when `enableObservability` is on) and the built-in
