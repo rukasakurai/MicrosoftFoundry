@@ -1,6 +1,6 @@
 # Foundry Guide feedback loop
 
-This optional sample demonstrates issue #66: a simple Microsoft Foundry prompt agent, end-user ratings emitted as OpenTelemetry, and aggregate negative feedback turned into a deduplicated GitHub issue.
+Optional sample for issue #66: a simple prompt agent, app-emitted OpenTelemetry feedback, and aggregate negative-feedback issues.
 
 ## Enable it
 
@@ -10,7 +10,7 @@ azd env set ENABLE_FOUNDRY_GUIDE true
 azd up
 ```
 
-`azd up` provisions the Foundry account/project/model and Application Insights, then the post-provision hook creates a prompt agent named `foundry-guide`. The endpoint is protected by Microsoft Entra ID; callers need the Foundry data-plane role used by the baseline, such as Foundry User or a narrower consumer role when assigned separately.
+The post-provision hook creates or reuses the `foundry-guide` prompt agent. The endpoint is protected by Microsoft Entra ID; callers need Foundry data-plane access.
 
 ## Try it
 
@@ -18,15 +18,15 @@ azd up
 ./scripts/foundry-guide-chat.sh --prompt "What is the difference between Microsoft Foundry and Foundry classic?" --rating 5
 ```
 
-The client calls the agent through the project endpoint and emits a `gen_ai.evaluation.result` OpenTelemetry event to Application Insights. It records the rating, agent name, agent version, and trace context; it does not record prompts, responses, feedback explanations, user identifiers, secrets, or Azure deployment identifiers.
+The client calls the agent and emits `gen_ai.evaluation.result` to Application Insights. It records rating metadata and trace context, not prompts, responses, explanations, user identifiers, secrets, or Azure deployment identifiers.
 
 Limitation: feedback is collected by this sample client, not the Foundry Playground. Playground conversations can appear in traces, but this sample's 5-point/good-bad ratings are only emitted when the client is used.
 
 ## GitHub issue automation
 
-The scheduled workflow is opt-in. Configure these repository settings, then set `FOUNDRY_GUIDE_FEEDBACK_ENABLED=true`:
+The manual workflow is opt-in. Configure these repository settings, then set `FOUNDRY_GUIDE_FEEDBACK_ENABLED=true`:
 
-Deployment caution: this public-repo sample is suitable for a personal/test environment. Before enabling it for more users or more confidential conversations, decide where issues should be created; prefer an internal or GitHub Enterprise Managed User repository to reduce the audience if aggregate feedback ever needs human follow-up. Keep the issue payload aggregate-only even in an internal repo.
+Deployment caution: before enabling this for more users or confidential conversations, decide where issues should be created. Prefer an internal or GitHub Enterprise Managed User repository, and keep issue payloads aggregate-only even there.
 
 | Setting | Purpose |
 | --- | --- |
@@ -38,6 +38,6 @@ Deployment caution: this public-repo sample is suitable for a personal/test envi
 
 Optional variables: `FOUNDRY_GUIDE_AGENT_NAME`, `FOUNDRY_GUIDE_FEEDBACK_LOOKBACK`, `FOUNDRY_GUIDE_MIN_NEGATIVE_FEEDBACK`, and `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN`. Set `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true` to validate the query without creating or commenting on issues.
 
-For Azure access, the workflow uses OIDC, not a GitHub PAT. If the workflow service principal should be configured by this template, set `FOUNDRY_GUIDE_FEEDBACK_PRINCIPAL_ID` in the azd environment to that service principal's object ID before `azd up`; the template grants read-only monitoring roles on Application Insights and Log Analytics.
+The workflow uses OIDC for Azure and `GITHUB_TOKEN` for issues; no PAT is required. Set `FOUNDRY_GUIDE_FEEDBACK_PRINCIPAL_ID` before `azd up` to grant the workflow principal read-only monitoring access.
 
-The workflow queries aggregate negative ratings only. If the threshold is met, `scripts/create-feedback-issue.sh` creates or comments on one open issue titled `Aggregate negative feedback for Foundry Guide`.
+If the aggregate negative-feedback threshold is met, `scripts/create-feedback-issue.sh` creates or updates one deduplicated issue.
