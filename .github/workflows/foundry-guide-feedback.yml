@@ -1,0 +1,37 @@
+name: Foundry Guide Feedback Issue Loop
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 0 * * *'
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+jobs:
+  create-feedback-issue:
+    if: ${{ vars.FOUNDRY_GUIDE_FEEDBACK_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create or update aggregate feedback issue
+        env:
+          AZURE_RESOURCE_GROUP: ${{ vars.FOUNDRY_GUIDE_RESOURCE_GROUP }}
+          APPLICATION_INSIGHTS_NAME: ${{ vars.FOUNDRY_GUIDE_APPLICATION_INSIGHTS_NAME }}
+          FOUNDRY_GUIDE_AGENT_NAME: ${{ vars.FOUNDRY_GUIDE_AGENT_NAME || 'foundry-guide' }}
+          FOUNDRY_GUIDE_FEEDBACK_LOOKBACK: ${{ vars.FOUNDRY_GUIDE_FEEDBACK_LOOKBACK || '7d' }}
+          FOUNDRY_GUIDE_MIN_NEGATIVE_FEEDBACK: ${{ vars.FOUNDRY_GUIDE_MIN_NEGATIVE_FEEDBACK || '3' }}
+          FOUNDRY_GUIDE_FEEDBACK_DRY_RUN: ${{ vars.FOUNDRY_GUIDE_FEEDBACK_DRY_RUN || 'false' }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/create-feedback-issue.sh

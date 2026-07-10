@@ -58,6 +58,18 @@ param projectDescription string = ''
 @description('Enable observability: a Log Analytics workspace + workspace-based Application Insights, connected to the project so agent runs are traceable in the Foundry portal.')
 param enableObservability bool = true
 
+@description('Optional plain-text purpose tag for resources created by this azd environment. Do not put secrets or private deployment details here.')
+param environmentPurpose string = ''
+
+@description('Optional plain-text lifecycle tag for resources created by this azd environment, for example ephemeral or persistent.')
+param environmentLifecycle string = ''
+
+@description('Optional plain-text workstream tag for resources created by this azd environment.')
+param environmentWorkstream string = ''
+
+@description('Optional service principal object ID for the GitHub Actions OIDC identity that queries aggregate Foundry Guide feedback. When set, observability must be enabled and this principal gets monitoring read roles on the telemetry resources.')
+param foundryGuideFeedbackPrincipalId string = ''
+
 @description('Retention (days) for the Log Analytics workspace')
 @minValue(30)
 param logAnalyticsRetentionInDays int = 30
@@ -86,9 +98,20 @@ param knowledgeBaseConnectionName string = 'foundry-iq-kb'
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
-var tags = {
-  'azd-env-name': environmentName
-}
+var tags = union(
+  {
+    'azd-env-name': environmentName
+  },
+  !empty(environmentPurpose) ? {
+    'environment-purpose': environmentPurpose
+  } : {},
+  !empty(environmentLifecycle) ? {
+    'environment-lifecycle': environmentLifecycle
+  } : {},
+  !empty(environmentWorkstream) ? {
+    'environment-workstream': environmentWorkstream
+  } : {}
+)
 
 // Cognitive Services - AIServices
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2026-05-01' = {
@@ -182,12 +205,36 @@ resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/co
     authType: 'ApiKey'
     isSharedToAll: true
     credentials: {
-      key: enableObservability ? applicationInsights.properties.ConnectionString : ''
+      key: enableObservability ? applicationInsights!.properties.ConnectionString : ''
     }
     metadata: {
       ApiType: 'Azure'
       ResourceId: enableObservability ? applicationInsights.id : ''
     }
+  }
+}
+
+// Optional secretless GitHub Actions path for issue automation. The workflow
+// queries aggregate feedback only, so read-only monitoring roles are enough.
+// Role: Monitoring Reader (43d0d8ad-25c7-4714-9337-8ba259a9fe05)
+resource feedbackAppInsightsMonitoringReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableObservability && !empty(foundryGuideFeedbackPrincipalId)) {
+  scope: applicationInsights
+  name: guid(applicationInsights.id, foundryGuideFeedbackPrincipalId, '43d0d8ad-25c7-4714-9337-8ba259a9fe05')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '43d0d8ad-25c7-4714-9337-8ba259a9fe05')
+    principalId: foundryGuideFeedbackPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Role: Log Analytics Reader (73c42c96-874c-492b-b04d-ab87d138a893)
+resource feedbackLogAnalyticsReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableObservability && !empty(foundryGuideFeedbackPrincipalId)) {
+  scope: logAnalytics
+  name: guid(logAnalytics.id, foundryGuideFeedbackPrincipalId, '73c42c96-874c-492b-b04d-ab87d138a893')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '73c42c96-874c-492b-b04d-ab87d138a893')
+    principalId: foundryGuideFeedbackPrincipalId
+    principalType: 'ServicePrincipal'
   }
 }
 

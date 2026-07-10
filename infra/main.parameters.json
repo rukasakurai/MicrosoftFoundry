@@ -17,6 +17,18 @@
     "enableObservability": {
       "value": "${ENABLE_OBSERVABILITY=true}"
     },
+    "environmentPurpose": {
+      "value": "${ENVIRONMENT_PURPOSE=}"
+    },
+    "environmentLifecycle": {
+      "value": "${ENVIRONMENT_LIFECYCLE=}"
+    },
+    "environmentWorkstream": {
+      "value": "${ENVIRONMENT_WORKSTREAM=}"
+    },
+    "foundryGuideFeedbackPrincipalId": {
+      "value": "${FOUNDRY_GUIDE_FEEDBACK_PRINCIPAL_ID=}"
+    },
     "enableFoundryIq": {
       "value": "${ENABLE_FOUNDRY_IQ=false}"
     }
