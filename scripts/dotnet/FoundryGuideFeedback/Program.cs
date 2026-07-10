@@ -87,17 +87,6 @@ var result = rating <= 2 ? "negative" : "positive";
 activity?.SetTag("gen_ai.evaluation.name", "user_feedback");
 activity?.SetTag("gen_ai.evaluation.score", rating);
 activity?.SetTag("gen_ai.evaluation.result", result);
-activity?.AddEvent(new ActivityEvent(
-    "gen_ai.evaluation.result",
-    tags: new ActivityTagsCollection
-    {
-        ["gen_ai.agent.name"] = agentName,
-        ["gen_ai.agent.version"] = agentVersion,
-        ["gen_ai.evaluation.name"] = "user_feedback",
-        ["gen_ai.evaluation.scale"] = "five_point",
-        ["gen_ai.evaluation.score"] = rating,
-        ["gen_ai.evaluation.result"] = result
-    }));
 
 using var feedbackActivity = activitySource.StartActivity("gen_ai.evaluation.result", ActivityKind.Internal);
 feedbackActivity?.SetTag("gen_ai.system", "microsoft_foundry");
