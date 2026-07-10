@@ -4,6 +4,13 @@ The AI Red Teaming Agent is a Microsoft Foundry evaluation capability for probin
 and scoring generative AI systems. It is **not** itself a Foundry Agent Service
 agent.
 
+> ⚠️ **Preview signals are mixed as of 2026-07-10.** The live Foundry portal's
+> **Build → Evaluations → Red team** surface did not show a visible Preview badge,
+> but the cloud run examples use `2025-11-15-preview` APIs, the local run page is
+> explicitly marked preview, and agentic evaluators such as prohibited actions and
+> sensitive data leakage are marked preview. Verify the current Learn pages and
+> live portal before relying on production behavior.
+
 ## Roles
 
 | Role | Meaning |
