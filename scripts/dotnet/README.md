@@ -1,6 +1,15 @@
-# .NET Agent Creation Tool
+# .NET tools
 
-This directory contains a .NET console application for programmatically creating AI agents in Microsoft Foundry.
+This directory contains small .NET console applications for Microsoft Foundry automation.
+
+## Tools
+
+| Tool | Purpose |
+| --- | --- |
+| `CreateAgent` | Programmatically create prompt-agent versions in Microsoft Foundry. |
+| `FoundryGuideFeedback` | Call the optional Foundry Guide agent and emit trace-correlated `gen_ai.evaluation.result` feedback to Application Insights. |
+
+## Agent creation
 
 ## Requirements
 

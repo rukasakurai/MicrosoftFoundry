@@ -20,6 +20,8 @@ The deployment provisions:
 - **Resource Group**: Container for all resources
 - **Azure AI Services (Cognitive Services)**: Multi-service resource of kind `AIServices`
 - **Cognitive Services Project**: Project for organizing AI solutions
+- **Model deployment**: Default model used by the agent creation examples
+- **Observability**: Optional Log Analytics + Application Insights, enabled by default
 
 ## Quick Start
 
@@ -80,6 +82,8 @@ After deployment, the following outputs are available as environment variables:
 - `COGNITIVE_SERVICES_NAME`: AI Services account name
 - `COGNITIVE_SERVICES_ENDPOINT`: AI Services endpoint URL
 - `PROJECT_NAME`: Project name
+- `PROJECT_ENDPOINT`: Foundry project data-plane endpoint
+- `APPLICATION_INSIGHTS_NAME`: Application Insights component name when observability is enabled
 
 Access these values with:
 
@@ -109,6 +113,8 @@ azd down
 ## Creating and Publishing Agents
 
 This template provisions **infrastructure only** (account, project, model deployment). Agents live in the **data plane** (created via the project endpoint's `/agents` API), not as ARM/Bicep resources — so they're created and published as a separate step after `azd up`. Publishing an agent (portal or REST) auto-creates the underlying application/agent-deployment resources; this template does not pre-provision them. See [agent-creation.md](agent-creation.md).
+
+Set `ENABLE_FOUNDRY_GUIDE=true` to opt into the [Foundry Guide feedback-loop sample](foundry-guide-feedback-loop.md). The post-provision hook creates or reuses the prompt agent after infrastructure deployment.
 
 ## Additional Resources
 
