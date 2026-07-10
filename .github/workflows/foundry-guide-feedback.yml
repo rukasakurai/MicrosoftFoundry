@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  # Enable only after deciding the issue audience is appropriate for the environment.
   issues: write
 
 jobs:

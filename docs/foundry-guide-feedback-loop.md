@@ -26,6 +26,8 @@ Limitation: feedback is collected by this sample client, not the Foundry Playgro
 
 The scheduled workflow is opt-in. Configure these repository settings, then set `FOUNDRY_GUIDE_FEEDBACK_ENABLED=true`:
 
+Deployment caution: this public-repo sample is suitable for a personal/test environment. Before enabling it for more users or more confidential conversations, decide where issues should be created; prefer an internal or GitHub Enterprise Managed User repository to reduce the audience if aggregate feedback ever needs human follow-up. Keep the issue payload aggregate-only even in an internal repo.
+
 | Setting | Purpose |
 | --- | --- |
 | `vars.AZURE_CLIENT_ID` | Existing OIDC app registration client ID |
