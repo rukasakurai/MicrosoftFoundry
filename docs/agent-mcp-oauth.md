@@ -155,8 +155,7 @@ the sign-in step. To inspect the stored connection, see the project's
 ## Toolbox path: MCP client → Toolbox → MCP server
 
 > The direct path above is verified end-to-end in this repo. Toolbox **consumption**
-> is also verified with a direct MCP client (see below); Toolbox **creation** is
-> currently a preview experience.
+> is also verified with a direct MCP client (see below).
 
 A [Foundry Toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox)
 bundles several tools (including MCP servers) behind a single MCP-compatible
@@ -186,7 +185,6 @@ Prefer the direct `Prompt agent → MCP` connection for a `prompt agent` that us
 one or a few MCP servers. The Toolbox's indirection pays off when a code-based
 runtime needs centrally managed access to a larger tool set. See
 [Foundry Toolbox overview](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox).
-It is also currently a portal/preview experience.
 
 ### Consuming a Toolbox (verified 2026-07-03)
 
@@ -198,9 +196,8 @@ An MCP client consumes a Toolbox through its MCP endpoint:
 **Consumption auth model — the key contrast with a direct connection:** the caller
 authenticates to the *Toolbox* with **its own Microsoft Entra token**
 (`DefaultAzureCredential`, scope `https://ai.azure.com/.default`) — it does **not**
-pass any per-tool credential. Every request must also carry the preview header
-`Foundry-Features: Toolboxes=V1Preview`. The Toolbox injects each downstream tool's
-credentials itself.
+pass any per-tool credential. The Toolbox injects each downstream tool's credentials
+itself.
 
 **The pitfall the gateway enforces:** authenticating to the Toolbox the way you'd
 authenticate to a direct MCP server — an API key / subscription key instead of an
