@@ -97,7 +97,7 @@ operational downtime.
 
 - Full OWASP risk explanations.
 - Full security mitigation guidance.
-- Generic AI governance prose.
+- Generic AI control prose.
 - Customer-facing cost claims.
 - Stale pricing numbers.
 - Invented quantitative estimates.

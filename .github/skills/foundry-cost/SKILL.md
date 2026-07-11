@@ -14,9 +14,9 @@ description: Guidance for analyzing Microsoft Foundry related cost drivers, hidd
 | Agents, tools, hosted compute, memory | Indirect model/tool/search/compute/license meters | Agents are data-plane artifacts; include the services they invoke, not just the connection object. |
 | AI Red Teaming Agent / evaluations | Red-team run volume, target calls, evaluator/system model usage, optional caller/runtime compute | Public docs do not clearly break out attacker generation vs evaluator/scoring meters. See `docs/ai-red-teaming-agent.md#cost-note`. |
 | Guardrails / runtime safety | Azure AI Content Safety and Foundry model/tool meters | Operate → Compliance views can be read-only; Build/runtime guardrails can drive usage indirectly through model, tool, and content-safety paths. |
-| Operate → Compliance → Data security and governance | Microsoft Purview / DSPM licensing and PAYG meters | Not provisioned by Bicep. Check tenant licensing, Purview enablement, and PAYG billing before assuming $0. |
+| **Operate → Compliance → Data security and governance** | Microsoft Purview / DSPM licensing and PAYG meters | Not provisioned by Bicep. Check tenant licensing, Purview enablement, and PAYG billing before assuming $0. |
 | Operate → Compliance → Security posture | Microsoft Defender for Cloud plans | Defender is subscription/security-plane, not a normal repo resource. Check plan enablement before excluding it. |
-| Entra agent identity, registry, OIDC, OAuth | Microsoft Entra licensing or app/governance dependencies | App registrations and RBAC are usually not usage meters, but premium Entra features or tenant licenses can matter. |
+| Entra agent identity, registry, OIDC, OAuth | Microsoft Entra licensing or app-management dependencies | App registrations and RBAC are usually not usage meters, but premium Entra features or tenant licenses can matter. |
 | API gateways / remote tools | Azure API Management or external service charges | Not in the baseline Bicep today; include if scripts/docs/PRs add gateway, MCP, or API front-door infrastructure. |
 
 ## Cannot infer from this repo alone

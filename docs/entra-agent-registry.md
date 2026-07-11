@@ -8,7 +8,7 @@
 > see [Agent Registry convergence with Microsoft Agent 365](https://learn.microsoft.com/en-us/entra/agent-id/agent-registry-convergence).
 > This guide is pending a rewrite against the new API.
 
-This guide explains how to register AI agents in the **Microsoft Entra Agent Registry** for visibility and governance. This makes your agents discoverable and manageable in the Microsoft Entra admin center.
+This retired guide describes the former **Microsoft Entra Agent Registry** registration flow. Microsoft Agent 365 now provides the unified inventory; Microsoft Entra continues to manage agent identities, permissions, Conditional Access, and identity governance.
 
 > **Looking for Agent Identity?** If you want your agent to authenticate as itself (get tokens, access resources), see [entra-agent-identity.md](./entra-agent-identity.md) instead.
 
@@ -16,10 +16,10 @@ This guide explains how to register AI agents in the **Microsoft Entra Agent Reg
 
 [Microsoft Entra Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/identity-platform/what-is-agent-id) provides a centralized identity management system for AI agents.
 
-**Agent Registry** provides:
+The former **Agent Registry** provided:
 
-- **Centralized visibility**: View all agents in the [Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/AllAgents.MenuView/~/overview)
-- **Governance and compliance**: Apply enterprise-wide policies to AI agents
+- **Registration and visibility**: Register and list agents, including agents without a Microsoft Entra agent identity
+- **Ownership metadata**: Record owners and related registration details
 - **Audit trail**: Track agent activities and ownership
 
 > **Note**: Registering an agent in the registry does **not** give it authentication capabilities. After registration, your agent will show **"Has Agent ID: No"** in Entra admin center. To enable agent authentication, see [entra-agent-identity.md](./entra-agent-identity.md).
@@ -262,6 +262,12 @@ az ad app delete --id $APP_ID
 > **API Version (as of December 2025)**: The Agent Registry API is available only in the Microsoft Graph beta endpoint (`https://graph.microsoft.com/beta/`). This API may change before reaching general availability. Monitor the [Microsoft Graph changelog](https://learn.microsoft.com/en-us/graph/changelog) for updates.
 
 ## Documentation Test History
+
+### 2026-07-11 12:33 JST
+- Result: FAIL (known retired registration flow)
+- Notes:
+  - Confirmed Microsoft Agent 365 is the unified inventory and Microsoft Entra retains identity and access controls.
+  - The legacy registration steps remain unusable because the retired API returns HTTP 503; the opening warning remains the source of truth.
 
 ### 2025-12-25 13:15 JST
 - Result: PASS with manual steps and fixes

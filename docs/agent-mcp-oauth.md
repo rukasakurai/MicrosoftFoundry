@@ -1,14 +1,14 @@
-# MCP authentication for prompt-agent and Toolbox paths
+# MCP authentication for prompt-agent and `Toolbox` paths
 
 This guide compares two distinct ways Foundry workloads reach remote
 [MCP](https://modelcontextprotocol.io/) servers:
 
 - **Direct**: `Prompt agent → MCP server`
-- **Toolbox**: `MCP client → Foundry Toolbox → MCP server`
+- **`Toolbox`**: `MCP client → Foundry Toolbox → MCP server`
 
 The direct path uses an **OAuth-authenticated remote MCP server**, with the
 [GitHub MCP server](https://github.com/github/github-mcp-server)
-(`https://api.githubcopilot.com/mcp/`) as a worked example. The Toolbox path
+(`https://api.githubcopilot.com/mcp/`) as a worked example. The `Toolbox` path
 describes direct MCP clients, such as a `hosted agent` runtime.
 
 It complements [agent-creation.md](./agent-creation.md), which covers creating a
@@ -152,66 +152,66 @@ Consent is remembered per user, per tool, per project, so subsequent runs skip
 the sign-in step. To inspect the stored connection, see the project's
 **Connections** (or **Connected resources**) settings.
 
-## Toolbox path: MCP client → Toolbox → MCP server
+## `Toolbox` path: MCP client → `Toolbox` → MCP server
 
-> The direct path above is verified end-to-end in this repo. Toolbox **consumption**
+> The direct path above is verified end-to-end in this repo. `Toolbox` **consumption**
 > is also verified with a direct MCP client (see below).
 
-A [Foundry Toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox)
+A [`Toolbox`](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox)
 bundles several tools (including MCP servers) behind a single MCP-compatible
-endpoint. A client such as a `hosted agent` runtime connects to the Toolbox
+endpoint. A client such as a `hosted agent` runtime connects to the `Toolbox`
 endpoint instead of connecting to each MCP server separately.
 
 **How the indirection changes auth:** the MCP client authenticates to the
-*Toolbox* endpoint with **Microsoft Entra** credentials
-(`DefaultAzureCredential`), and the Toolbox centrally manages the downstream MCP
+`Toolbox` endpoint with **Microsoft Entra** credentials
+(`DefaultAzureCredential`), and the `Toolbox` centrally manages the downstream MCP
 credentials — injection, token refresh, and policy — for every tool in the
 bundle. Clients do not reference per-tool credentials, and you can add or
 reconfigure tools without changing client code. See
-[Toolbox prerequisites](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox#prerequisites)
+[`Toolbox` prerequisites](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox#prerequisites)
 for the Entra configuration.
 
-| | Direct | Toolbox |
+| | Direct | `Toolbox` |
 | --- | --- | --- |
 | Caller | `prompt agent` | MCP client, such as a `hosted agent` runtime |
-| Caller authenticates to | the MCP server (via the connection) | the Toolbox (Entra) |
-| Downstream credential reference | project connection in the `prompt agent` definition | project connection in the Toolbox definition |
-| Credential injection / refresh | direct connection path | centralized in the Toolbox |
+| Caller authenticates to | the MCP server (via the connection) | the `Toolbox` (Entra) |
+| Downstream credential reference | project connection in the `prompt agent` definition | project connection in the `Toolbox` definition |
+| Credential injection / refresh | direct connection path | centralized in the `Toolbox` |
 | Change tools without changing the caller | no | yes |
 
-### When to use the Toolbox vs. connect directly
+### When to use `Toolbox` vs. connect directly
 
 Prefer the direct `Prompt agent → MCP` connection for a `prompt agent` that uses
-one or a few MCP servers. The Toolbox's indirection pays off when a code-based
+one or a few MCP servers. The `Toolbox` indirection pays off when a code-based
 runtime needs centrally managed access to a larger tool set. See
-[Foundry Toolbox overview](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox).
+[`Toolbox` overview](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox).
 
-### Consuming a Toolbox (verified 2026-07-03)
+### Consuming a `Toolbox` (verified 2026-07-03)
 
-An MCP client consumes a Toolbox through its MCP endpoint:
+An MCP client consumes a `Toolbox` through its MCP endpoint:
 
 - Consumer (always serves the default version): `{project_endpoint}/toolboxes/{name}/mcp?api-version=v1`
 - Developer (a specific version): `{project_endpoint}/toolboxes/{name}/versions/{version}/mcp?api-version=v1`
 
 **Consumption auth model — the key contrast with a direct connection:** the caller
-authenticates to the *Toolbox* with **its own Microsoft Entra token**
+authenticates to the `Toolbox` with **its own Microsoft Entra token**
 (`DefaultAzureCredential`, scope `https://ai.azure.com/.default`) — it does **not**
-pass any per-tool credential. The Toolbox injects each downstream tool's credentials
+pass any per-tool credential. The `Toolbox` injects each downstream tool's credentials
 itself.
 
-**The pitfall the gateway enforces:** authenticating to the Toolbox the way you'd
+**The pitfall the gateway enforces:** authenticating to the `Toolbox` the way you'd
 authenticate to a direct MCP server — an API key / subscription key instead of an
 Entra bearer token — fails at the gateway with
 `401 "Access denied due to invalid subscription key or wrong API key"`.
 
 To exercise this cleanly, bundle an **auth-free MCP** (for example the
 [Microsoft Learn MCP](https://learn.microsoft.com/api/mcp)). Holding downstream
-tool auth at "none" isolates the *Toolbox-consumption* auth as the only variable,
+tool auth at "none" isolates the `Toolbox` consumption auth as the only variable,
 so a failure can't be ambiguous. Tools then surface namespaced as
 `{server_label}___{tool}` (for example `learn___microsoft_docs_search`).
 
 **Portal vs. code (verified 2026-07-03):** the new-experience portal manages
-Toolboxes under **Build → Tools → Toolboxes** (create, list, and an
+`Toolbox` resources under **Build → Tools → Toolboxes** (create, list, and an
 *Endpoint + samples* pane titled *"Call this toolbox in code"*). For SDK/REST
 consumption samples and `hosted agent` integration,
 see [Create, test, and deploy a toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox)
@@ -222,7 +222,7 @@ rather than reproducing them here.
 Owner or Contributor do not confer it. This repo's Bicep grants the deploying
 principal that role during `azd up` (see `infra/main.bicep`), so the baseline is
 usable without a manual step. For the full role matrix, see
-[Toolbox prerequisites](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox#prerequisites).
+[`Toolbox` prerequisites](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox#prerequisites).
 
 ## What keeps the connection valid over time
 

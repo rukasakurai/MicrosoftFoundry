@@ -11,7 +11,7 @@ or review process.
 | Repo IaC | Resources, SKUs, default feature toggles, retention, baseline connections | `infra/main.bicep`, `enableObservability`, `enableFoundryIq`, Search SKU, model deployment SKU/capacity |
 | Runtime workload design | Workload volume, retries, tool loops, cache behavior, guardrails, rate limits | Token volume, agentic retrieval calls, hosted compute hours, Content Safety usage, memory use |
 | Subscription governance | Budgets, Cost Management, Defender plans, Azure Policy, quotas | Actual spend and plan state can be outside this repo's resource group or Bicep |
-| Tenant governance | Entra licensing, app registrations, admin consent, Purview/DSPM licensing/PAYG | Required for identity, DLP, compliance, and some agent governance flows |
+| Tenant governance | Entra licensing, app registrations, admin consent, Purview/DSPM licensing/PAYG | Required for identity, DLP, compliance, and some agent identity and registry flows |
 | Review process | PR cost-delta checks, estimate freshness, explicit assumptions, follow-up issues | Use `pr-diff-cost-review.md`; record region/currency/date/source for numeric estimates |
 
 ## Practical rules

@@ -128,7 +128,7 @@ Technical boundaries:
 - Foundry Control Plane is a management experience spanning inventory, monitoring, compliance, security, and remediation; there is no single Control Plane governance resource type.
 - Foundry guardrail policies are backed by Azure Policy assignments represented in ARM as `Microsoft.Authorization/policyAssignments`.
 - `MCP tools governance` has no dedicated governance resource type. An eligible MCP tool is configured in the Agent Service project data plane to route through an API Management endpoint. The gateway and its policies are Azure API Management resources.
-- `Toolbox` is a project-scoped data-plane resource, not an ARM resource. The `v1` API represents it as a `ToolboxObject` with immutable `ToolboxVersionObject` versions under `/toolboxes`.
+- `Toolbox` is a project-scoped data-plane resource, not an ARM resource. The `v1` API represents it as a `ToolboxObject` with immutable `ToolboxVersionObject` versions under `/toolboxes`; `policies.rai_config.rai_policy_name` can apply an optional toolbox-layer guardrail to a version.
 - `Agent Governance Toolkit` has no Azure ARM or Foundry data-plane representation. It is installed into an application or runtime and uses its own policy formats.
 
 Terms:
@@ -136,11 +136,11 @@ Terms:
 - **Foundry Control Plane.** Specify the capability: inventory, monitoring, compliance reporting, policy assignment, security integration, or remediation. Do not imply that every runtime action passes through Foundry Control Plane.
 - **Configuration governance.** Describe the configuration being evaluated and the policy effect. Do not describe an audit-only Azure Policy assignment as a runtime request blocker.
 - **`MCP tools governance` — preview.** Eligible new portal-created MCP tools that do not use managed OAuth are routed through a connected API Management AI Gateway. Its policies apply only to traffic using that gateway.
-- **`Toolbox`.** Centralizes tool definitions, immutable versions, and downstream credential handling. It is separate from `MCP tools governance`; `require_approval` is metadata that the calling runtime must enforce.
+- **`Toolbox`.** Provides tool curation, immutable version promotion, downstream credential handling, and optional toolbox-layer RAI guardrails. It is separate from `MCP tools governance` and is not a universal semantic authorization boundary; `require_approval` is metadata that the calling runtime must enforce.
 - **Runtime enforcement.** Name the actual boundary, such as an API Management policy, configured guardrail, RBAC check, or application middleware.
 - **`Agent Governance Toolkit` (`AGT`).** A separate open-source runtime toolkit in public preview. It is not a managed Foundry service or evidence of a Foundry roadmap commitment.
 
-References: [Foundry Control Plane](https://learn.microsoft.com/azure/foundry/control-plane/overview), [MCP tools governance](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/governance), [Toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox), and [Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit).
+References: [Foundry Control Plane](https://learn.microsoft.com/azure/foundry/control-plane/overview), [`MCP tools governance`](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/governance), [`Toolbox`](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox), and [`Agent Governance Toolkit`](https://github.com/microsoft/agent-governance-toolkit).
 
 ### Key Distinctions
 

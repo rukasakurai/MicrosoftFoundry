@@ -23,7 +23,7 @@ References:
 
 The Foundry portal's **Create policy** page is an
 **[Azure Policy](https://learn.microsoft.com/azure/governance/policy/overview)**-backed
-configuration-governance surface: creating or editing policies requires the **Resource
+configuration governance surface: creating or editing policies requires the **Resource
 Policy Contributor** or **Owner** role, and the selected controls map to built-in Azure
 Policy definitions. Microsoft Learn says deleting a Foundry policy removes the underlying
 Azure Policy assignment; live testing confirmed that the portal-created policy appears as

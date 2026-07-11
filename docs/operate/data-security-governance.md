@@ -1,10 +1,10 @@
-# Foundry "Data security and governance": what it governs, and what it doesn't
+# Foundry **Data security and governance**: what it covers, and what it doesn't
 
 > ⚠️ **This is a preview feature; the facts below will likely change quickly.** Verify
 > against the linked Microsoft Learn pages and the live portal before relying on
 > anything here.
 
-> **Preview (as of 2026-07-06).** The "Data security and governance" pane is the
+> **Preview (as of 2026-07-06).** The **Data security and governance** pane is the
 > Foundry portal's Microsoft Purview integration, which Microsoft's own docs mark as
 > **(preview)** — see the section
 > [Enable enterprise-grade data security and compliance for Foundry with Microsoft Purview (preview)](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security#enable-enterprise-grade-data-security-and-compliance-for-foundry-with-microsoft-purview-preview).
@@ -12,7 +12,7 @@
 >
 > **The portal doesn't make this obvious.** As of 2026-07-06, the Foundry portal
 > shows a "Preview" badge on the Compliance workspace's *Policies* view but **not**
-> when the *Data security and governance* tab is selected — so the pane itself carries
+> when the **Data security and governance** tab is selected — so the pane itself carries
 > no visible preview label (verified live in the portal). Treat it as preview
 > regardless, per the docs above.
 >
@@ -70,7 +70,7 @@ one doesn't reveal the next:
 7. **DLP block only:** app registration, Graph consent, policy setup, and app code
    that calls `processContent` and honors the verdict.
 
-The takeaway: the highest-value governance tests are the **least** addressable from
+The takeaway: the highest-value Purview compliance tests are the **least** addressable from
 this repo's IaC — they hinge on tenant licensing and admin-plane actions Bicep can't
 perform.
 
@@ -84,7 +84,7 @@ user — that authorization check happens elsewhere.
 
 Per-user trimming of retrieved knowledge is enforced inside **Azure AI Search** at
 query time (under the caller's Microsoft Entra identity), **not** by the Foundry
-governance pane. It underpins Foundry IQ, and there are two paths:
+**Data security and governance** pane. It underpins Foundry IQ, and there are two paths:
 
 - **Document-level ACLs / RBAC scope** — indexed knowledge sources carry Entra
   user/group permissions (natively from sources like ADLS Gen2, or pushed into

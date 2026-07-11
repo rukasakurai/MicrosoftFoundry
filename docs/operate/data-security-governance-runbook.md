@@ -1,4 +1,4 @@
-# Runbook: experiencing Foundry Data security and governance
+# Runbook: experiencing Foundry **Data security and governance**
 
 This runbook is for a lab that deliberately experiences the Microsoft Foundry →
 Microsoft Purview **Data security and governance** path. It is not for RAG
@@ -84,7 +84,7 @@ browser session open during the spike to avoid repeated MFA.
 
 ## Cost estimate for a small lab
 
-There is no single "Foundry governance" meter. Expect several possible meters:
+There is no single meter for Foundry compliance and data-security features. Expect multiple billing meters:
 
 | Surface | Cost driver | Small-lab assumption |
 | --- | --- | --- |
