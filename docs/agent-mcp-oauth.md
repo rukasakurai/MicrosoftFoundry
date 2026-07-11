@@ -1,13 +1,15 @@
-# Connecting a Prompt Agent to an Authenticated Remote MCP Server
+# MCP authentication for prompt-agent and Toolbox paths
 
-This guide shows how a Foundry Agent Service `prompt agent` connects to an **OAuth-authenticated
-remote [MCP](https://modelcontextprotocol.io/) server**, using the
-[GitHub MCP server](https://github.com/github/github-mcp-server)
-(`https://api.githubcopilot.com/mcp/`) as a worked example. It covers the two
-connection shapes and where authentication is configured in each:
+This guide compares two distinct ways Foundry workloads reach remote
+[MCP](https://modelcontextprotocol.io/) servers:
 
 - **Direct**: `Prompt agent → MCP server`
-- **Toolbox**: `Prompt agent → Foundry Toolbox → MCP server`
+- **Toolbox**: `MCP client → Foundry Toolbox → MCP server`
+
+The direct path uses an **OAuth-authenticated remote MCP server**, with the
+[GitHub MCP server](https://github.com/github/github-mcp-server)
+(`https://api.githubcopilot.com/mcp/`) as a worked example. The Toolbox path
+describes direct MCP clients, such as a `hosted agent` runtime.
 
 It complements [agent-creation.md](./agent-creation.md), which covers creating a
 plain `prompt agent`. See [Agent Terminology](../AGENTS.md#agent-terminology) for
@@ -18,10 +20,10 @@ and [Set up MCP server authentication](https://learn.microsoft.com/azure/foundry
 
 ## Where credentials live
 
-An agent never carries MCP credentials inline. Instead, the credentials are
-stored in a **project connection**, and the agent's `mcp` tool references that
+This `prompt agent` does not carry MCP credentials inline. Instead, the credentials are
+stored in a **project connection**, and the `prompt agent`'s `mcp` tool references that
 connection by name via `project_connection_id`. The connection is
-**project-scoped**: the agent must run in the same Foundry project as the
+**project-scoped**: the `prompt agent` must run in the same Foundry project as the
 connection.
 
 Foundry supports several auth methods for a connection (key-based, Microsoft
@@ -30,7 +32,7 @@ passthrough, because it preserves each user's own identity — the pattern that
 matters for production systems where per-user permissions and audit trails are
 required.
 
-## Direct path: Agent → MCP server
+## Direct path: Prompt agent → MCP server
 
 ### 1. Create the project connection (once)
 
@@ -72,7 +74,7 @@ eval $(azd env get-values) && ./scripts/create-mcp-agent.sh \
   --prompt "What is my GitHub username? Use the GitHub MCP tools."
 ```
 
-The agent's tool is wired to the connection:
+The `prompt agent`'s tool is wired to the connection:
 
 ```json
 {
@@ -134,60 +136,61 @@ server-side evidence, use the Foundry portal **Traces** tab / Application Insigh
 
 ### Verify in the Foundry portal
 
-You can also exercise the same agent interactively:
+You can also exercise the same `prompt agent` interactively:
 
 1. Open the project in the [Foundry portal](https://ai.azure.com), making sure the
    directory selector (top right) is the tenant that owns the project.
-2. Go to **Build → Agents** and open the agent created above. Its config shows the
+2. Go to **Build → Agents** and open the `prompt agent` created above. Its config shows the
    MCP tool wired to the `github` connection.
-3. Open the agent's **playground / Try** view and send:
+3. Open the `prompt agent`'s **playground / Try** view and send:
    *"What is my GitHub username? Use the GitHub MCP tools."*
 4. On first use you may be prompted to sign in and consent (OAuth passthrough);
    with `require_approval: always` you then **Approve** each tool call in the UI.
-5. The agent returns the result from the live `get_me` tool call.
+5. The `prompt agent` returns the result from the live `get_me` tool call.
 
 Consent is remembered per user, per tool, per project, so subsequent runs skip
 the sign-in step. To inspect the stored connection, see the project's
 **Connections** (or **Connected resources**) settings.
 
-## Toolbox path: Prompt agent → Toolbox → MCP server
+## Toolbox path: MCP client → Toolbox → MCP server
 
 > The direct path above is verified end-to-end in this repo. Toolbox **consumption**
-> is also verified (see below); Toolbox **creation** and the portal agent-build
-> surface are currently a preview experience.
+> is also verified with a direct MCP client (see below); Toolbox **creation** is
+> currently a preview experience.
 
 A [Foundry Toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox)
 bundles several tools (including MCP servers) behind a single MCP-compatible
-endpoint. The agent points its `mcp` tool at the **Toolbox** endpoint instead of
-the MCP server, using the same `server_url` / `server_label` shape.
+endpoint. A client such as a `hosted agent` runtime connects to the Toolbox
+endpoint instead of connecting to each MCP server separately.
 
-**How the indirection changes auth:** with a Toolbox, the agent authenticates to
-the *Toolbox* endpoint with **Microsoft Entra** credentials
+**How the indirection changes auth:** the MCP client authenticates to the
+*Toolbox* endpoint with **Microsoft Entra** credentials
 (`DefaultAzureCredential`), and the Toolbox centrally manages the downstream MCP
 credentials — injection, token refresh, and policy — for every tool in the
-bundle. Individual agents no longer carry per-MCP credentials, and you can add or
-reconfigure tools without changing agent code. See
+bundle. Clients do not reference per-tool credentials, and you can add or
+reconfigure tools without changing client code. See
 [Toolbox prerequisites](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox#prerequisites)
 for the Entra configuration.
 
 | | Direct | Toolbox |
 | --- | --- | --- |
-| Agent authenticates to | the MCP server (via the connection) | the Toolbox (Entra) |
-| MCP credentials stored in | the project connection | the Toolbox |
-| Token refresh / policy | per connection | centralized in the Toolbox |
-| Change tools without touching agents | no | yes |
+| Caller | `prompt agent` | MCP client, such as a `hosted agent` runtime |
+| Caller authenticates to | the MCP server (via the connection) | the Toolbox (Entra) |
+| Downstream credential reference | project connection in the `prompt agent` definition | project connection in the Toolbox definition |
+| Credential injection / refresh | direct connection path | centralized in the Toolbox |
+| Change tools without changing the caller | no | yes |
 
 ### When to use the Toolbox vs. connect directly
 
-Prefer the direct `Agent → MCP` connection for a single MCP server and a few
-agents; the Toolbox's indirection adds an auth hop for little benefit at that
-scale. Reach for a Toolbox when its centralization pays off — see
+Prefer the direct `Prompt agent → MCP` connection for a `prompt agent` that uses
+one or a few MCP servers. The Toolbox's indirection pays off when a code-based
+runtime needs centrally managed access to a larger tool set. See
 [Foundry Toolbox overview](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox).
 It is also currently a portal/preview experience.
 
 ### Consuming a Toolbox (verified 2026-07-03)
 
-An agent (or any MCP client) consumes a Toolbox through its MCP endpoint:
+An MCP client consumes a Toolbox through its MCP endpoint:
 
 - Consumer (always serves the default version): `{project_endpoint}/toolboxes/{name}/mcp?api-version=v1`
 - Developer (a specific version): `{project_endpoint}/toolboxes/{name}/versions/{version}/mcp?api-version=v1`
@@ -212,11 +215,8 @@ so a failure can't be ambiguous. Tools then surface namespaced as
 
 **Portal vs. code (verified 2026-07-03):** the new-experience portal manages
 Toolboxes under **Build → Tools → Toolboxes** (create, list, and an
-*Endpoint + samples* pane titled *"Call this toolbox in code"*). In the agent
-builder, the **Add tool → Select a tool** picker (Configured / Catalog / Custom)
-offers direct **MCP**, OpenAPI, A2A, and catalog tools — but **no first-class
-option to consume a Toolbox**. So an agent consumes a Toolbox via **code/SDK**,
-not by adding it in the portal Playground. For the SDK/REST consumption samples,
+*Endpoint + samples* pane titled *"Call this toolbox in code"*). For SDK/REST
+consumption samples and `hosted agent` integration,
 see [Create, test, and deploy a toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox)
 rather than reproducing them here.
 
@@ -269,7 +269,7 @@ does not guarantee the same for another.
   OAuth app's *Authorization callback URL* **after** the connection is created, or
   consent fails. A stale or truncated consent link surfaces as a generic
   `Server Error in '/' Application` from the consent broker — regenerate it by
-  re-running the agent.
+  re-running the `prompt agent`.
 - **Tenant match & role.** For OAuth passthrough, the consuming user's Entra
   tenant must match the project's tenant, and the user needs at least the
   **Foundry Agent Consumer** role on the project.
