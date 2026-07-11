@@ -217,7 +217,7 @@ curl -X POST \
 
 Creating a new `prompt agent` gives it a stable endpoint; there is no separate publish step for API access. Publishing now means distributing that endpoint through Microsoft 365 or Teams.
 
-Channel publishing is available in the Foundry portal and has no public API. See [Migrate from Agent Applications to the new endpoint and publishing experience](https://learn.microsoft.com/azure/foundry/agents/how-to/migrate-agent-applications).
+Channel publishing is available through the [Foundry portal](https://learn.microsoft.com/azure/foundry/agents/how-to/publish-copilot) or the [REST API](https://learn.microsoft.com/azure/foundry/agents/how-to/publish-copilot-virtual-network). See [Migrate from Agent Applications](https://learn.microsoft.com/azure/foundry/agents/how-to/migrate-agent-applications) for the legacy model.
 
 ## Documentation Test History
 
