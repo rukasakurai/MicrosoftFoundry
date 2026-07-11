@@ -237,7 +237,7 @@ GUI/Playwright and live provisioning are extra.
 | `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~16s | ✅ |
 | `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
 | `docs/entra-agent-identity.md` | flow 10 | ~4s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
-| `docs/entra-agent-registry.md` | flow 10 | ~3s | ❌ **registration retired 2026-06-15**: `POST /beta/agentRegistry/agentInstances` returns `503` ("use the Microsoft Agent 365 registration API"), though `GET` still returns `200` — the doc's core register flow is broken and it's stale until rewritten |
+| `docs/entra-agent-registry.md` | flow 10 | ~4s | ❌ **registration retired 2026-06-15**: `POST /beta/agentRegistry/agentInstances` returns `503` ("use the Microsoft Agent 365 registration API"), though `GET` still returns `200` — the doc's core register flow is broken and it's stale until rewritten |
 | `docs/agent-mcp-oauth.md` | flow 11 | ~69s | ⚠️ needs a real OAuth app (client id/secret) |
 | `docs/ai-red-teaming-agent.md` | docs-accuracy check (no provisioning flow): Learn links, API/portal labels, preview/cost caveats | ~60s + portal check | ✅ verify against Microsoft Learn and the live **Build → Evaluations → Red team** portal with Playwright; preview signals are mixed, so confirm caveats still hold and date the result |
 | `docs/operate/data-security-governance.md` | docs-accuracy check (no provisioning flow) | ~74s | ✅ verify the claims against Microsoft Learn + the live portal pane with Playwright; it's a **preview** feature, so confirm the caveats still hold and date the result |

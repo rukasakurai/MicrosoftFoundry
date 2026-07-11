@@ -48,7 +48,7 @@ compliance assignments.
 
 | # | Risk | Foundry control | Primary owner | Supporting |
 |---|------|-----------------|---------------|------------|
-| LLM01 | Prompt Injection | Guardrails: Jailbreak + Indirect prompt injections + Spotlighting; enforce via Compliance Policies | **Foundry** | Defender for AI, APIM |
+| LLM01 | Prompt Injection | Runtime guardrails: Jailbreak + Indirect prompt injections + Spotlighting; Compliance Policies audit required configuration | **Foundry** | Defender for AI, APIM |
 | LLM02 | Sensitive Information Disclosure | Guardrails: PII; Compliance: Purview DLP/sensitive-data monitoring | **Purview** + Foundry + Entra (access slice) | Azure AI Search (RAG trimming), Defender |
 | LLM03 | Supply Chain | Operate → Assets registry + Security posture (Defender) recs | **Other** (GHAS, Azure Policy) + **Defender for Cloud** (vuln) | Azure API Center (leads API/tool/MCP inventory + allow-listing), APIM (runtime), Purview (model/data lineage), Foundry |
 | LLM04 | Data and Model Poisoning | Build → Data/Knowledge access controls + Purview (indirect) | **Purview** + Foundry | Azure AI Search (index provenance/RBAC), Other (model provider, Storage immutability) |

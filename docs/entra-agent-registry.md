@@ -39,7 +39,7 @@ Before registering agents with Microsoft Entra Agent Registry, ensure you have:
    - Access to a tenant admin who can grant consent on your behalf
 5. **A deployed Microsoft Foundry agent** (see [agent-creation.md](./agent-creation.md))
 
-> ⚠️ **Important**: The Azure CLI's built-in Microsoft Graph permissions do **not** include `AgentInstance.ReadWrite.All`. Even with the Agent Registry Administrator role, you cannot register agents using Azure CLI tokens directly. You must create a **custom app registration** with `AgentInstance.ReadWrite.All` permission granted and authenticate as that app. See [Setting Up Permissions](#setting-up-permissions) below.
+> ⚠️ **Important**: The Azure CLI's built-in Microsoft Graph permissions do **not** include `AgentInstance.ReadWrite.All`. Even with the Agent Registry Administrator role, you cannot register agents using Azure CLI tokens directly. You must create a **custom app registration** with `AgentInstance.ReadWrite.All` permission granted and authenticate as that app. See [Setting Up Permissions](#1-setting-up-permissions) below.
 
 ## 1. Setting Up Permissions
 
