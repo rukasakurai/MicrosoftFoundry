@@ -123,8 +123,8 @@ Treat the minute figures as a **floor**, not an ETA.
 | 4 | Agent run step (documented flow) | run → 200 | ~2s | ✅ old `…/responses?api-version=` returns 404; use `/openai/v1/responses` |
 | 5 | Agent creation (.NET) `scripts/dotnet/CreateAgent` | `dotnet run` → agent created | ~17s (warm; first run adds restore+build) | ✅ builds and creates an agent. Uses `AzureCliCredential` (not `DefaultAzureCredential`, which stalls ~3 min probing IMDS locally). Pins stable `Azure.AI.Projects` 2.0.1 / `Azure.AI.Projects.Agents` 2.0.0 |
 | 6 | MCP agent + evidence-safe validation (`scripts/verify-agent-run.sh`) | create + run; return a **pass/fail/invalid** verdict from the output items (not just prose). `mcp_call` with output → `pass`; message-only → `invalid` | ~15s | ✅ easy with an auth-free MCP. `pass` + `invalid` are testable here; the `fail`/consent branch needs an OAuth connection (flow 11). `create-mcp-agent.sh` runs it automatically |
-| 7 | `enableAgentDeployments` toggle removed (#34) | compiled ARM has no `enableAgentDeployments` param and no `applications`/`agentDeployments` resources (`az bicep build` + `jq`) | ~5s | ✅ resolves #34: the toggle always failed (`Agents cannot be null or empty`) because agents are data-plane only (created via `/agents`, flows 3/5) and published via portal/REST (flow 8) — it was removed rather than fixed |
-| 8 | Agent publish → application/deployment | agent published to an application | ~50s | ⚠️ not an ARM/Bicep path; use **portal Publish** (Playwright) or the publish REST API — publishing auto-creates the application + deployment |
+| 7 | `enableAgentDeployments` toggle removed (#34) | compiled ARM has no `enableAgentDeployments` param and no `applications`/`agentDeployments` resources (`az bicep build` + `jq`) | ~5s | ✅ resolves #34: the toggle always failed (`Agents cannot be null or empty`) because agents are data-plane records created via `/agents` (flows 3/5). The new object model exposes the stable endpoint without separate application/deployment resources |
+| 8 | Agent stable endpoint / channel publishing | stable endpoint available after creation; optional Microsoft 365/Teams publishing | endpoint check: seconds; channel publishing: setup-dependent | ⚠️ stable endpoint is part of the new agent object. Microsoft 365/Teams publishing is available through the portal or REST API |
 | 9 | Azure OIDC (`.github/workflows/azure-oidc-check.yml`) | federated GitHub Actions login | ~20–60s (runner queue) | ⚠️ triggers via `gh workflow run`; green needs an Entra federated-identity credential matching the branch ref (`AADSTS700213` otherwise) |
 | 10 | Entra agent identity / registry | `instance_identity` present; agent visible in portal | ~5s | ✅ identity auto-created (agent API); agent also visible in the nextgen portal project view (Playwright) |
 | 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy: needs a real OAuth app (client id/secret). Portal "Connect a tool → MCP" dialog exists (Playwright); a working OAuth connection can't be created without those credentials |
@@ -132,9 +132,10 @@ Treat the minute figures as a **floor**, not an ETA.
 | 13 | Observability + agent-run tracing (`enableObservability`, default on) | App Insights connection attached; after a run, spans land in the Log Analytics workspace | ~+18s provision, then ~2–3 min ingestion lag | ✅ resolves #36. Verify deterministically by querying the workspace (see below), not the portal |
 | 14 | Foundry Guide feedback-loop sample (`ENABLE_FOUNDRY_GUIDE=true`) | `scripts/deploy-foundry-guide.sh` creates/reuses the prompt agent; `scripts/foundry-guide-chat.sh --rating <1-5>` runs the Entra-protected endpoint and emits `gen_ai.evaluation.result`; `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true scripts/create-feedback-issue.sh` proves threshold/dedup logic without writing GitHub issues | deploy reuse path **3s** observed; chat + feedback client **21s** observed; dry-run issue check **21s** observed | ✅ opt-in. Do **not** create real GitHub issues during routine E2E; real issue creation is noisy and should be a deliberate one-off validation only. The issue script is not time-sensitive: it uses a lookback window and can run manually at any time. |
 
-Flows 8, 9, and 11 are setup-dependent and don't fit an automated per-PR E2E;
-validate them out-of-band and note that in the PR. For portal-based checks (agent
-visible in the project, MCP connection dialog, Publish action), the
+The channel-publishing portion of flow 8, plus flows 9 and 11, are setup-dependent
+and don't fit an automated per-PR E2E; validate them out-of-band and note that in
+the PR. For portal-based checks (agent visible in the project, MCP connection dialog,
+channel Publish action), the
 `foundry-ui-playwright` skill can drive an authenticated portal session — verified to
 work without an interactive login when the operator already has a portal session in
 the target tenant.
@@ -232,12 +233,12 @@ GUI/Playwright and live provisioning are extra.
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
 | `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~55s | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
-| `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ~15s | ✅ |
-| `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~30s | ✅ (flow 8 publish: REST is scriptable; the portal path uses Playwright) |
+| `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ~10s | ✅ |
+| `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~16s | ✅ |
 | `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
 | `docs/entra-agent-identity.md` | flow 10 | ~30s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
 | `docs/entra-agent-registry.md` | flow 10 | ~30s | ❌ **registration retired 2026-06-15**: `POST /beta/agentRegistry/agentInstances` returns `503` ("use the Microsoft Agent 365 registration API"), though `GET` still returns `200` — the doc's core register flow is broken and it's stale until rewritten |
-| `docs/agent-mcp-oauth.md` | flow 11 | ~35s | ⚠️ needs a real OAuth app (client id/secret) |
+| `docs/agent-mcp-oauth.md` | flow 11 | ~146s | ⚠️ needs a real OAuth app (client id/secret) |
 | `docs/ai-red-teaming-agent.md` | docs-accuracy check (no provisioning flow): Learn links, API/portal labels, preview/cost caveats | ~60s + portal check | ✅ verify against Microsoft Learn and the live **Build → Evaluations → Red team** portal with Playwright; preview signals are mixed, so confirm caveats still hold and date the result |
 | `docs/operate/data-security-governance.md` | docs-accuracy check (no provisioning flow) | ~15s | ✅ verify the claims against Microsoft Learn + the live portal pane with Playwright; it's a **preview** feature, so confirm the caveats still hold and date the result |
 | `docs/operate/policies.md` | docs-accuracy check (no provisioning flow) | ~65s + portal check | ✅ verify claims against Microsoft Learn, the live **Operate → Compliance → Policies** portal (Preview badge + **Create policy** page footer and scope choices) with Playwright, and `az policy set-definition show` / `az policy definition show` (guardrail initiative/defs are `[Preview]`, `Audit`-only and inspect `raiPolicy` configuration, not runtime prompts/responses); if verifying scan results, expect async delay (**No scan results** initially; tens of minutes, possibly up to 24h) and use detached/background logging rather than an in-turn polling loop; **preview**, so confirm caveats still hold and date the result |
