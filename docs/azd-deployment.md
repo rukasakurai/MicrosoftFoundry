@@ -110,9 +110,9 @@ azd env get-values
 azd down
 ```
 
-## Creating and Publishing Prompt Agents
+## Creating Prompt Agents
 
-This template provisions **infrastructure only** (account, project, model deployment). The repository's `prompt agent` examples are created in the **data plane** through the project endpoint's `/agents` API, so they are created and published separately after `azd up`. Publishing a prompt agent (portal or REST) auto-creates the underlying application/agent-deployment resources; this template does not pre-provision them. See [agent-creation.md](agent-creation.md) and [Agent Terminology](../AGENTS.md#agent-terminology).
+This template provisions **infrastructure only** (account, project, model deployment). The repository's `prompt agent` examples are created separately after `azd up` through the project data-plane `/agents` API. New agents receive a stable endpoint when created; publishing refers to distributing that endpoint through Microsoft 365 or Teams. See [agent-creation.md](agent-creation.md) and [Agent Terminology](../AGENTS.md#agent-terminology).
 
 Set `ENABLE_FOUNDRY_GUIDE=true` to opt into the [Foundry Guide feedback-loop sample](foundry-guide-feedback-loop.md). The post-provision hook creates or reuses the prompt agent after infrastructure deployment.
 

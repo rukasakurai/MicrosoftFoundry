@@ -213,12 +213,11 @@ curl -X POST \
   }'
 ```
 
-## Publishing the Prompt Agent
+## Stable Endpoint and Channel Publishing
 
-Once you've created and tested the `prompt agent`, you can publish it so external consumers can call it through a stable endpoint. Publishing creates the underlying **application** and **agent-deployment** resources for you (they are not provisioned by this template):
+Creating a new `prompt agent` gives it a stable endpoint; there is no separate publish step for API access. Publishing now means distributing that endpoint through Microsoft 365 or Teams.
 
-- **Foundry portal**: open the agent in the Agent Builder and select **Publish Agent**.
-- **REST API**: use the [agent publishing API](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/migrate-agent-applications) to create/update an application and its deployment with the target `agentName`/`agentVersion`.
+Channel publishing is available in the Foundry portal and has no public API. See [Migrate from Agent Applications to the new endpoint and publishing experience](https://learn.microsoft.com/azure/foundry/agents/how-to/migrate-agent-applications).
 
 ## Documentation Test History
 
