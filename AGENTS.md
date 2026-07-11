@@ -110,6 +110,18 @@ These labels describe product integration and hosting. They do not by themselves
 
 References: [Agent Service `prompt agent` and `hosted agent`](https://learn.microsoft.com/azure/foundry/agents/overview), [Control Plane `custom agent`](https://learn.microsoft.com/azure/foundry/control-plane/register-custom-agent), [Agent Service `external agent`](https://learn.microsoft.com/azure/foundry/agents/how-to/register-external-agent), and [`AI Red Teaming Agent`](https://learn.microsoft.com/azure/foundry/concepts/ai-red-teaming-agent).
 
+### Governance Terminology
+
+Governance is an umbrella term, not an enforcement guarantee. Qualify what is governed and name the mechanism that observes, evaluates, or blocks it.
+
+- **Foundry Control Plane governance.** Describe the specific capability—inventory, monitoring, compliance reporting, policy assignment, security integration, or remediation. Do not imply that every runtime action passes through Control Plane.
+- **MCP tools governance.** This preview feature routes eligible new portal-created MCP tools that do not use managed OAuth through a connected API Management AI Gateway. Its policies apply only to traffic that uses that gateway.
+- **Toolbox.** Toolbox centralizes tool definitions, versions, and downstream credential handling. It is separate from MCP tools governance; `require_approval` is metadata that the calling runtime must enforce.
+- **Runtime enforcement.** Name the actual enforcement boundary, such as an API Management policy, configured guardrail, RBAC check, or application middleware.
+- **Agent Governance Toolkit (AGT).** AGT is a separate open-source runtime toolkit in public preview, not a managed Foundry service or evidence of a Foundry roadmap commitment.
+
+References: [Foundry Control Plane](https://learn.microsoft.com/azure/foundry/control-plane/overview), [MCP tools governance](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/governance), [Toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox), and [Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit).
+
 ### Key Distinctions
 
 - **Microsoft Foundry** (this repository): Uses `Microsoft.CognitiveServices` ARM resource provider with `AIServices` kind. Focused on AI agents and cognitive services.
