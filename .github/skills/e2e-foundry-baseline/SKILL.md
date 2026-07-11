@@ -232,12 +232,12 @@ GUI/Playwright and live provisioning are extra.
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
 | `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~55s | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
-| `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ~15s | ✅ |
-| `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~30s | ✅ (flow 8 publish: REST is scriptable; the portal path uses Playwright) |
+| `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ~60s | ✅ |
+| `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~44s | ✅ (flow 8 publish: REST is scriptable; the portal path uses Playwright) |
 | `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
 | `docs/entra-agent-identity.md` | flow 10 | ~30s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
 | `docs/entra-agent-registry.md` | flow 10 | ~30s | ❌ **registration retired 2026-06-15**: `POST /beta/agentRegistry/agentInstances` returns `503` ("use the Microsoft Agent 365 registration API"), though `GET` still returns `200` — the doc's core register flow is broken and it's stale until rewritten |
-| `docs/agent-mcp-oauth.md` | flow 11 | ~35s | ⚠️ needs a real OAuth app (client id/secret) |
+| `docs/agent-mcp-oauth.md` | flow 11 | ~69s | ⚠️ needs a real OAuth app (client id/secret) |
 | `docs/ai-red-teaming-agent.md` | docs-accuracy check (no provisioning flow): Learn links, API/portal labels, preview/cost caveats | ~60s + portal check | ✅ verify against Microsoft Learn and the live **Build → Evaluations → Red team** portal with Playwright; preview signals are mixed, so confirm caveats still hold and date the result |
 | `docs/operate/data-security-governance.md` | docs-accuracy check (no provisioning flow) | ~15s | ✅ verify the claims against Microsoft Learn + the live portal pane with Playwright; it's a **preview** feature, so confirm the caveats still hold and date the result |
 | `docs/operate/policies.md` | docs-accuracy check (no provisioning flow) | ~65s + portal check | ✅ verify claims against Microsoft Learn, the live **Operate → Compliance → Policies** portal (Preview badge + **Create policy** page footer and scope choices) with Playwright, and `az policy set-definition show` / `az policy definition show` (guardrail initiative/defs are `[Preview]`, `Audit`-only and inspect `raiPolicy` configuration, not runtime prompts/responses); if verifying scan results, expect async delay (**No scan results** initially; tens of minutes, possibly up to 24h) and use detached/background logging rather than an in-turn polling loop; **preview**, so confirm caveats still hold and date the result |

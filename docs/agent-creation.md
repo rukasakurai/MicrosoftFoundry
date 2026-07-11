@@ -1,14 +1,14 @@
-# Programmatically Creating Agents in Microsoft Foundry
+# Programmatically Creating a Prompt Agent in Microsoft Foundry
 
-This guide explains how to programmatically create AI agents in your Microsoft Foundry project after provisioning infrastructure with Bicep templates.
+This guide explains how to programmatically create a Foundry Agent Service `prompt agent` after provisioning the project infrastructure with Bicep.
 
 ## Overview
 
-Microsoft Foundry agents are intelligent assistants powered by large language models (LLMs) that can be configured with custom instructions, tools, and capabilities. While the Bicep templates provision the infrastructure (AI Services, Projects, Applications, and Deployments), the actual agent logic must be created separately.
+The `prompt agent` created here is defined by configuration—model, instructions, and tools—and run by Agent Service. It does not deploy application code or create a `hosted agent`.
 
-> **Note**: This guide uses the **new Microsoft Foundry Agents API** which creates versioned agents using the `/agents/{name}/versions` endpoint. This is the recommended approach going forward.
+The Bicep template provisions the account, project, and model deployment. The script then creates the versioned `prompt agent` through the data-plane `/agents/{name}/versions` API with `definition.kind` set to `prompt`.
 
-While various approaches exist, this repository focuses on programmatic agent creation with **REST API with Bash/Azure CLI**
+See [Agent Terminology](../AGENTS.md#agent-terminology) for the boundaries between prompt, hosted, custom, and external agents. This guide uses the REST API with Bash and Azure CLI.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ eval $(azd env get-values) && ./scripts/create-agent.sh
 
 ## Verifying Agent Creation
 
-After creating an agent, you can verify it was created successfully by listing all agents or retrieving a specific agent:
+After creating the `prompt agent`, verify it by listing agents or retrieving its version:
 
 ### List All Agents
 
@@ -91,7 +91,7 @@ The response will include all agent properties including name, model, instructio
 
 ## Agent Configuration Options
 
-When creating an agent, you can configure various properties:
+When creating this `prompt agent`, you can configure these properties:
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -108,7 +108,7 @@ When creating an agent, you can configure various properties:
 
 ### Available Tools
 
-Microsoft Foundry agents support several built-in tools:
+Prompt agents support several built-in tools:
 
 - **Code Interpreter**: Execute code
 - **File Search**: Search through uploaded documents
@@ -176,9 +176,9 @@ steps:
     arguments: '--model gpt-5.4 --name production-agent'
 ```
 
-## Testing Your Agent
+## Testing the Prompt Agent
 
-After creating an agent, you can test it by creating a conversation and response:
+After creating the `prompt agent`, test it by creating a conversation and response:
 
 **REST API:**
 
@@ -213,9 +213,9 @@ curl -X POST \
   }'
 ```
 
-## Publishing Agents to Applications
+## Publishing the Prompt Agent
 
-Once you've created and tested an agent, you can publish it so external consumers can call it through a stable endpoint. Publishing creates the underlying **application** and **agent-deployment** resources for you (they are not provisioned by this template):
+Once you've created and tested the `prompt agent`, you can publish it so external consumers can call it through a stable endpoint. Publishing creates the underlying **application** and **agent-deployment** resources for you (they are not provisioned by this template):
 
 - **Foundry portal**: open the agent in the Agent Builder and select **Publish Agent**.
 - **REST API**: use the [agent publishing API](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/migrate-agent-applications) to create/update an application and its deployment with the target `agentName`/`agentVersion`.

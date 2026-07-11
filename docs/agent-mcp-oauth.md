@@ -1,16 +1,18 @@
-# Connecting a Foundry Agent to an Authenticated Remote MCP Server
+# Connecting a Prompt Agent to an Authenticated Remote MCP Server
 
-This guide shows how a Microsoft Foundry agent connects to an **OAuth-authenticated
+This guide shows how a Foundry Agent Service `prompt agent` connects to an **OAuth-authenticated
 remote [MCP](https://modelcontextprotocol.io/) server**, using the
 [GitHub MCP server](https://github.com/github/github-mcp-server)
 (`https://api.githubcopilot.com/mcp/`) as a worked example. It covers the two
 connection shapes and where authentication is configured in each:
 
-- **Direct**: `Agent → MCP server`
-- **Toolbox**: `Agent → Foundry Toolbox → MCP server`
+- **Direct**: `Prompt agent → MCP server`
+- **Toolbox**: `Prompt agent → Foundry Toolbox → MCP server`
 
 It complements [agent-creation.md](./agent-creation.md), which covers creating a
-plain agent. For the authoritative reference, see
+plain `prompt agent`. See [Agent Terminology](../AGENTS.md#agent-terminology) for
+the boundaries between prompt, hosted, custom, and external agents. For the
+authoritative MCP reference, see
 [Connect to MCP server endpoints](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/model-context-protocol)
 and [Set up MCP server authentication](https://learn.microsoft.com/azure/foundry/agents/how-to/mcp-authentication).
 
@@ -60,7 +62,7 @@ az cognitiveservices account connection show \
 # -> authType: OAuth2, category: RemoteTool, target: https://api.githubcopilot.com/mcp/
 ```
 
-### 2. Create the agent and run it
+### 2. Create the prompt agent and run it
 
 Use [scripts/create-mcp-agent.sh](../scripts/create-mcp-agent.sh):
 
@@ -148,7 +150,7 @@ Consent is remembered per user, per tool, per project, so subsequent runs skip
 the sign-in step. To inspect the stored connection, see the project's
 **Connections** (or **Connected resources**) settings.
 
-## Toolbox path: Agent → Toolbox → MCP server
+## Toolbox path: Prompt agent → Toolbox → MCP server
 
 > The direct path above is verified end-to-end in this repo. Toolbox **consumption**
 > is also verified (see below); Toolbox **creation** and the portal agent-build

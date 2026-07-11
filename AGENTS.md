@@ -80,6 +80,22 @@ The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. Th
 | **Microsoft Agent SDK (.NET)** | NuGet: `Microsoft.Agents.AI.*` |
 | **Foundry IQ (knowledge base / RAG)** | Azure AI Search agentic retrieval (`Microsoft.Search`), data-plane; reached from Foundry via a connection |
 
+### Agent Terminology
+
+Foundry agent labels span different product surfaces; they are not one global hierarchy. Qualify the surface when runtime ownership or traffic routing matters.
+
+| Term | Product surface | Runtime and integration boundary |
+|------|-----------------|----------------------------------|
+| `prompt agent` | Foundry Agent Service | Instructions, model, and tools are configuration; Agent Service runs the managed runtime. The API definition uses `kind: "prompt"`. |
+| `hosted agent` | Foundry Agent Service | Application code is supplied as a container image or source archive; Agent Service manages its compute and endpoint. |
+| Control Plane `custom agent` | Foundry Control Plane | A reachable endpoint from a platform not natively managed by Control Plane is registered manually. Azure API Management acts as the AI Gateway proxy for client traffic. The runtime can still be in Azure and can use Foundry models. |
+| Agent Service `external agent` *(preview)* | Foundry Agent Service | A runtime outside Foundry is linked to the project by registration metadata and OpenTelemetry agent ID. Foundry does not host, proxy, or invoke it. |
+| Application using Foundry APIs | Not a Foundry agent type | Application code can call model inference directly, or call the Agent Service Responses API without creating a managed agent resource. This does not make the application a `prompt agent`, `hosted agent`, `custom agent`, or `external agent`. |
+
+These classifications describe product integration and hosting; they do not by themselves establish that a workload has planning, tool use, state, goal pursuit, or multistep autonomy. Use *agentic application* only when the described behavior warrants it. A self-hosted application can be prompt-driven without being the Agent Service product type `prompt agent`.
+
+References: [Agent Service overview](https://learn.microsoft.com/azure/foundry/agents/overview), [Control Plane custom agents](https://learn.microsoft.com/azure/foundry/control-plane/register-custom-agent), and [Agent Service external agents](https://learn.microsoft.com/azure/foundry/agents/how-to/register-external-agent).
+
 ### Key Distinctions
 
 - **Microsoft Foundry** (this repository): Uses `Microsoft.CognitiveServices` ARM resource provider with `AIServices` kind. Focused on AI agents and cognitive services.
