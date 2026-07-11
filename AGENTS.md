@@ -82,25 +82,35 @@ The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. Th
 
 ### Agent Terminology
 
-Foundry product labels span different surfaces; they are not one global hierarchy. Qualify the surface when runtime ownership or traffic routing matters.
+Foundry uses similar labels across different product surfaces. They are not one hierarchy.
 
-Writing rules:
+Writing and naming rules:
 
-- Render exact Foundry product classifications in backticks, such as `prompt agent`, `hosted agent`, `custom agent`, and `external agent`.
-- Avoid the bare word *agent*. Use the exact product classification when it matters; otherwise prefer *application*, *runtime*, *service*, *API*, or *workload*. Keep unqualified uses only when they are part of an exact product name or an external quotation.
-- Use *agentic application* only when behavior such as planning, tool use, state, goal pursuit, or multistep autonomy warrants it. Do not infer agentic behavior from a Foundry product label.
+- Render exact classifications and feature names in backticks, such as `prompt agent`, `hosted agent`, `custom agent`, `external agent`, and `AI Red Teaming Agent`.
+- Use product and service names without backticks, such as Microsoft Foundry, Foundry Agent Service, and Foundry Control Plane.
+- Use bold for portal labels and navigation.
+- Avoid the bare word *agent*. Use an exact classification when relevant; otherwise prefer *application*, *runtime*, *service*, *API*, or *workload*.
+- Use *agentic application* only when planning, tool use, state, goal pursuit, or multistep autonomy warrants it.
 
-| Term | Product surface | Runtime and integration boundary |
-|------|-----------------|----------------------------------|
-| `prompt agent` | Foundry Agent Service | Instructions, model, and tools are configuration; Agent Service runs the managed runtime. The API definition uses `kind: "prompt"`. |
-| `hosted agent` | Foundry Agent Service | Application code is supplied as a container image or source archive; Agent Service manages its compute and endpoint. |
-| Control Plane `custom agent` | Foundry Control Plane | A reachable endpoint from a platform not natively managed by Control Plane is registered manually. Azure API Management acts as the AI Gateway proxy for client traffic. The runtime can still be in Azure and can use Foundry models. |
-| Agent Service `external agent` *(preview)* | Foundry Agent Service | A runtime outside Foundry is linked to the project by registration metadata and OpenTelemetry agent ID. Foundry does not host, proxy, or invoke it. |
-| Application using Foundry APIs | Not a Foundry product classification | Application code can call model inference directly, or call the Agent Service Responses API without creating a `prompt agent` or `hosted agent`. This does not make the application a `prompt agent`, `hosted agent`, `custom agent`, or `external agent`. |
+Technical boundaries:
 
-These classifications describe product integration and hosting; they do not by themselves establish behavior. A self-hosted application can be prompt-driven without being the Agent Service product type `prompt agent`.
+- Foundry Agent Service stores `prompt agent`, `hosted agent`, and `external agent` as project-scoped data-plane records. In that API, the record contains a `definition` object whose `kind` field identifies the classification.
+- This data-plane `definition.kind` is not an ARM resource type or ARM `kind`.
+- Foundry Control Plane is a product surface, not a statement that `custom agent` is an ARM resource.
+- `AI Red Teaming Agent` is an evaluation capability, not a Foundry Agent Service classification.
 
-References: [Agent Service `prompt agent` and `hosted agent`](https://learn.microsoft.com/azure/foundry/agents/overview), [Control Plane `custom agent`](https://learn.microsoft.com/azure/foundry/control-plane/register-custom-agent), and [Agent Service `external agent`](https://learn.microsoft.com/azure/foundry/agents/how-to/register-external-agent).
+Classifications:
+
+- **`prompt agent` — Foundry Agent Service.** Defined through model, instructions, and tools; Agent Service runs the managed runtime. Its data-plane definition uses `"kind": "prompt"`.
+- **`hosted agent` — Foundry Agent Service.** Application code is supplied as a container image or source archive; Agent Service manages its compute and endpoint. Its data-plane definition uses `"kind": "hosted"`.
+- **Control Plane `custom agent` — Foundry Control Plane.** A separately hosted runtime exposes a reachable endpoint that is registered with Control Plane. Azure API Management proxies client requests to that endpoint. It has no Agent Service `definition.kind`; Control Plane inventory identifies its source as `FoundryCustom`.
+- **Agent Service `external agent` — Foundry Agent Service, preview.** A separately hosted runtime is registered through metadata and an `otel_agent_id` for tracing and evaluation. Foundry does not host, proxy, or invoke it. Its data-plane definition uses `"kind": "external"`.
+- **`AI Red Teaming Agent` — Foundry evaluation capability.** This Foundry-managed service generates adversarial test items and runs the evaluation workflow. It has no Agent Service `definition.kind`; its artifacts use project data-plane evaluation endpoints such as `/openai/evals`.
+- **Application using Foundry APIs — not a Foundry classification.** Application code may call model inference or the Responses API without creating an Agent Service record. It therefore has no `definition.kind`.
+
+These labels describe product integration and hosting. They do not by themselves establish agentic behavior.
+
+References: [Agent Service `prompt agent` and `hosted agent`](https://learn.microsoft.com/azure/foundry/agents/overview), [Control Plane `custom agent`](https://learn.microsoft.com/azure/foundry/control-plane/register-custom-agent), [Agent Service `external agent`](https://learn.microsoft.com/azure/foundry/agents/how-to/register-external-agent), and [`AI Red Teaming Agent`](https://learn.microsoft.com/azure/foundry/concepts/ai-red-teaming-agent).
 
 ### Key Distinctions
 
