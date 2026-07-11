@@ -60,12 +60,12 @@ Never silently convert an unknown into a number.
 - Application Insights / Log Analytics workspace assumptions;
 - alerting or dashboard query frequency.
 
-### Safety, governance, and admin-plane surfaces
+### Safety, security, and admin-plane surfaces
 
 - guardrails / Content Safety usage volume;
 - Purview / DSPM enablement;
 - Defender for Cloud plan state;
-- Entra premium / governance dependency;
+- Entra premium / identity-management dependency;
 - API Management or gateway use;
 - budgets, quotas, or Azure Policy constraints.
 

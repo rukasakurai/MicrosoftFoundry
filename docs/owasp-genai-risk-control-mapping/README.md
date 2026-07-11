@@ -23,7 +23,7 @@ surrounding Microsoft security stack. For each risk it records:
   navigation and re-verification steps.
 - **Environment:** a non-production Foundry resource (`Microsoft.CognitiveServices/accounts`, kind
   `AIServices`). No environment identifiers are recorded here by design.
-- **Last verified:** 2026-06-15.
+- **Last verified:** 2026-07-11.
 - **Caveat:** Several of the strongest Foundry controls are in **Preview**, and **Evaluations** was
   RBAC-gated in the test account. Re-confirm before relying on any single cell.
 
@@ -38,7 +38,7 @@ compliance assignments.
   Content harms (Hate/Sexual/Self-harm/Violence), Blocklists, Protected material (code/text),
   PII (Preview; input / tool-call / tool-response / output), Task adherence "task drift" (Preview, on tool call).
 - **Operate → Compliance:** Policies (mandate minimum guardrail controls per scope), Guardrails
-  (fleet view), Security posture (Defender for Cloud recommendations), Data security & governance
+  (fleet view), Security posture (Defender for Cloud recommendations), **Data security and governance**
   (Microsoft Purview integration).
 - **Build → Tools:** MCP/custom tool auth — Key-based, OAuth Identity Passthrough, Microsoft Entra, Unauthenticated.
 - **Other surfaces:** Build → Evaluations (RBAC-gated in test env), Build → Memory, Operate → Quota,
@@ -48,10 +48,10 @@ compliance assignments.
 
 | # | Risk | Foundry control | Primary owner | Supporting |
 |---|------|-----------------|---------------|------------|
-| LLM01 | Prompt Injection | Guardrails: Jailbreak + Indirect prompt injections + Spotlighting; enforce via Compliance Policies | **Foundry** | Defender for AI, APIM |
+| LLM01 | Prompt Injection | Runtime guardrails: Jailbreak + Indirect prompt injections + Spotlighting; Compliance Policies audit required configuration | **Foundry** | Defender for AI, APIM |
 | LLM02 | Sensitive Information Disclosure | Guardrails: PII; Compliance: Purview DLP/sensitive-data monitoring | **Purview** + Foundry + Entra (access slice) | Azure AI Search (RAG trimming), Defender |
 | LLM03 | Supply Chain | Operate → Assets registry + Security posture (Defender) recs | **Other** (GHAS, Azure Policy) + **Defender for Cloud** (vuln) | Azure API Center (leads API/tool/MCP inventory + allow-listing), APIM (runtime), Purview (model/data lineage), Foundry |
-| LLM04 | Data and Model Poisoning | Build → Data/Knowledge governance + Purview (indirect) | **Purview** + Foundry | Azure AI Search (index provenance/RBAC), Other (model provider, Storage immutability) |
+| LLM04 | Data and Model Poisoning | Build → Data/Knowledge access controls + Purview (indirect) | **Purview** + Foundry | Azure AI Search (index provenance/RBAC), Other (model provider, Storage immutability) |
 | LLM05 | Improper Output Handling | Output-side guardrails reduce bad output, but downstream sanitization is app-side | **Other** (app code / GHAS) | APIM, Foundry, Entra (blast-radius containment) |
 | LLM06 | Excessive Agency | Guardrails: Task adherence; tool auth scoping | **Entra** + Foundry | APIM, Azure API Center (curated/approved tool catalog) |
 | LLM07 | System Prompt Leakage | No dedicated control (Jailbreak/Spotlighting help indirectly) | **Other** (architecture, Key Vault) | Entra (managed identity ⇒ no secrets in prompt), Foundry, Defender |
@@ -66,13 +66,13 @@ compliance assignments.
 | ASI01 | Agent Goal Hijack | Guardrails: Indirect prompt injections + Jailbreak + Task adherence | **Foundry** | Defender for AI, Sentinel |
 | ASI02 | Tool Misuse & Exploitation | Guardrails Task adherence (tool call) + PII (tool call/response); tool auth | **API Management** + Foundry | Entra, Defender, Azure API Center (vetted tool/MCP registry + allow-listing) |
 | ASI03 | Agent Identity & Privilege Abuse | Build → Tools auth (OAuth Passthrough/Entra) + Operate → Admin RBAC | **Entra** | Sentinel (UEBA), Defender for Identity |
-| ASI04 | Agentic Supply Chain Compromise | Assets registry + Security posture (Defender) + connection governance | **Azure API Center** (MCP/tool registry, allow-listing) + **Defender for Cloud** + Other (GHAS, Azure Policy) | Foundry, APIM |
+| ASI04 | Agentic Supply Chain Compromise | Assets registry + Security posture (Defender) + connection inventory/authentication | **Azure API Center** (MCP/tool registry, allow-listing) + **Defender for Cloud** + Other (GHAS, Azure Policy) | Foundry, APIM |
 | ASI05 | Unexpected Code Execution | Platform-managed sandbox; no operator config observed | **Foundry** (sandbox) + Defender | Other (container/network isolation) |
 | ASI06 | Memory & Context Poisoning | Indirect prompt injection guardrail (tool-response ingestion); Memory feature has no poisoning control | **Foundry** | Azure AI Search (retrieved-context provenance/partitioning), Purview, Other |
 | ASI07 | Insecure Inter-Agent Communication | No dedicated Foundry control observed for A2A channel security | **API Management + Entra** | Other (Private Link, mTLS), Foundry, Azure API Center (A2A/MCP endpoint inventory) |
 | ASI08 | Cascading Agent Failures | Monitoring only: Operate → Overview (health/alerts/anomalies) + Quota | **API Management** + Foundry | Sentinel, Azure Monitor |
 | ASI09 | Human-Agent Trust Exploitation | Indirect: content-harm/groundedness reduce deceptive output | **Other** (UX, training, provenance labels) | Foundry, Purview |
-| ASI10 | Rogue / Shadow Agents | Assets inventory + Overview agent discovery + Admin + Defender detection | **Sentinel + Defender for Cloud** | Entra (Agent ID inventory), Foundry, Azure API Center (sanctioned-tool baseline + Dev Proxy shadow detection) |
+| ASI10 | Rogue / Shadow Agents | Assets inventory + Overview agent discovery + Admin + Defender detection | **Sentinel + Defender for Cloud** | Microsoft Agent 365 (unified inventory), Entra (identity-bearing agents), Foundry, Azure API Center (sanctioned-tool baseline + Dev Proxy shadow detection) |
 
 ## Product ownership — role of each layer
 
@@ -101,10 +101,10 @@ compliance assignments.
   mediation. An easy layer to overlook when planning for agentic risk.
 - **Purview (primary/co on ~2):** LLM02, LLM04 — the data classification, DLP, and lineage plane.
 - **Sentinel + Defender (primary/co on ~4):** ASI04, ASI05, ASI10, plus detection support on
-  ASI01/03/08 — the detect-and-respond plane; nothing else discovers shadow agents across the estate.
+  ASI01/03/08 — the runtime detect-and-respond plane for shadow or compromised workloads.
 - **Other / SDLC (primary on ~4):** LLM03, LLM05, LLM07, ASI09 — code, architecture, and human-factor risks.
 
-**Takeaway:** a defensible governance story needs multiple planes, not just Foundry —
+**Takeaway:** a defensible control architecture needs multiple planes, not just Foundry —
 Foundry (in-context safety) + Entra (agent identity) + Azure AI Search (RAG retrieval) + APIM
 (runtime traffic/cost) + Purview (data) + Sentinel/Defender (detect & respond). Most missing or
 partial Foundry controls for LLM06, LLM10, ASI02, ASI07, ASI08, and ASI10 are

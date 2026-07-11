@@ -30,7 +30,7 @@ and explicit assumptions.
 3. Do explicit negative checks for non-Bicep surfaces:
    - Purview/DSPM: enabled? licensed? PAYG billing linked?
    - Defender for Cloud: relevant plans enabled at subscription/resource scope?
-   - Entra: any premium agent identity, governance, or tenant licensing dependency?
+   - Entra: any premium agent identity, registry, or tenant licensing dependency?
    - API Management/gateways: any APIM or external gateway introduced by scripts/docs?
    - Content Safety/guardrails: any runtime content-safety resource or usage?
 4. Separate **idle/provisioned** costs from **workload** costs. The repo can usually

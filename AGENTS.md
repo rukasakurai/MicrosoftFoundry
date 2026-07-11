@@ -110,6 +110,29 @@ These labels describe product integration and hosting. They do not by themselves
 
 References: [Agent Service `prompt agent` and `hosted agent`](https://learn.microsoft.com/azure/foundry/agents/overview), [Control Plane `custom agent`](https://learn.microsoft.com/azure/foundry/control-plane/register-custom-agent), [Agent Service `external agent`](https://learn.microsoft.com/azure/foundry/agents/how-to/register-external-agent), and [`AI Red Teaming Agent`](https://learn.microsoft.com/azure/foundry/concepts/ai-red-teaming-agent).
 
+### Governance Terminology
+
+Foundry uses *governance* for several different capabilities. It does not by itself mean runtime enforcement.
+
+Writing and naming rules:
+
+- Avoid the unqualified word *governance*. Name what is governed and whether the mechanism observes, audits, remediates, or blocks.
+- Render exact names containing governance in backticks, such as `Agent Governance Toolkit`.
+- Use bold for portal labels and navigation, such as **Data security and governance**.
+- Use qualified general terms without backticks, such as data governance, identity governance, configuration governance, and cost governance.
+
+Technical boundaries:
+
+- Foundry has no generic governance ARM resource or project data-plane object. Name the actual resource, API, policy, or runtime boundary instead.
+- [`Agent Governance Toolkit`](https://github.com/microsoft/agent-governance-toolkit) is separate open-source runtime software in public preview as of 2026-07-11; it is not part of Microsoft Foundry. It focuses on application/runtime policy enforcement, identity and trust, audit, sandboxing, and SRE—not the full scope of enterprise inventory, data, compliance, and security governance. It has no Azure ARM or Foundry data-plane representation and is not a managed Foundry service or roadmap commitment.
+
+Terms:
+
+- **Data security and governance.** A live Foundry portal label observed for the Microsoft Purview integration; portal labels are high-churn, and Learn may place the integration under **Security posture**. It is not a general Foundry governance layer.
+- **Runtime enforcement.** Name the actual boundary, such as an API Management policy, configured guardrail, RBAC check, or application middleware.
+
+Reference: [Foundry data security and compliance](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security).
+
 ### Key Distinctions
 
 - **Microsoft Foundry** (this repository): Uses `Microsoft.CognitiveServices` ARM resource provider with `AIServices` kind. Focused on AI agents and cognitive services.

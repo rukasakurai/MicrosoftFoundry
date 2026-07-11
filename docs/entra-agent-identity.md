@@ -2,7 +2,7 @@
 
 This guide explains how to create **Agent Identities** in Microsoft Entra, allowing your AI agents to authenticate as themselves, request tokens, and access resources.
 
-> **Looking for Agent Registry?** If you only want to make your agents visible in the Entra admin center (for governance/visibility), see [entra-agent-registry.md](./entra-agent-registry.md) instead. Agent Registry and Agent Identity are independent features.
+> **Looking for organization-wide inventory?** Use the [Microsoft Agent 365 registry](https://learn.microsoft.com/entra/agent-id/agent-registry-convergence). Microsoft Entra remains the identity and access-policy layer; [entra-agent-registry.md](./entra-agent-registry.md) documents the retired Entra registration API and is pending a Microsoft Agent 365 rewrite.
 
 ## Overview
 
@@ -235,7 +235,7 @@ curl -s -X GET \
    - Created date
    - Associated blueprint
 
-> **Tip**: If you also registered the agent in the Agent Registry (see [entra-agent-registry.md](./entra-agent-registry.md)), the agent will show **"Has Agent ID: Yes"** in the registry view.
+> **Tip**: To include the identity-bearing agent in the organization-wide inventory, register it in the [Microsoft Agent 365 registry](https://learn.microsoft.com/microsoft-365/admin/manage/agent-registry).
 
 ## 3. Using the Agent Identity
 
@@ -406,10 +406,17 @@ The role assignments will be automatically cleaned up when the service principal
 
 ## Related Guides
 
-- **Agent Registry**: See [entra-agent-registry.md](./entra-agent-registry.md) for registering agents for visibility/governance
+- **Agent inventory**: Use Microsoft Agent 365 for the unified inventory; see [entra-agent-registry.md](./entra-agent-registry.md) for the retired Entra API and migration notice
 - **Agent Creation**: See [agent-creation.md](./agent-creation.md) for creating agents in Microsoft Foundry
 
 ## Documentation Test History
+
+### 2026-07-11 12:33 JST
+- Result: PASS (content accuracy)
+- Notes:
+  - Confirmed Microsoft Agent 365 is the unified inventory.
+  - Confirmed Microsoft Entra remains the identity and access-policy layer.
+  - No Entra operations were run for this terminology-only change.
 
 ### 2025-12-25 13:15 JST
 - Result: PASS with manual steps and fixes

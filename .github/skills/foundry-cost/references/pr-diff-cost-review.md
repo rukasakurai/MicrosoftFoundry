@@ -28,7 +28,7 @@ Apply the cost-driver map in `../SKILL.md`, then call out changes to:
 - Purview/DSPM enablement, licensing, and PAYG billing;
 - Defender for Cloud plan assumptions;
 - Entra agent identity/registry/OIDC/OAuth features that imply premium licensing or
-  tenant-governance dependencies;
+  tenant-level licensing and administration dependencies;
 - Azure API Management, gateways, remote tools, hosted compute, memory, and external
   services.
 

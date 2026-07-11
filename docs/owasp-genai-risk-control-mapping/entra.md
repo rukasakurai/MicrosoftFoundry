@@ -15,9 +15,10 @@ plays a Primary, Supporting, or no role across the 20 OWASP GenAI risks.
   [What is Microsoft Entra Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/identity-platform/what-is-agent-id),
   [Entra at Ignite 2025](https://learn.microsoft.com/en-us/entra/fundamentals/whats-new-ignite-2025).
 - **Hands-on guides in this repo:** [entra-agent-identity.md](../entra-agent-identity.md) (give an agent
-  its own identity/token) and [entra-agent-registry.md](../entra-agent-registry.md) (make agents visible
-  for governance).
-- **Last verified:** 2026-06-15.
+  its own identity/token) and [entra-agent-registry.md](../entra-agent-registry.md) (retired Entra
+  registration API; Microsoft Agent 365 now provides the unified inventory, while Entra retains identity and
+  access-policy enforcement).
+- **Last verified:** 2026-07-11.
 
 ## What Microsoft Entra is (and is not)
 
@@ -81,15 +82,15 @@ model, or runtime-behavior centric (where Entra can only **contain blast radius*
 | ASI07 Insecure Inter-Agent Communication | **Primary (co)** | Verifiable identity + **A2A/MCP token-based authorization**; OBO propagates scoped delegation across the chain | APIM/mTLS/Private Link secure transport & mediation; app validates message schema |
 | ASI08 Cascading Agent Failures | Supporting (weak) | Least-privilege blast-radius containment + Identity Protection kill-switch (disable a compromised agent) + audit attribution | APIM circuit breakers/throttling; Foundry orchestration; Monitor/Sentinel detect |
 | ASI09 Human-Agent Trust Exploitation | Supporting (weak) | Verifiable agent identity distinguishes agents from humans + audit attribution (anti-impersonation) | UX disclosure, content-provenance labels, user training, app design own it |
-| ASI10 Rogue / Shadow Agents | **Primary (co, inventory/lifecycle slice)** | Agent ID registry/autodiscovery + ownership ("agent sprawl"), access reviews for orphans, lifecycle retirement, Conditional Access block, Identity Protection auto-remediate | Sentinel + Defender do runtime hunting/response for agents with **no** Entra identity; API Center sanctioned-tool baseline |
+| ASI10 Rogue / Shadow Agents | Supporting (material) | Visibility and lifecycle controls for identity-bearing agents, access reviews for orphans, Conditional Access block, Identity Protection auto-remediate | Microsoft Agent 365 owns the unified inventory; Sentinel + Defender hunt workloads with **no** Entra identity; API Center provides the sanctioned-tool baseline |
 
-**Tally:** Primary 6 (LLM02, LLM06, LLM08, ASI03, ASI07, ASI10 — several co-owned) · Supporting (material) 3
-(ASI01, ASI02, ASI04) · Supporting (weak) 10 (LLM01, LLM03, LLM04, LLM05, LLM07, LLM10, ASI05, ASI06,
+**Tally:** Primary 5 (LLM02, LLM06, LLM08, ASI03, ASI07 — several co-owned) · Supporting (material) 4
+(ASI01, ASI02, ASI04, ASI10) · Supporting (weak) 10 (LLM01, LLM03, LLM04, LLM05, LLM07, LLM10, ASI05, ASI06,
 ASI08, ASI09) · Not applicable 1 (LLM09).
 
 ## Where Entra leads
 
-Entra is the **clear owner of identity-and-privilege risks** and the **agent-lifecycle/inventory** story:
+Entra is the **clear owner of identity-and-privilege risks** and the identity-lifecycle story:
 
 - **ASI03 — Agent Identity & Privilege Abuse:** the single risk Entra Agent ID was built for. A unique,
   non-forgeable identity per agent + time-bound privilege scoping + access reviews + lifecycle retirement
@@ -102,10 +103,6 @@ Entra is the **clear owner of identity-and-privilege risks** and the **agent-lif
 - **ASI07 — Insecure Inter-Agent Communication:** Entra's **A2A/MCP authenticated authorization** ensures
   an agent delegates only to *legitimate, authenticated* agents — co-primary with APIM, which secures the
   transport/mediation layer.
-- **ASI10 — Rogue / Shadow Agents:** Agent ID's registry, autodiscovery, ownership metadata, and
-  lifecycle workflows are Microsoft's direct answer to **"agent sprawl."** Entra leads the
-  inventory/lifecycle slice; Sentinel + Defender remain primary for *runtime* detection of agents that
-  have no Entra identity.
 - **LLM08 — Vector & Embedding Weaknesses:** RBAC on the vector store plus **on-behalf-of, security-trimmed
   retrieval** is the leading control against cross-user/cross-tenant RAG leakage (co-primary with Purview).
 
@@ -123,7 +120,10 @@ Entra cannot prevent the failure. Its contribution is **second-order but still w
 - **Secret-less auth** — managed identities / workload-identity federation remove the *need* to embed
   credentials in prompts or code, reducing the impact if a prompt leaks (LLM07).
 
-**Net:** Entra is a **Primary owner on ~6 risks** and a **material dependency on most of the rest** — but
+For ASI10, Entra covers the identity-bearing subset; Microsoft Agent 365 provides the unified inventory,
+while Sentinel and Defender detect workloads without Entra identities.
+
+**Net:** Entra is a **Primary owner on ~5 risks** and a **material dependency on most of the rest** — but
 it must be paired with Foundry (in-context safety), APIM (runtime traffic), Purview (data), and
 Sentinel/Defender (detect & respond) for an end-to-end story. Entra answers *who the agent is and what it
 may do*; it does not answer *how it behaves, what it processes, or how fast it runs*.

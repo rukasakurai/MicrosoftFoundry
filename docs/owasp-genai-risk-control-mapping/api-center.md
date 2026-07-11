@@ -10,7 +10,7 @@ where **Azure API Center** plays a Primary, Supporting, or no role across the 20
 - **Sources:** [API Center overview](https://learn.microsoft.com/en-us/azure/api-center/overview),
   [register/discover MCP servers](https://learn.microsoft.com/en-us/azure/api-center/register-discover-mcp-server),
   [linting & analysis](https://learn.microsoft.com/en-us/azure/api-center/enable-api-analysis-linting).
-- **Last verified:** 2026-06-15.
+- **Last verified:** 2026-07-11.
 
 ## What Azure API Center is (and is not)
 
@@ -22,7 +22,7 @@ API governance and discovery service (distinct from API Management, which is the
   definitions, deployments, and environments.
 - **MCP server registry** (remote/local) that integrates with Microsoft Foundry tool catalogs and
   private tool catalogs.
-- **Governance via metadata** (approval status, owner, compliance, data classification, lifecycle) →
+- **Metadata-based lifecycle controls** (approval status, owner, compliance, data classification, lifecycle) →
   enables allow-listing of vetted APIs/tools/MCP servers.
 - **Spectral linting** + breaking-change detection (shift-left in VS Code).
 - **Shadow API detection** via Dev Proxy (design/test-time).
@@ -76,7 +76,7 @@ a design-time catalog, not an enforcement plane.
 API Center's strongest fit is the **API / tool / MCP-server dependency** dimension of supply-chain risk.
 
 **What it covers:** org-wide inventory of APIs/tools/MCP servers (eliminates shadow/unknown
-dependencies); allow-listing & governance via custom metadata (approval, owner, license, data class),
+dependencies); allow-listing and lifecycle controls via custom metadata (approval, owner, license, data class),
 lifecycle, and versioning; design-time conformance via Spectral linting; GitOps/CI-CD registration for
 an auditable record of what enters the estate.
 

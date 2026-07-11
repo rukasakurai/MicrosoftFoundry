@@ -39,5 +39,5 @@ search, but no create/edit/toggle control. Use **Build → Guardrails** for the 
 guardrail configuration.
 
 It is also **not** the same thing as **Operate → Compliance → Policies**. The Policies
-tab is the Azure Policy-backed configuration-governance surface; this Guardrails tab is
+tab is the Azure Policy-backed configuration governance surface; this Guardrails tab is
 only a coverage review lens.
