@@ -82,7 +82,13 @@ The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. Th
 
 ### Agent Terminology
 
-Foundry agent labels span different product surfaces; they are not one global hierarchy. Qualify the surface when runtime ownership or traffic routing matters.
+Foundry product labels span different surfaces; they are not one global hierarchy. Qualify the surface when runtime ownership or traffic routing matters.
+
+Writing rules:
+
+- Render exact Foundry product classifications in backticks, such as `prompt agent`, `hosted agent`, `custom agent`, and `external agent`.
+- Avoid the bare word *agent*. Use the exact product classification when it matters; otherwise prefer *application*, *runtime*, *service*, *API*, or *workload*. Keep unqualified uses only when they are part of an exact product name or an external quotation.
+- Use *agentic application* only when behavior such as planning, tool use, state, goal pursuit, or multistep autonomy warrants it. Do not infer agentic behavior from a Foundry product label.
 
 | Term | Product surface | Runtime and integration boundary |
 |------|-----------------|----------------------------------|
@@ -90,11 +96,11 @@ Foundry agent labels span different product surfaces; they are not one global hi
 | `hosted agent` | Foundry Agent Service | Application code is supplied as a container image or source archive; Agent Service manages its compute and endpoint. |
 | Control Plane `custom agent` | Foundry Control Plane | A reachable endpoint from a platform not natively managed by Control Plane is registered manually. Azure API Management acts as the AI Gateway proxy for client traffic. The runtime can still be in Azure and can use Foundry models. |
 | Agent Service `external agent` *(preview)* | Foundry Agent Service | A runtime outside Foundry is linked to the project by registration metadata and OpenTelemetry agent ID. Foundry does not host, proxy, or invoke it. |
-| Application using Foundry APIs | Not a Foundry agent type | Application code can call model inference directly, or call the Agent Service Responses API without creating a managed agent resource. This does not make the application a `prompt agent`, `hosted agent`, `custom agent`, or `external agent`. |
+| Application using Foundry APIs | Not a Foundry product classification | Application code can call model inference directly, or call the Agent Service Responses API without creating a `prompt agent` or `hosted agent`. This does not make the application a `prompt agent`, `hosted agent`, `custom agent`, or `external agent`. |
 
-These classifications describe product integration and hosting; they do not by themselves establish that a workload has planning, tool use, state, goal pursuit, or multistep autonomy. Use *agentic application* only when the described behavior warrants it. A self-hosted application can be prompt-driven without being the Agent Service product type `prompt agent`.
+These classifications describe product integration and hosting; they do not by themselves establish behavior. A self-hosted application can be prompt-driven without being the Agent Service product type `prompt agent`.
 
-References: [Agent Service overview](https://learn.microsoft.com/azure/foundry/agents/overview), [Control Plane custom agents](https://learn.microsoft.com/azure/foundry/control-plane/register-custom-agent), and [Agent Service external agents](https://learn.microsoft.com/azure/foundry/agents/how-to/register-external-agent).
+References: [Agent Service `prompt agent` and `hosted agent`](https://learn.microsoft.com/azure/foundry/agents/overview), [Control Plane `custom agent`](https://learn.microsoft.com/azure/foundry/control-plane/register-custom-agent), and [Agent Service `external agent`](https://learn.microsoft.com/azure/foundry/agents/how-to/register-external-agent).
 
 ### Key Distinctions
 
