@@ -89,15 +89,13 @@ Writing and naming rules:
 - Render exact classifications and feature names in backticks, such as `prompt agent`, `hosted agent`, `custom agent`, `external agent`, and `AI Red Teaming Agent`.
 - Use product and service names without backticks, such as Microsoft Foundry, Foundry Agent Service, and Foundry Control Plane.
 - Use bold for portal labels and navigation.
-- Avoid the bare word *agent*. Use an exact classification when relevant; otherwise prefer *application*, *runtime*, *service*, *API*, or *workload*.
+- Avoid the bare word *agent*; use the exact classification when relevant.
 - Use *agentic application* only when planning, tool use, state, goal pursuit, or multistep autonomy warrants it.
 
 Technical boundaries:
 
 - Foundry Agent Service stores `prompt agent`, `hosted agent`, and `external agent` as project-scoped data-plane records. In that API, the record contains a `definition` object whose `kind` field identifies the classification.
 - This data-plane `definition.kind` is not an ARM resource type or ARM `kind`.
-- Foundry Control Plane is a product surface, not a statement that `custom agent` is an ARM resource.
-- `AI Red Teaming Agent` is an evaluation capability, not a Foundry Agent Service classification.
 
 Classifications:
 
