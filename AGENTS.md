@@ -112,13 +112,33 @@ References: [Agent Service `prompt agent` and `hosted agent`](https://learn.micr
 
 ### Governance Terminology
 
-Governance is an umbrella term, not an enforcement guarantee. Qualify what is governed and name the mechanism that observes, evaluates, or blocks it.
+Foundry uses *governance* for several different capabilities. It does not by itself mean runtime enforcement.
 
-- **Foundry Control Plane governance.** Describe the specific capability—inventory, monitoring, compliance reporting, policy assignment, security integration, or remediation. Do not imply that every runtime action passes through Control Plane.
-- **MCP tools governance.** This preview feature routes eligible new portal-created MCP tools that do not use managed OAuth through a connected API Management AI Gateway. Its policies apply only to traffic that uses that gateway.
-- **Toolbox.** Toolbox centralizes tool definitions, versions, and downstream credential handling. It is separate from MCP tools governance; `require_approval` is metadata that the calling runtime must enforce.
-- **Runtime enforcement.** Name the actual enforcement boundary, such as an API Management policy, configured guardrail, RBAC check, or application middleware.
-- **Agent Governance Toolkit (AGT).** AGT is a separate open-source runtime toolkit in public preview, not a managed Foundry service or evidence of a Foundry roadmap commitment.
+Writing and naming rules:
+
+- Avoid the unqualified word *governance*. Name what is governed and whether the mechanism observes, audits, remediates, or blocks.
+- Render exact feature and toolkit names in backticks, such as `MCP tools governance`, `Toolbox`, and `Agent Governance Toolkit`.
+- Use product and service names without backticks, such as Foundry Control Plane and Azure API Management.
+- Use bold for portal labels and navigation, such as **Data security and governance**.
+- Use qualified general terms without backticks, such as data governance, identity governance, configuration governance, and cost governance.
+
+Technical boundaries:
+
+- Governance is not one ARM resource or Foundry data-plane object. Each capability has its own representation and enforcement boundary.
+- Foundry Control Plane is a management experience spanning inventory, monitoring, compliance, security, and remediation; there is no single Control Plane governance resource type.
+- Foundry guardrail policies are backed by Azure Policy assignments represented in ARM as `Microsoft.Authorization/policyAssignments`.
+- `MCP tools governance` has no dedicated governance resource type. An eligible MCP tool is configured in the Agent Service project data plane to route through an API Management endpoint. The gateway and its policies are Azure API Management resources.
+- `Toolbox` is a project-scoped data-plane resource, not an ARM resource. The `v1` API represents it as a `ToolboxObject` with immutable `ToolboxVersionObject` versions under `/toolboxes`.
+- `Agent Governance Toolkit` has no Azure ARM or Foundry data-plane representation. It is installed into an application or runtime and uses its own policy formats.
+
+Terms:
+
+- **Foundry Control Plane.** Specify the capability: inventory, monitoring, compliance reporting, policy assignment, security integration, or remediation. Do not imply that every runtime action passes through Foundry Control Plane.
+- **Configuration governance.** Describe the configuration being evaluated and the policy effect. Do not describe an audit-only Azure Policy assignment as a runtime request blocker.
+- **`MCP tools governance` — preview.** Eligible new portal-created MCP tools that do not use managed OAuth are routed through a connected API Management AI Gateway. Its policies apply only to traffic using that gateway.
+- **`Toolbox`.** Centralizes tool definitions, immutable versions, and downstream credential handling. It is separate from `MCP tools governance`; `require_approval` is metadata that the calling runtime must enforce.
+- **Runtime enforcement.** Name the actual boundary, such as an API Management policy, configured guardrail, RBAC check, or application middleware.
+- **`Agent Governance Toolkit` (`AGT`).** A separate open-source runtime toolkit in public preview. It is not a managed Foundry service or evidence of a Foundry roadmap commitment.
 
 References: [Foundry Control Plane](https://learn.microsoft.com/azure/foundry/control-plane/overview), [MCP tools governance](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/governance), [Toolbox](https://learn.microsoft.com/azure/foundry/agents/how-to/tools/toolbox), and [Agent Governance Toolkit](https://github.com/microsoft/agent-governance-toolkit).
 
