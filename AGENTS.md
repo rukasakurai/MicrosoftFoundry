@@ -124,14 +124,14 @@ Writing and naming rules:
 Technical boundaries:
 
 - Foundry has no generic governance ARM resource or project data-plane object. Name the actual resource, API, policy, or runtime boundary instead.
-- `Agent Governance Toolkit` has no Azure ARM or Foundry data-plane representation. It is separate open-source runtime software, not a managed Foundry service or roadmap commitment.
+- [`Agent Governance Toolkit`](https://github.com/microsoft/agent-governance-toolkit) is separate open-source runtime software in public preview as of 2026-07-11; it is not part of Microsoft Foundry. It focuses on application/runtime policy enforcement, identity and trust, audit, sandboxing, and SRE—not the full scope of enterprise inventory, data, compliance, and security governance. It has no Azure ARM or Foundry data-plane representation and is not a managed Foundry service or roadmap commitment.
 
 Terms:
 
 - **Data security and governance.** A live Foundry portal label observed for the Microsoft Purview integration; portal labels are high-churn, and Learn may place the integration under **Security posture**. It is not a general Foundry governance layer.
 - **Runtime enforcement.** Name the actual boundary, such as an API Management policy, configured guardrail, RBAC check, or application middleware.
 
-References: [Foundry data security and compliance](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security) and [`Agent Governance Toolkit`](https://github.com/microsoft/agent-governance-toolkit).
+Reference: [Foundry data security and compliance](https://learn.microsoft.com/azure/foundry/control-plane/how-to-manage-compliance-security).
 
 ### Key Distinctions
 
