@@ -4,7 +4,9 @@
 > uses (`/beta/agentRegistry/agentInstances`) is retired: registration (`POST`) returns
 > **HTTP 503** ("use the Microsoft Agent 365 registration API"), though read (`GET`) still
 > works. **Do not follow the registration steps below as-is.** The registry has converged
-> into [Agent Registry APIs powered by Microsoft Agent 365](https://learn.microsoft.com/en-us/microsoft-agent-365/admin/graph-api);
+> into the [Agent Registration API (preview)](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/api/admin-settings/agent-registration/overview)
+> for registration lifecycle operations and [Microsoft Agent 365 inventory APIs](https://learn.microsoft.com/en-us/microsoft-agent-365/admin/graph-api)
+> for inventory and details;
 > see [Agent Registry convergence with Microsoft Agent 365](https://learn.microsoft.com/en-us/entra/agent-id/agent-registry-convergence).
 > This guide is pending a rewrite against the new API.
 
