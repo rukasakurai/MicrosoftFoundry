@@ -3,5 +3,8 @@
   "cognitiveServicesAccounts": "cog-",
   "operationalInsightsWorkspaces": "log-",
   "insightsComponents": "appi-",
-  "searchSearchServices": "srch-"
+  "searchSearchServices": "srch-",
+  "storageStorageAccounts": "st",
+  "webServerFarms": "plan-",
+  "webSitesApp": "app-"
 }

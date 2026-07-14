@@ -24,6 +24,9 @@ This uses GA Application Insights custom telemetry. It does not use the preview 
 
 Limitation: feedback is collected by this sample client, not the Foundry Playground. Playground conversations can appear in traces, but this sample's 5-point/good-bad ratings are only emitted when the client is used.
 
+For desktop and mobile browser access, see the optional
+[Foundry Guide web app](foundry-guide-web-app.md).
+
 ## GitHub issue automation
 
 The manual workflow is opt-in. Configure these repository settings, then set `FOUNDRY_GUIDE_FEEDBACK_ENABLED=true`:

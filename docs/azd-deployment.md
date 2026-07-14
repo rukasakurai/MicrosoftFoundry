@@ -116,6 +116,11 @@ This template provisions **infrastructure only** (account, project, model deploy
 
 Set `ENABLE_FOUNDRY_GUIDE=true` to opt into the [Foundry Guide feedback-loop sample](foundry-guide-feedback-loop.md). The post-provision hook creates or reuses the prompt agent after infrastructure deployment.
 
+Set `ENABLE_FOUNDRY_GUIDE_WEB_APP=true` to add the opt-in
+[authenticated browser client](foundry-guide-web-app.md). It provisions one Linux
+Azure App Service web app, its plan and managed identity, and short-lived
+feedback-correlation storage.
+
 ## Verifying Evaluation Visibility
 
 With observability enabled, run one synthetic response through

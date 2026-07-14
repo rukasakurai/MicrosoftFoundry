@@ -1,0 +1,172 @@
+name: Deploy Foundry Guide Web
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-foundry-guide-web.yml"
+      - "azure.yaml"
+      - "infra/**"
+      - "scripts/deploy-foundry-guide.sh"
+      - "scripts/foundry-guide-instructions.md"
+      - "src/foundry-guide-web/**"
+      - "src/foundry-guide-webapp/**"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: foundry-guide-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ vars.FOUNDRY_GUIDE_WEB_ENABLED == 'true' }}
+    environment: foundry-guide
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate environment configuration
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+          AZURE_PRINCIPAL_ID: ${{ vars.AZURE_PRINCIPAL_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AUTH_CLIENT_ID: ${{ vars.FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID }}
+        run: |
+          for name in \
+            AZURE_CLIENT_ID AZURE_ENV_NAME AZURE_LOCATION AZURE_PRINCIPAL_ID \
+            AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AUTH_CLIENT_ID
+          do
+            if [ -z "${!name}" ]; then
+              echo "Error: required GitHub Environment value '${name}' is not configured." >&2
+              exit 1
+            fi
+          done
+
+          echo "::add-mask::$AZURE_CLIENT_ID"
+          echo "::add-mask::$AZURE_ENV_NAME"
+          echo "::add-mask::$AZURE_PRINCIPAL_ID"
+          echo "::add-mask::$AUTH_CLIENT_ID"
+
+      - uses: actions/checkout@v7.0.0
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: src/foundry-guide-web/package-lock.json
+
+      - uses: actions/setup-dotnet@v5.4.0
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build deployment artifact
+        run: |
+          npm ci --prefix src/foundry-guide-web
+          npm run build --prefix src/foundry-guide-web
+          npm audit --prefix src/foundry-guide-web --audit-level=high
+
+          dotnet publish src/foundry-guide-webapp/FoundryGuide.Web.csproj \
+            --configuration Release \
+            --output "$RUNNER_TEMP/foundry-guide-web"
+          dotnet list src/foundry-guide-webapp/FoundryGuide.Web.csproj \
+            package --vulnerable --include-transitive
+
+          mkdir -p "$RUNNER_TEMP/foundry-guide-web/wwwroot"
+          cp -R src/foundry-guide-web/dist/. \
+            "$RUNNER_TEMP/foundry-guide-web/wwwroot/"
+          (
+            cd "$RUNNER_TEMP/foundry-guide-web"
+            zip -q -r "$RUNNER_TEMP/foundry-guide-web.zip" .
+          )
+
+      - name: Azure login
+        uses: azure/login@v3.0.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install azd
+        uses: Azure/setup-azd@v2.3.0
+
+      - name: Configure persistent environment
+        env:
+          AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+          AZURE_PRINCIPAL_ID: ${{ vars.AZURE_PRINCIPAL_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AUTH_CLIENT_ID: ${{ vars.FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID }}
+        run: |
+          azd config set auth.useAzCliAuth true
+          azd env new "$AZURE_ENV_NAME" \
+            --subscription "$AZURE_SUBSCRIPTION_ID" \
+            --location "$AZURE_LOCATION"
+          azd env set AZURE_PRINCIPAL_ID "$AZURE_PRINCIPAL_ID"
+          azd env set AZURE_PRINCIPAL_TYPE ServicePrincipal
+          azd env set ENABLE_OBSERVABILITY true
+          azd env set ENABLE_FOUNDRY_GUIDE true
+          azd env set ENABLE_FOUNDRY_GUIDE_WEB_APP true
+          azd env set FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID "$AUTH_CLIENT_ID"
+          azd env set FOUNDRY_GUIDE_WEB_APP_SERVICE_SKU B1
+          azd env set ENVIRONMENT_PURPOSE foundry-guide-web
+          azd env set ENVIRONMENT_LIFECYCLE persistent
+          azd env set ENVIRONMENT_WORKSTREAM foundry-guide
+
+      - name: Provision persistent environment
+        run: |
+          if ! azd provision --no-prompt >"$RUNNER_TEMP/azd-provision.log" 2>&1; then
+            echo "Error: Azure provisioning failed. Review the Azure deployment activity log." >&2
+            exit 1
+          fi
+
+      - name: Load deployment outputs
+        id: deployment
+        run: |
+          set -a
+          eval "$(azd env get-values)"
+          set +a
+
+          for name in \
+            AZURE_RESOURCE_GROUP FOUNDRY_GUIDE_WEB_APP_NAME \
+            FOUNDRY_GUIDE_WEB_APP_URL
+          do
+            if [ -z "${!name}" ]; then
+              echo "Error: expected deployment output '${name}' is missing." >&2
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+
+          {
+            echo "resource_group=$AZURE_RESOURCE_GROUP"
+            echo "web_app_name=$FOUNDRY_GUIDE_WEB_APP_NAME"
+            echo "web_app_url=$FOUNDRY_GUIDE_WEB_APP_URL"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Deploy web app
+        uses: Azure/webapps-deploy@v3.0.8
+        with:
+          app-name: ${{ steps.deployment.outputs.web_app_name }}
+          package: ${{ runner.temp }}/foundry-guide-web.zip
+
+      - name: Verify deployment boundary
+        env:
+          WEB_APP_URL: ${{ steps.deployment.outputs.web_app_url }}
+        run: |
+          curl --fail --silent --show-error "$WEB_APP_URL/health" >/dev/null
+          status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data '{"input":"boundary-check"}' \
+            "$WEB_APP_URL/api/chat")"
+          if [ "$status" != "401" ]; then
+            echo "Error: unauthenticated API request returned HTTP $status instead of 401." >&2
+            exit 1
+          fi
