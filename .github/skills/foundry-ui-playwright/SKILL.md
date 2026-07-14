@@ -95,16 +95,15 @@ The portal redirects this to the appropriate `/foundryProject/...` or `/nextgen/
 
 ## Playwright MCP tips for this context
 
-- **Authentication needs a headed, manual login.** The MCP browser starts with a fresh profile and is **not** signed in to Azure. Navigating to `ai.azure.com` lands on the signed-out marketing page. The user must complete Azure sign-in **and MFA** in a visible (headed) window; the agent cannot do this. After login, re-navigate and confirm with `browser_evaluate` returning `window.location.href` (a `?tid=...` tenant param indicates authenticated).
+- **Browser authentication is profile-specific.** If the portal opens signed out, complete its normal interactive flow; see [references/setup.md](references/setup.md) for profile behavior. Then use `browser_tabs` to confirm that the URL contains a `?tid=...` tenant parameter.
 - **Prefer `browser_snapshot` (accessibility tree) over screenshots** for finding and clicking elements. Use `browser_take_screenshot` only for visual confirmation/evidence.
-- **Enumerate nav cheaply with `browser_evaluate`** instead of dumping huge snapshots, e.g. collect `button/a/[role=tab]` `innerText` + `href` and test for the pane you care about. This is far smaller than a full snapshot of the Foundry portal (which is large).
-- **`browser_evaluate(... .click())` is a reliable fallback** when `browser_click` rejects its target/ref argument. Match the element by trimmed text or aria-label.
+- **Use `browser_find` before dumping a large snapshot** when locating a known label.
 - **The browser stays open across tool calls** until `browser_close`. Close it when done to free the session.
-- **Read-only navigation and inspection are what this signed-in session does reliably** — walking panes, reading labels, running an existing agent in the Playground, and capturing screenshots. Actions that *write Azure resources* (e.g. **Connect**/create/delete a connection under Build → Knowledge) go through ARM and may require interactive MFA that the browser session doesn't carry; if you need to create such a resource, provision it via IaC/CLI and use the portal to confirm it appears.
+- **Use this browser session for navigation and inspection.** Provision Azure resource changes through IaC/CLI, then use the portal to confirm they appear.
 - **Docs vs reality flow:** read the doc text first via `web_fetch` on the docs API (`https://learn.microsoft.com/api/article/body?pathname=/en/azure/foundry/...`) for clean markdown; then use Playwright to confirm the exact live labels/panes. Note any drift (label renames, preview gating, toggle requirements) with the date, since the portal changes often.
 - **Inspecting what a pane actually loads:** the `/nextgen` portal calls a private internal BFF (`ai.azure.com/nextgen/api/...Resolver`, no `api-version`), **not** public ARM (`management.azure.com`). When you need to confirm a feature is real from its network traffic, or to understand the docs' "available through the Foundry portal only" wording, see **[references/portal-backend-api.md](references/portal-backend-api.md)**.
 - **Azure Pricing Calculator:** when navigating the public calculator, keep the session signed out and use the repo-specific notes in **[references/pricing-calculator.md](references/pricing-calculator.md)**.
 
 ## Setting up the Playwright MCP server
 
-If the Playwright MCP server is not yet configured (or its tools vanished after a config change), see **[references/setup.md](references/setup.md)**. It covers first-time install, the Copilot CLI vs Copilot in VS Code config differences, keeping artifacts out of the repo (`PLAYWRIGHT_MCP_OUTPUT_DIR`), headless-Linux `DISPLAY` settings, and diagnosing a server that won't start.
+If the Playwright MCP server is not yet configured (or its tools vanished after a config change), see **[references/setup.md](references/setup.md)**. It covers first-time install, the GitHub Copilot CLI vs GitHub Copilot in VS Code config differences, keeping artifacts out of the repo (`PLAYWRIGHT_MCP_OUTPUT_DIR`), headless-Linux `DISPLAY` settings, and browser launch failures.
