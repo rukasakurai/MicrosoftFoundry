@@ -23,7 +23,7 @@ internal sealed class FoundryGuideClient(
         var token = await credential.GetTokenAsync(TokenContext, cancellationToken);
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            $"{_projectEndpoint}/agents/{Uri.EscapeDataString(_agentName)}/endpoint/protocols/openai/responses");
+            $"{_projectEndpoint}/agents/{Uri.EscapeDataString(_agentName)}/endpoint/protocols/openai/responses?api-version=v1");
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
         request.Headers.Add("user_isolation_key", HashUserId(userId));
