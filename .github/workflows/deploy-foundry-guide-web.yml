@@ -25,7 +25,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ vars.FOUNDRY_GUIDE_WEB_ENABLED == 'true' }}
     environment: foundry-guide
     runs-on: ubuntu-latest
 
@@ -39,16 +38,22 @@ jobs:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           AUTH_CLIENT_ID: ${{ vars.FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID }}
+          WEB_ENABLED: ${{ vars.FOUNDRY_GUIDE_WEB_ENABLED }}
         run: |
           for name in \
             AZURE_CLIENT_ID AZURE_ENV_NAME AZURE_LOCATION AZURE_PRINCIPAL_ID \
-            AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AUTH_CLIENT_ID
+            AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AUTH_CLIENT_ID WEB_ENABLED
           do
             if [ -z "${!name}" ]; then
               echo "Error: required GitHub Environment value '${name}' is not configured." >&2
               exit 1
             fi
           done
+
+          if [ "$WEB_ENABLED" != "true" ]; then
+            echo "Error: FOUNDRY_GUIDE_WEB_ENABLED must be 'true'." >&2
+            exit 1
+          fi
 
           echo "::add-mask::$AZURE_CLIENT_ID"
           echo "::add-mask::$AZURE_ENV_NAME"
