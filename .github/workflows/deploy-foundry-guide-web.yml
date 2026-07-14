@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - feat/foundry-guide-web-app
     paths:
       - ".github/workflows/deploy-foundry-guide-web.yml"
       - "azure.yaml"
