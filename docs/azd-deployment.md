@@ -75,15 +75,19 @@ Or edit the `infra/main.parameters.json` file before deployment.
 
 ### Environment Variables
 
-After deployment, the following outputs are available as environment variables:
+After deployment, common outputs are available as environment variables:
 
 - `AZURE_LOCATION`: Deployment region
-- `AZURE_TENANT_ID`: Azure AD tenant ID
+- `AZURE_TENANT_ID`: Microsoft Entra tenant ID
 - `COGNITIVE_SERVICES_NAME`: AI Services account name
 - `COGNITIVE_SERVICES_ENDPOINT`: AI Services endpoint URL
+- `MODEL_DEPLOYMENT_NAME`: Deployed model name
 - `PROJECT_NAME`: Project name
 - `PROJECT_ENDPOINT`: Foundry project data-plane endpoint
 - `APPLICATION_INSIGHTS_NAME`: Application Insights component name when observability is enabled
+- `LOG_ANALYTICS_WORKSPACE_NAME`: Log Analytics workspace name when observability is enabled
+- `FOUNDRY_GUIDE_WEB_APP_NAME`: App Service app name when the browser client is enabled
+- `FOUNDRY_GUIDE_WEB_APP_URL`: App Service URL when the browser client is enabled
 
 Access these values with:
 

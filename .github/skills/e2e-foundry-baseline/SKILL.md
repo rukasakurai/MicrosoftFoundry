@@ -278,9 +278,9 @@ GUI/Playwright and live provisioning are extra.
 
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
-| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | stale after current edit | ⚠️ remeasure before merge |
-| `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~15s | ✅ |
-| `docs/foundry-guide-web-app.md` | flow 16 + architecture/source checks | not yet measured | ⚠️ live auth requires the resource-tenant app registration and GitHub Environment |
+| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~155s | ✅ |
+| `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~137s | ✅ |
+| `docs/foundry-guide-web-app.md` | flow 16 + architecture/source checks | ~195s | ⚠️ content verified; live auth requires the resource-tenant app registration and GitHub Environment |
 | `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~16s | ✅ |
 | `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
 | `docs/entra-agent-identity.md` | flow 10 | ~4s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
