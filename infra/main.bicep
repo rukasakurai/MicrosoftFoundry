@@ -214,6 +214,19 @@ resource appInsightsConnection 'Microsoft.CognitiveServices/accounts/projects/co
   }
 }
 
+// Let the deploying principal run the workspace-scoped diagnostics used to
+// verify trace and evaluation ingestion.
+// Role: Log Analytics Reader (73c42c96-874c-492b-b04d-ab87d138a893)
+resource observabilityLogAnalyticsReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableObservability && !empty(principalId)) {
+  scope: logAnalytics
+  name: guid(logAnalytics.id, principalId, '73c42c96-874c-492b-b04d-ab87d138a893')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '73c42c96-874c-492b-b04d-ab87d138a893')
+    principalId: principalId
+    principalType: principalType
+  }
+}
+
 // Optional secretless GitHub Actions path for issue automation. The workflow
 // queries aggregate feedback only, so read-only monitoring roles are enough.
 // Role: Monitoring Reader (43d0d8ad-25c7-4714-9337-8ba259a9fe05)
@@ -228,7 +241,7 @@ resource feedbackAppInsightsMonitoringReaderRoleAssignment 'Microsoft.Authorizat
 }
 
 // Role: Log Analytics Reader (73c42c96-874c-492b-b04d-ab87d138a893)
-resource feedbackLogAnalyticsReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableObservability && !empty(foundryGuideFeedbackPrincipalId)) {
+resource feedbackLogAnalyticsReaderRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (enableObservability && !empty(foundryGuideFeedbackPrincipalId) && toLower(foundryGuideFeedbackPrincipalId) != toLower(principalId)) {
   scope: logAnalytics
   name: guid(logAnalytics.id, foundryGuideFeedbackPrincipalId, '73c42c96-874c-492b-b04d-ab87d138a893')
   properties: {

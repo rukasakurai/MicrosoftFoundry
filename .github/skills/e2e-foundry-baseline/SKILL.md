@@ -131,6 +131,7 @@ Treat the minute figures as a **floor**, not an ETA.
 | 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination). `enableObservability=false` is a variation here — it drops the observability resources, ≈ the pre-observability baseline |
 | 13 | Observability + agent-run tracing (`enableObservability`, default on) | App Insights connection attached; after a run, spans land in the Log Analytics workspace | ~+18s provision, then ~2–3 min ingestion lag | ✅ resolves #36. Verify deterministically by querying the workspace (see below), not the portal |
 | 14 | Foundry Guide feedback-loop sample (`ENABLE_FOUNDRY_GUIDE=true`) | `scripts/deploy-foundry-guide.sh` creates/reuses the prompt agent; `scripts/foundry-guide-chat.sh --rating <1-5>` runs the Entra-protected endpoint and emits `gen_ai.evaluation.result`; `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true scripts/create-feedback-issue.sh` proves threshold/dedup logic without writing GitHub issues | deploy reuse path **3s** observed; chat + feedback client **21s** observed; dry-run issue check **21s** observed | ✅ opt-in. Do **not** create real GitHub issues during routine E2E; real issue creation is noisy and should be a deliberate one-off validation only. The issue script is not time-sensitive: it uses a lookback window and can run manually at any time. |
+| 15 | Evaluation visibility | `scripts/evaluate-agent-response.sh` creates one synthetic response, evaluates it with `builtin.coherence`, and correlates the numeric score in workspace `AppEvents`; Playwright confirms the Trace **Evaluation** cell | evaluation ~20s, then ~2–3 min ingestion + portal review | 🧪 response-ID evaluation and `builtin.coherence` aren't marked Preview; the Trace **Evaluation** UI is Preview as of 2026-07-14 |
 
 The channel-publishing portion of flow 8, plus flows 9 and 11, are setup-dependent
 and don't fit an automated per-PR E2E; validate them out-of-band and note that in
@@ -177,6 +178,31 @@ The protected endpoint + feedback client run also took **21s** in the same warm
 environment. Re-running `scripts/deploy-foundry-guide.sh` against an existing
 `foundry-guide:1` reuse path took **3s**; first creation can take longer, especially
 while RBAC propagates.
+
+**Flow 15 — deterministic evaluation visibility check.** This flow uses
+response-ID evaluation (`azure_ai_responses`) and `builtin.coherence` through
+raw v1 REST; neither is marked Preview in Microsoft Learn as of 2026-07-14. It
+avoids the experimental .NET `EvaluationClient`, Preview trace evaluation,
+Preview agent evaluators, and region-dependent risk/safety evaluators.
+
+```bash
+./scripts/evaluate-agent-response.sh --output /tmp/evaluation-result.json
+```
+
+Green = the evaluation run completes with a numeric coherence score and the
+correlated workspace event is classified as
+`scored_automated_evaluation`. The query classifier distinguishes that state
+from `evaluator_error`, `missing_evaluation_event`,
+`human_feedback_only`, and `connection_or_permission_error`.
+The optional output file contains local correlation IDs; don't publish it.
+
+The final visual check uses the `foundry-ui-playwright` skill to open
+**Build → Agents → evaluation-visibility-agent → Traces** and confirm that the
+matching response row has a numeric **Evaluation** value. That column is
+Preview as of 2026-07-14, so keep the GA API result plus the workspace event as
+the durable diagnostic evidence. Evaluation reports can contain full prompts,
+responses, evaluator reasoning, and signed download URLs; don't publish report
+pages or raw output items.
 
 > **Keeping this table honest:** the Status column is a grounded observation, not a
 > spec. Linked issues (e.g. [#34](https://github.com/rukasakurai/MicrosoftFoundry/issues/34),
@@ -233,7 +259,7 @@ GUI/Playwright and live provisioning are extra.
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
 | `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~55s | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
-| `docs/azd-deployment.md` | flows 1, 2, 12, 13 | ~10s | ✅ |
+| `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~15s | ✅ |
 | `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~16s | ✅ |
 | `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
 | `docs/entra-agent-identity.md` | flow 10 | ~4s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
@@ -266,6 +292,10 @@ GUI/Playwright and live provisioning are extra.
 
 - `az` and `azd` installed; the operator signed in to `az` against the target
   subscription's tenant.
+- Verify the active Azure account as well as the subscription and tenant before
+  provisioning. Shared CLI state can point at the right tenant and subscription
+  under the wrong identity; don't use an administrator account unless the owner
+  explicitly requests it.
 - **`azd` may be signed in to a different identity/tenant than `az`.** If `azd up`
   fails with a principal/tenant resolution error, or an `AADSTS50076` MFA error for
   Azure Resource Manager, make `azd` reuse the `az` CLI's (MFA-satisfied) token:

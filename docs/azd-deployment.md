@@ -116,6 +116,31 @@ This template provisions **infrastructure only** (account, project, model deploy
 
 Set `ENABLE_FOUNDRY_GUIDE=true` to opt into the [Foundry Guide feedback-loop sample](foundry-guide-feedback-loop.md). The post-provision hook creates or reuses the prompt agent after infrastructure deployment.
 
+## Verifying Evaluation Visibility
+
+With observability enabled, run one synthetic response through
+[response-ID evaluation](https://learn.microsoft.com/azure/foundry/how-to/develop/cloud-evaluation#agent-response-evaluation):
+
+```bash
+azd env select <environment-name>
+./scripts/evaluate-agent-response.sh --output /tmp/evaluation-result.json
+```
+
+Success produces a numeric `builtin.coherence` score and classifies the
+correlated Application Insights event as `scored_automated_evaluation`. The
+script also distinguishes evaluator errors, missing events, end-user feedback,
+builder feedback, and connection or permission failures. Human-only results
+identify the observed feedback sources.
+
+The output file contains local correlation IDs for matching the response in
+**Build → Agents → evaluation-visibility-agent → Traces**. Do not publish it or
+evaluation reports, which can contain prompts, responses, evaluator reasoning,
+and signed download URLs.
+
+Response-ID evaluation and `builtin.coherence` are not marked Preview in
+Microsoft Learn as of 2026-07-14. The Trace **Evaluation** column used for the
+visual check is Preview as of that date.
+
 ## Additional Resources
 
 - [Azure Developer CLI Documentation](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/)
@@ -136,3 +161,13 @@ Set `ENABLE_FOUNDRY_GUIDE=true` to opt into the [Foundry Guide feedback-loop sam
   - **Fix applied**: Added `allowProjectManagement: true` property to the Cognitive Services account in [infra/main.bicep](../infra/main.bicep). This property is required for projects to be created as child resources under AIServices kind accounts. Without this property, deployment fails with error: "Project can only be created under AIServices kind account with allowProjectManagement set to true."
   - All deployment steps completed successfully after fix
   - Environment variables verified: `AZURE_LOCATION`, `AZURE_TENANT_ID`, `COGNITIVE_SERVICES_NAME`, `COGNITIVE_SERVICES_ENDPOINT`, `PROJECT_NAME` all returned correct values
+
+### 2026-07-14
+- Result: PASS with fixes
+- Platform/Context: Linux, isolated azd environment, synthetic data only
+- Tester: GitHub Copilot CLI with Playwright MCP
+- Notes:
+  - Clean provisioning completed in 132 seconds.
+  - Response-ID evaluation produced a numeric `builtin.coherence` score and a correlated `scored_automated_evaluation` workspace event.
+  - The matching Trace **Evaluation** cell displayed `coherence: 5`.
+  - Clarified that response-ID evaluation and `builtin.coherence` are not marked Preview, while the Trace **Evaluation** column is Preview as of 2026-07-14.
