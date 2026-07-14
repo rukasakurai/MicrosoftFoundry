@@ -7,7 +7,7 @@ This directory contains small .NET console applications for Microsoft Foundry au
 | Tool | Purpose |
 | --- | --- |
 | `CreateAgent` | Programmatically create prompt-agent versions in Microsoft Foundry. |
-| `FoundryGuideFeedback` | Call the optional Foundry Guide agent and emit trace-correlated `gen_ai.evaluation.result` feedback to Application Insights. |
+| `FoundryGuideFeedback` | Call the optional Foundry Guide agent and emit a trace-correlated `foundry_guide.feedback` custom event to Application Insights. |
 
 ## Agent creation
 

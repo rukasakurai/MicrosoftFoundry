@@ -130,7 +130,7 @@ Treat the minute figures as a **floor**, not an ETA.
 | 11 | MCP OAuth connection `scripts/create-mcp-agent.sh` | project connection + consent flow | — | ⚠️ heavy: needs a real OAuth app (client id/secret). Portal "Connect a tool → MCP" dialog exists (Playwright); a working OAuth connection can't be created without those credentials |
 | 12 | Region / SKU / model / capacity overrides | provision with non-default params | ~170s | ✅ easy (per param combination). `enableObservability=false` is a variation here — it drops the observability resources, ≈ the pre-observability baseline |
 | 13 | Observability + agent-run tracing (`enableObservability`, default on) | App Insights connection attached; after a run, spans land in the Log Analytics workspace | ~+18s provision, then ~2–3 min ingestion lag | ✅ resolves #36. Verify deterministically by querying the workspace (see below), not the portal |
-| 14 | Foundry Guide feedback-loop sample (`ENABLE_FOUNDRY_GUIDE=true`) | `scripts/deploy-foundry-guide.sh` creates/reuses the prompt agent; `scripts/foundry-guide-chat.sh --rating <1-5>` runs the Entra-protected endpoint and emits `gen_ai.evaluation.result`; `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true scripts/create-feedback-issue.sh` proves threshold/dedup logic without writing GitHub issues | deploy reuse path **3s** observed; chat + feedback client **21s** observed; dry-run issue check **21s** observed | ✅ opt-in. Do **not** create real GitHub issues during routine E2E; real issue creation is noisy and should be a deliberate one-off validation only. The issue script is not time-sensitive: it uses a lookback window and can run manually at any time. |
+| 14 | Foundry Guide feedback-loop sample (`ENABLE_FOUNDRY_GUIDE=true`) | `scripts/deploy-foundry-guide.sh` creates/reuses the prompt agent; `scripts/foundry-guide-chat.sh --rating <1-5>` runs the Entra-protected endpoint and emits the application-owned `foundry_guide.feedback` custom event; `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true scripts/create-feedback-issue.sh` proves threshold/dedup logic without writing GitHub issues | deploy reuse path **3s** observed; chat + feedback client **21s** observed; dry-run issue check **21s** observed | ✅ opt-in. Do **not** create real GitHub issues during routine E2E; real issue creation is noisy and should be a deliberate one-off validation only. The issue script is not time-sensitive: it uses a lookback window and can run manually at any time. |
 | 15 | Evaluation visibility | `scripts/evaluate-agent-response.sh` creates one synthetic response, evaluates it with `builtin.coherence`, and correlates the numeric score in workspace `AppEvents`; Playwright confirms the Trace **Evaluation** cell | evaluation ~20s, then ~2–3 min ingestion + portal review | 🧪 response-ID evaluation and `builtin.coherence` aren't marked Preview; the Trace **Evaluation** UI is Preview as of 2026-07-14 |
 
 The channel-publishing portion of flow 8, plus flows 9 and 11, are setup-dependent
@@ -170,7 +170,7 @@ FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true ./scripts/create-feedback-issue.sh
 ```
 
 Green = the agent is ready, the protected endpoint returns a response, a
-`gen_ai.evaluation.result` span lands in the workspace, and the issue script reports
+`foundry_guide.feedback` custom event lands in `AppEvents`, and the issue script reports
 what it would create/update in dry-run mode. **Do not run the issue script without
 `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true` during routine E2E**; it can create public
 issue noise. A timed dry-run on an already-provisioned environment took **21s**.

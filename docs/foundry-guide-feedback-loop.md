@@ -18,7 +18,9 @@ The post-provision hook creates or reuses the `foundry-guide` prompt agent. The 
 ./scripts/foundry-guide-chat.sh --prompt "What is the difference between Microsoft Foundry and Foundry classic?" --rating 5
 ```
 
-The client calls the agent and emits `gen_ai.evaluation.result` to Application Insights. It records rating metadata and trace context, not prompts, responses, explanations, user identifiers, secrets, or Azure deployment identifiers.
+The client calls the agent and emits the application-owned `foundry_guide.feedback` custom event to Application Insights. It records rating metadata and trace context, not prompts, responses, explanations, user identifiers, secrets, or Azure deployment identifiers.
+
+This uses GA Application Insights custom telemetry. It does not use the preview `gen_ai.evaluation.result` convention or appear as a Foundry trace annotation as of 2026-07-14.
 
 Limitation: feedback is collected by this sample client, not the Foundry Playground. Playground conversations can appear in traces, but this sample's 5-point/good-bad ratings are only emitted when the client is used.
 
