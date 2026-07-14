@@ -14,7 +14,7 @@ setup, then pin that version in the local configuration.
 | Add a server | **`copilot mcp add`** (or `/mcp` in-session) — preferred | **`MCP: Add Server`** command, or `@mcp playwright` in Extensions — preferred |
 | Manage / inspect | `copilot mcp list` / `get` / `remove`, or `/mcp` | `MCP: List Servers`, the `mcp.json` gutter actions |
 | Config file (under the hood) | `~/.copilot/mcp-config.json` (key `mcpServers`) | `.vscode/mcp.json` (workspace) or user-profile `mcp.json` (key `servers`) |
-| Tool approval | CLI allow flow (`/allow-all`, per-session) | Prompts to confirm each tool invocation by default |
+| Tool access | Focused allowlist below; CLI approval flow still applies | Enable only the tools needed for the task |
 | Reload after change | `/mcp` restart or `/restart` | Restart the server from the `mcp.json` gutter / command |
 
 **Use the built-in management commands, not hand-edited JSON.** `copilot mcp add` (and the in-session `/mcp` flow) validate input, write the correct schema, and avoid JSON typos. Editing `~/.copilot/mcp-config.json` directly is an escape hatch for automation/bulk edits only. The JSON blocks below are shown as reference for what the commands produce.
@@ -25,6 +25,9 @@ setup, then pin that version in the local configuration.
 
    ```bash
    PLAYWRIGHT_MCP_VERSION="$(npm view @playwright/mcp version)"
+   PLAYWRIGHT_MCP_OUTPUT_DIR="$HOME/.cache/playwright-mcp"
+   PLAYWRIGHT_MCP_TOOLS="browser_navigate,browser_navigate_back,browser_snapshot,browser_find,browser_click,browser_type,browser_wait_for,browser_tabs,browser_network_requests,browser_network_request,browser_take_screenshot,browser_close"
+   install -d -m 700 "$PLAYWRIGHT_MCP_OUTPUT_DIR"
    npx -y "@playwright/mcp@$PLAYWRIGHT_MCP_VERSION" install-browser chromium
    ```
 
@@ -39,33 +42,16 @@ A single command sets the command, args, `env` vars (`--env`, repeatable), and t
 
 ```bash
 copilot mcp add playwright \
-  --tools "*" \
+  --tools "$PLAYWRIGHT_MCP_TOOLS" \
   --env DISPLAY=:0 \
-  --env PLAYWRIGHT_MCP_OUTPUT_DIR=/tmp/playwright-mcp \
+  --env PLAYWRIGHT_MCP_OUTPUT_DIR="$PLAYWRIGHT_MCP_OUTPUT_DIR" \
   -- npx -y "@playwright/mcp@$PLAYWRIGHT_MCP_VERSION" --browser chromium
 ```
 
 Inspect or remove it with `copilot mcp get playwright` / `copilot mcp remove playwright`. Inside a session, `/mcp` offers the same add/edit/restart flow interactively.
 
-This stores the exact version in `~/.copilot/mcp-config.json` (shown as
-`<version>` below):
-
-```json
-{
-  "mcpServers": {
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@<version>", "--browser", "chromium"],
-      "env": {
-        "DISPLAY": ":0",
-        "PLAYWRIGHT_MCP_OUTPUT_DIR": "/tmp/playwright-mcp"
-      },
-      "tools": ["*"]
-    }
-  }
-}
-```
+The shell expands the version and output path before storing them in the user
+configuration.
 
 ## Copilot in VS Code config (`.vscode/mcp.json` or user profile)
 
@@ -79,27 +65,30 @@ Prefer the `MCP: Add Server` command (or `@mcp playwright` in the Extensions vie
       "args": ["-y", "@playwright/mcp@<version>", "--browser", "chromium"],
       "env": {
         "DISPLAY": ":0",
-        "PLAYWRIGHT_MCP_OUTPUT_DIR": "/tmp/playwright-mcp"
+        "PLAYWRIGHT_MCP_OUTPUT_DIR": "<private-output-dir>"
       }
     }
   }
 }
 ```
 
-Replace `<version>` with the resolved value from the first-time install step.
+Replace the placeholders with the resolved version and a private user-owned
+directory. In **Configure Tools**, enable only the browser tools needed for the
+task.
 
-Note: a workspace `.vscode/mcp.json` is usually committed and shared, so a hardcoded `/tmp/...` path is Linux/macOS-only — for a cross-platform team, set these in the **user-profile** config instead of committing them.
+Note: a workspace `.vscode/mcp.json` is usually committed and shared, so
+machine-specific paths belong in the **user-profile** config.
 
 **Browser profiles:** the default MCP profile is separate from other browser
-sessions. Use `--extension` only to connect to an existing Chrome/Edge profile, or
-`--isolated` for disposable state; see the upstream
-[profile guidance](https://github.com/microsoft/playwright-mcp#user-profile).
+sessions. Review the upstream
+[profile guidance](https://github.com/microsoft/playwright-mcp#user-profile)
+before changing that default.
 
 ## Keep artifacts out of the repo (`PLAYWRIGHT_MCP_OUTPUT_DIR`)
 
-Playwright MCP writes snapshots/screenshots/PDFs to an output directory that **defaults to `./.playwright-mcp` in the server's working directory** — which is your repo root, so it shows up as untracked clutter. Redirect it out of the repo with the **`PLAYWRIGHT_MCP_OUTPUT_DIR`** env var (or `--output-dir <path>`), as shown in the configs above. This keeps the auto-generated snapshots out of the repo — preferred over deleting them each session or adding a `.gitignore` entry. Use `/tmp/playwright-mcp` for throwaway output, or `~/.cache/playwright-mcp` if you want it to survive reboots.
-
-For an **explicit `browser_take_screenshot`**, pass a **filename that is an absolute path under that output directory** (e.g. `/tmp/playwright-mcp/operate-assets.png`) to be sure it lands there; a bare relative filename resolves against the server's working directory. Verifying a screenshot's final path once (and moving it out of the repo if needed) keeps the working tree clean.
+Playwright MCP defaults to `./.playwright-mcp` in the server's working directory.
+Set **`PLAYWRIGHT_MCP_OUTPUT_DIR`** to a private user-owned directory, as shown
+above. Browser artifacts can contain page data; do not publish them.
 
 ## Headless-Linux launch settings
 
