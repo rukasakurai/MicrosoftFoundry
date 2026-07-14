@@ -4,6 +4,11 @@ Read this when setting up (or repairing) the Playwright MCP server. Once it is w
 
 The two tools configure and run MCP differently. Know which you are in.
 
+The browser and profile guidance below was revalidated against
+[`@playwright/mcp`](https://github.com/microsoft/playwright-mcp) 0.0.78 and its
+upstream documentation as of 2026-07-14. Resolve the current stable version during
+setup, then pin that version in the local configuration.
+
 | Aspect | Copilot CLI | Copilot in VS Code |
 | --- | --- | --- |
 | Add a server | **`copilot mcp add`** (or `/mcp` in-session) — preferred | **`MCP: Add Server`** command, or `@mcp playwright` in Extensions — preferred |
@@ -16,10 +21,17 @@ The two tools configure and run MCP differently. Know which you are in.
 
 ## First-time install (both tools)
 
-1. The server is downloaded on demand via `npx @playwright/mcp@latest`; no global install needed.
-2. Install the browser once: `npx playwright install chromium`. The server may additionally request `npx @playwright/mcp install-browser chrome-for-testing`, and on Linux a one-time `sudo npx playwright install-deps`.
-3. Add the server with the command below (CLI) or `MCP: Add Server` (VS Code), then reload: `/mcp` restart in CLI, or restart from `mcp.json` in VS Code.
-4. Verify: in CLI, `copilot mcp list` (or `/mcp`) should show `playwright`; or navigate to any URL and confirm a snapshot returns.
+1. Resolve the current stable version and install its matching browser:
+
+   ```bash
+   PLAYWRIGHT_MCP_VERSION="$(npm view @playwright/mcp version)"
+   npx -y "@playwright/mcp@$PLAYWRIGHT_MCP_VERSION" install-browser chromium
+   ```
+
+   If Playwright reports missing Linux libraries, follow its
+   [system-dependency instructions](https://playwright.dev/docs/browsers#install-system-dependencies).
+2. Add the server with the command below (CLI) or `MCP: Add Server` (VS Code), then reload: `/mcp` restart in CLI, or restart from `mcp.json` in VS Code.
+3. Verify: in CLI, `copilot mcp list` (or `/mcp`) should show `playwright`; or navigate to any URL and confirm a snapshot returns.
 
 ## Copilot CLI: add with `copilot mcp add` (preferred)
 
@@ -30,12 +42,13 @@ copilot mcp add playwright \
   --tools "*" \
   --env DISPLAY=:0 \
   --env PLAYWRIGHT_MCP_OUTPUT_DIR=/tmp/playwright-mcp \
-  -- npx -y @playwright/mcp@latest --browser chromium
+  -- npx -y "@playwright/mcp@$PLAYWRIGHT_MCP_VERSION" --browser chromium
 ```
 
 Inspect or remove it with `copilot mcp get playwright` / `copilot mcp remove playwright`. Inside a session, `/mcp` offers the same add/edit/restart flow interactively.
 
-The above writes this entry to `~/.copilot/mcp-config.json` (shown for reference — you should not need to edit it by hand):
+This stores the exact version in `~/.copilot/mcp-config.json` (shown as
+`<version>` below):
 
 ```json
 {
@@ -43,7 +56,7 @@ The above writes this entry to `~/.copilot/mcp-config.json` (shown for reference
     "playwright": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--browser", "chromium"],
+      "args": ["-y", "@playwright/mcp@<version>", "--browser", "chromium"],
       "env": {
         "DISPLAY": ":0",
         "PLAYWRIGHT_MCP_OUTPUT_DIR": "/tmp/playwright-mcp"
@@ -63,7 +76,7 @@ Prefer the `MCP: Add Server` command (or `@mcp playwright` in the Extensions vie
   "servers": {
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--browser", "chromium"],
+      "args": ["-y", "@playwright/mcp@<version>", "--browser", "chromium"],
       "env": {
         "DISPLAY": ":0",
         "PLAYWRIGHT_MCP_OUTPUT_DIR": "/tmp/playwright-mcp"
@@ -73,7 +86,14 @@ Prefer the `MCP: Add Server` command (or `@mcp playwright` in the Extensions vie
 }
 ```
 
+Replace `<version>` with the resolved value from the first-time install step.
+
 Note: a workspace `.vscode/mcp.json` is usually committed and shared, so a hardcoded `/tmp/...` path is Linux/macOS-only — for a cross-platform team, set these in the **user-profile** config instead of committing them.
+
+**Browser profiles:** the default MCP profile is separate from other browser
+sessions. Use `--extension` only to connect to an existing Chrome/Edge profile, or
+`--isolated` for disposable state; see the upstream
+[profile guidance](https://github.com/microsoft/playwright-mcp#user-profile).
 
 ## Keep artifacts out of the repo (`PLAYWRIGHT_MCP_OUTPUT_DIR`)
 
@@ -85,17 +105,14 @@ For an **explicit `browser_take_screenshot`**, pass a **filename that is an abso
 
 When running on a Linux host where MCP servers are spawned without a display:
 
-- The Playwright MCP server is **headed by default**. There is **no `--headed` flag** (it is invalid — the server only accepts `--headless` to opt out of headed mode). A headed (visible) window is required for interactive Azure sign-in + MFA.
+- The Playwright MCP server is **headed by default**. There is **no `--headed` flag** (it is invalid — the server only accepts `--headless` to opt out of headed mode). A headed (visible) window is required for interactive browser flows.
 - A headed browser needs a display. The spawned MCP process may **not inherit `DISPLAY`**, so set it explicitly in the server's `env` (e.g. `":0"`). Without it, the server crashes on first navigation and its tools silently disappear from the session.
-- Use `--browser chromium` to run the Playwright-managed Chromium and avoid requiring system Google Chrome (which needs `sudo` for deps).
+- `--browser chromium` uses the Playwright-managed browser; `chrome` and `msedge`
+  require a system installation.
 
-## Diagnosing a server that won't start
+## Browser launch failures
 
-If the Playwright tools vanish after a config change, the server crashed on launch. Run the exact command manually and read stderr, e.g.:
-
-```bash
-env -i HOME="$HOME" PATH="$PATH" DISPLAY=:0 \
-  npx -y @playwright/mcp@latest --browser chromium --help
-```
-
-then re-enable the server (`/mcp` restart in CLI, or restart from `mcp.json` in VS Code).
+| Symptom | Action |
+| --- | --- |
+| `Executable doesn't exist at ...ms-playwright...` | Rerun `install-browser chromium` using the exact `@playwright/mcp@<version>` package spec pinned in your config, then restart the server. A separate `npx playwright install` can install a different revision than MCP expects ([upstream #1091](https://github.com/microsoft/playwright-mcp/issues/1091)). |
+| `"chrome" executable not found` on WSL/Linux | Install a Linux-native Chrome/Edge/Chromium, or use the Playwright-managed `--browser chromium` path without extension mode. Do not assume a Windows `/mnt/c/.../chrome.exe` path will work; as of 2026-07-14, treat that path as revalidate-only because it has regressed upstream ([#1590](https://github.com/microsoft/playwright-mcp/issues/1590)). |
