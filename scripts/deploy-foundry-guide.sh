@@ -174,8 +174,8 @@ if is_true "${ENABLE_FOUNDRY_GUIDE_WEB_APP:-false}"; then
 fi
 
 if command -v azd >/dev/null 2>&1 && [ -n "${AZURE_ENV_NAME:-}" ]; then
-  azd env set FOUNDRY_GUIDE_AGENT_NAME "$AGENT_NAME" >/dev/null
-  azd env set FOUNDRY_GUIDE_AGENT_VERSION "$latest_version" >/dev/null
+  azd env set --environment "$AZURE_ENV_NAME" FOUNDRY_GUIDE_AGENT_NAME "$AGENT_NAME" >/dev/null
+  azd env set --environment "$AZURE_ENV_NAME" FOUNDRY_GUIDE_AGENT_VERSION "$latest_version" >/dev/null
 fi
 
 echo "Foundry Guide agent ready: ${AGENT_NAME}:${latest_version}"

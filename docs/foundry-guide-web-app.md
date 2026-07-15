@@ -20,12 +20,13 @@ subscription that contains the Foundry resources. The same tenant therefore owns
 the user identities, app registration, deployment identity, and Azure resources.
 
 The API emits the application-owned `foundry_guide.feedback` custom event and
-stores only short-lived feedback correlation records. It doesn't store prompts,
-responses, user identifiers, secrets, or Azure deployment identifiers.
+keeps short-lived feedback correlation records in bounded process memory. It
+doesn't store prompts, responses, user identifiers, secrets, or Azure deployment
+identifiers.
 
 ## Options considered
 
-Status is current as of 2026-07-14.
+Status is current as of 2026-07-15.
 
 | Option | Feasibility | Decision |
 | --- | --- | --- |
@@ -69,10 +70,8 @@ Cross-tenant access is out of scope.
 
 Use the repository owner's normal member account in this tenant for one-time setup,
 manual deployment, and interactive testing. Its credentials are never stored in
-GitHub. The web app uses its system-assigned managed identity and receives only:
-
-- Foundry Agent Consumer on the Foundry project;
-- Storage Table Data Contributor on the feedback-correlation account.
+GitHub. The web app uses its system-assigned managed identity and receives only
+Foundry Agent Consumer on the Foundry project.
 
 The agent endpoint uses header-based isolation. The API derives an opaque per-user
 key from the authenticated token and creates a separate key for each chat. It
@@ -82,17 +81,16 @@ doesn't log or persist the user identifier.
 
 The deployment workflow targets the `foundry-guide` GitHub Environment. The
 environment requires owner approval and permits deployments only from `main`.
+Infrastructure provisioning remains a manual owner operation; routine GitHub
+deployments can update only the existing App Service.
 
 Configure:
 
 | Type | Name |
 | --- | --- |
 | Variable | `AZURE_CLIENT_ID` |
-| Variable | `AZURE_ENV_NAME` |
-| Variable | `AZURE_LOCATION` |
-| Variable | `AZURE_PRINCIPAL_ID` |
-| Variable | `FOUNDRY_GUIDE_WEB_ENABLED` |
-| Variable | `FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID` |
+| Variable | `FOUNDRY_GUIDE_WEB_APP_NAME` |
+| Variable | `FOUNDRY_GUIDE_WEB_APP_URL` |
 | Secret | `AZURE_TENANT_ID` |
 | Secret | `AZURE_SUBSCRIPTION_ID` |
 
@@ -102,24 +100,73 @@ The Azure federated credential subject must target:
 repo:<owner>/<repository>:environment:foundry-guide
 ```
 
-The workflow uses OIDC for Azure access, builds one ZIP artifact, and deploys it
-through Azure RBAC. The federated workload identity is the routine deployment
-identity; it stores no cloud or publishing credential in GitHub.
+Assign the workload identity **Website Contributor** on the App Service itself.
+Don't grant it Contributor, Owner, or role-assignment permissions on the resource
+group.
+
+The workflow builds without environment access or OIDC, transfers a checksummed
+seven-day artifact to a separate protected job, then uses OIDC to deploy it. Actions
+are pinned to immutable commit SHAs. The workload identity stores no cloud or
+publishing credential in GitHub.
 
 ## Deploy
 
-Set `FOUNDRY_GUIDE_WEB_ENABLED=true`, configure the GitHub Environment, then run
-**Deploy Foundry Guide Web**.
+Provision the infrastructure once with the repository owner's resource-tenant
+account:
 
-The first run provisions the persistent environment and outputs the App Service
-URL privately. Add that URL to the app registration:
+```bash
+azd env set ENABLE_FOUNDRY_GUIDE true
+azd env set ENABLE_FOUNDRY_GUIDE_WEB_APP true
+azd env set FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID <app-client-id>
+azd env set FOUNDRY_GUIDE_WEB_APP_SERVICE_SKU B1
+azd up
+```
+
+Add the private `FOUNDRY_GUIDE_WEB_APP_URL` output to the app registration:
 
 ```text
 <FOUNDRY_GUIDE_WEB_APP_URL>
 ```
 
-No redeployment is needed after registering the redirect URI. Do not publish the
-app URL or tenant/application identifiers.
+Configure the GitHub Environment from the deployment outputs, assign its workload
+identity the site-scoped role described above, then run **Deploy Foundry Guide
+Web** from `main`. Do not publish the app URL or tenant/application identifiers.
+
+Earlier preview deployments used a dedicated feedback storage account. After
+deploying this version, remove that account and the
+`FEEDBACK_STORAGE_TABLE_ENDPOINT` app setting; incremental ARM deployments don't
+delete resources omitted from a newer template.
+
+## View feedback
+
+Open the deployment's Log Analytics workspace, select **Logs**, and run:
+
+```kusto
+AppEvents
+| where TimeGenerated > ago(7d)
+| where Name == "foundry_guide.feedback"
+| extend
+    rating = toint(Properties["feedback.rating"]),
+    outcome = tostring(Properties["feedback.outcome"]),
+    responseId = tostring(Properties["foundry_guide.response.id"]),
+    agentName = tostring(Properties["foundry_guide.agent.name"]),
+    channel = tostring(Properties["feedback.channel"])
+| project TimeGenerated, rating, outcome, agentName, responseId, channel, OperationId
+| order by TimeGenerated desc
+```
+
+Allow approximately five minutes for telemetry ingestion before treating feedback
+events as missing.
+
+The web app records `5` as helpful and `1` as not helpful. `OperationId` links the
+event to its trace; `responseId` identifies the rated Foundry response. The event
+doesn't contain the prompt, response text, explanation, or user identifier.
+Outstanding feedback tokens become invalid if the single App Service instance
+restarts; submitted feedback remains in Application Insights.
+
+This application-owned event doesn't appear as a Foundry trace annotation as of
+2026-07-15. Keep query results private because correlation identifiers are
+operational data.
 
 ## Verification
 
@@ -139,3 +186,14 @@ these are true:
 
 The static frontend would still need a web host unless Foundry adds a documented
 general-purpose static-content surface.
+
+## Documentation Test History
+
+### 2026-07-15
+- Result: PASS with fixes
+- Platform/Context: WSL2, isolated `azd` environment, Playwright MCP
+- Notes:
+  - Clean provisioning completed in 211 seconds; the initial ZIP deployment took 268 seconds.
+  - Desktop and 390x844 mobile sign-in, chat, and feedback passed.
+  - The feedback event appeared after 264 seconds, was trace-correlated in `AppEvents`, and contained no prompt, response text, explanation, or user identity.
+  - Removed the blocked storage dependency and hardened the GitHub OIDC deployment boundary.

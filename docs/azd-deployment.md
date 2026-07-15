@@ -8,7 +8,7 @@ This repository includes Bicep infrastructure-as-code (IaC) files to provision A
 
 ## Prerequisites
 
-- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) installed
+- [Azure CLI](https://learn.microsoft.com/azure/cli/install-azure-cli) installed
 - [Azure Developer CLI (azd)](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd) installed
 - An active Azure subscription with appropriate permissions
 - Contributor role (or higher) on the target subscription
@@ -55,9 +55,9 @@ This command will:
 
 ## Configuration
 
-### Default Parameters
+### azd defaults
 
-| Parameter | Default Value | Description |
+| Parameter | azd default | Description |
 |-----------|---------------|-------------|
 | `location` | `japaneast` | Azure region for deployment |
 | `cognitiveServicesSku` | `S0` | SKU for Azure AI Services |
@@ -122,8 +122,8 @@ Set `ENABLE_FOUNDRY_GUIDE=true` to opt into the [Foundry Guide feedback-loop sam
 
 Set `ENABLE_FOUNDRY_GUIDE_WEB_APP=true` to add the opt-in
 [authenticated browser client](foundry-guide-web-app.md). It provisions one Linux
-Azure App Service web app, its plan and managed identity, and short-lived
-feedback-correlation storage.
+Azure App Service web app, its plan, and its managed identity. The single-instance
+app keeps bounded, short-lived feedback correlations in process memory.
 
 ## Verifying Evaluation Visibility
 
@@ -154,7 +154,7 @@ visual check is Preview as of that date.
 
 - [Azure Developer CLI Documentation](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/)
 - [Bicep Documentation](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/)
-- [Azure AI Services Documentation](https://learn.microsoft.com/en-us/azure/ai-services/)
+- [Azure AI Services Documentation](https://learn.microsoft.com/azure/ai-services/)
 - [Microsoft.CognitiveServices/accounts Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts)
 
 ## Documentation Test History
@@ -180,3 +180,11 @@ visual check is Preview as of that date.
   - Response-ID evaluation produced a numeric `builtin.coherence` score and a correlated `scored_automated_evaluation` workspace event.
   - The matching Trace **Evaluation** cell displayed `coherence: 5`.
   - Clarified that response-ID evaluation and `builtin.coherence` are not marked Preview, while the Trace **Evaluation** column is Preview as of 2026-07-14.
+
+### 2026-07-15
+- Result: PASS with fixes
+- Platform/Context: WSL2, isolated `azd` environment
+- Tester: GitHub Copilot CLI with Playwright MCP
+- Notes:
+  - Clean Foundry Guide web infrastructure provisioned in 211 seconds.
+  - Confirmed the template creates App Service without feedback storage and grants its managed identity only Foundry Agent Consumer.

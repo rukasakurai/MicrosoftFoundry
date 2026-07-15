@@ -26,8 +26,8 @@ internal sealed class FoundryGuideClient(
             $"{_projectEndpoint}/agents/{Uri.EscapeDataString(_agentName)}/endpoint/protocols/openai/responses?api-version=v1");
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
-        request.Headers.Add("user_isolation_key", HashUserId(userId));
-        request.Headers.Add("chat_isolation_key", chatId);
+        request.Headers.Add("x-ms-user-isolation-key", HashUserId(userId));
+        request.Headers.Add("x-ms-chat-isolation-key", chatId);
 
         var payload = new Dictionary<string, object?>
         {

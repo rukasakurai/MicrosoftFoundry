@@ -273,24 +273,6 @@ resource feedbackLogAnalyticsReaderRoleAssignment 'Microsoft.Authorization/roleA
 // Optional authenticated browser client for Foundry Guide. One Linux App Service
 // serves both the SPA and API, validates tokens from the resource subscription's
 // tenant, and calls Foundry through its managed identity.
-resource foundryGuideFeedbackStorage 'Microsoft.Storage/storageAccounts@2026-04-01' = if (deployFoundryGuideWebApp) {
-  name: '${abbrs.storageStorageAccounts}${resourceToken}'
-  location: location
-  tags: tags
-  kind: 'StorageV2'
-  sku: {
-    name: 'Standard_LRS'
-  }
-  properties: {
-    allowSharedKeyAccess: false
-    allowBlobPublicAccess: false
-    defaultToOAuthAuthentication: true
-    minimumTlsVersion: 'TLS1_2'
-    publicNetworkAccess: 'Enabled'
-    supportsHttpsTrafficOnly: true
-  }
-}
-
 resource foundryGuideWebPlan 'Microsoft.Web/serverfarms@2026-03-15' = if (deployFoundryGuideWebApp) {
   name: '${abbrs.webServerFarms}${resourceToken}'
   location: location
@@ -332,10 +314,6 @@ resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundry
         {
           name: 'AUTH_TENANT_ID'
           value: tenant().tenantId
-        }
-        {
-          name: 'FEEDBACK_STORAGE_TABLE_ENDPOINT'
-          value: 'https://${foundryGuideFeedbackStorage.name}.table.${environment().suffixes.storage}'
         }
         {
           name: 'FOUNDRY_GUIDE_AGENT_NAME'
@@ -390,17 +368,6 @@ resource foundryGuideWebConsumerRoleAssignment 'Microsoft.Authorization/roleAssi
   name: guid(cognitiveServicesProject.id, foundryGuideWebApp.id, 'eed3b665-ab3a-47b6-8f48-c9382fb1dad6')
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eed3b665-ab3a-47b6-8f48-c9382fb1dad6')
-    principalId: foundryGuideWebApp!.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Role: Storage Table Data Contributor (0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3)
-resource foundryGuideWebTableRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployFoundryGuideWebApp) {
-  scope: foundryGuideFeedbackStorage
-  name: guid(foundryGuideFeedbackStorage.id, foundryGuideWebApp.id, '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
     principalId: foundryGuideWebApp!.identity.principalId
     principalType: 'ServicePrincipal'
   }

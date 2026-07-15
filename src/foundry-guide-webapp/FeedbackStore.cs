@@ -1,127 +1,69 @@
-using Azure;
-using Azure.Core;
-using Azure.Data.Tables;
-
-internal sealed class FeedbackStore(
-    TokenCredential credential,
-    IConfiguration configuration)
+internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
 {
-    private const string PartitionKey = "feedback";
-    private readonly TableClient _table = new TableServiceClient(
-        new Uri(Require(configuration["FEEDBACK_STORAGE_TABLE_ENDPOINT"], "FEEDBACK_STORAGE_TABLE_ENDPOINT")),
-        credential).GetTableClient("FoundryGuideFeedback");
-    private readonly SemaphoreSlim _initializationLock = new(1, 1);
-    private bool _initialized;
+    private const int MaximumEntries = 10_000;
+    private static readonly TimeSpan Lifetime = TimeSpan.FromHours(24);
+    private readonly Dictionary<string, FeedbackEntry> _entries = [];
+    private readonly object _gate = new();
 
-    internal async Task<string> SaveAsync(
+    internal string Save(
         string traceParent,
-        string responseId,
-        CancellationToken cancellationToken)
+        string responseId)
     {
-        await EnsureCreatedAsync(cancellationToken);
-        await DeleteExpiredAsync(cancellationToken);
-
-        var token = Guid.NewGuid().ToString("N");
-        await _table.AddEntityAsync(
-            new FeedbackEntity
+        lock (_gate)
+        {
+            var now = DateTimeOffset.UtcNow;
+            DeleteExpired(now);
+            if (_entries.Count >= MaximumEntries)
             {
-                PartitionKey = PartitionKey,
-                RowKey = token,
-                TraceParent = traceParent,
-                ResponseId = responseId,
-                ExpiresAt = DateTimeOffset.UtcNow.AddHours(24),
-            },
-            cancellationToken);
-        return token;
-    }
-
-    internal async Task<FeedbackCorrelation?> ConsumeAsync(
-        string token,
-        CancellationToken cancellationToken)
-    {
-        await EnsureCreatedAsync(cancellationToken);
-        var result = await _table.GetEntityIfExistsAsync<FeedbackEntity>(
-            PartitionKey,
-            token,
-            cancellationToken: cancellationToken);
-
-        if (!result.HasValue)
-        {
-            return null;
-        }
-
-        var entity = result.Value!;
-        try
-        {
-            await _table.DeleteEntityAsync(
-                entity.PartitionKey,
-                entity.RowKey,
-                entity.ETag,
-                cancellationToken);
-        }
-        catch (RequestFailedException exception) when (exception.Status is 404 or 412)
-        {
-            return null;
-        }
-
-        return entity.ExpiresAt > DateTimeOffset.UtcNow
-            ? new FeedbackCorrelation(entity.TraceParent, entity.ResponseId)
-            : null;
-    }
-
-    private async Task DeleteExpiredAsync(CancellationToken cancellationToken)
-    {
-        var now = DateTimeOffset.UtcNow;
-        await foreach (var entity in _table.QueryAsync<FeedbackEntity>(
-            item => item.PartitionKey == PartitionKey && item.ExpiresAt <= now,
-            maxPerPage: 25,
-            cancellationToken: cancellationToken))
-        {
-            await _table.DeleteEntityAsync(
-                entity.PartitionKey,
-                entity.RowKey,
-                entity.ETag,
-                cancellationToken);
-        }
-    }
-
-    private async Task EnsureCreatedAsync(CancellationToken cancellationToken)
-    {
-        if (_initialized)
-        {
-            return;
-        }
-
-        await _initializationLock.WaitAsync(cancellationToken);
-        try
-        {
-            if (!_initialized)
-            {
-                await _table.CreateIfNotExistsAsync(cancellationToken);
-                _initialized = true;
+                var oldest = _entries.MinBy(entry => entry.Value.ExpiresAt);
+                _entries.Remove(oldest.Key);
+                logger.LogWarning(
+                    "Evicted the oldest feedback correlation after reaching the {MaximumEntries} entry limit.",
+                    MaximumEntries);
             }
-        }
-        finally
-        {
-            _initializationLock.Release();
+
+            string token;
+            do
+            {
+                token = Guid.NewGuid().ToString("N");
+            }
+            while (!_entries.TryAdd(
+                token,
+                new FeedbackEntry(traceParent, responseId, now.Add(Lifetime))));
+
+            return token;
         }
     }
 
-    private static string Require(string? value, string name) =>
-        string.IsNullOrWhiteSpace(value)
-            ? throw new InvalidOperationException($"{name} is required.")
-            : value;
+    internal FeedbackCorrelation? Consume(string token)
+    {
+        lock (_gate)
+        {
+            if (!_entries.Remove(token, out var entry)
+                || entry.ExpiresAt <= DateTimeOffset.UtcNow)
+            {
+                return null;
+            }
+
+            return new FeedbackCorrelation(entry.TraceParent, entry.ResponseId);
+        }
+    }
+
+    private void DeleteExpired(DateTimeOffset now)
+    {
+        foreach (var token in _entries
+            .Where(entry => entry.Value.ExpiresAt <= now)
+            .Select(entry => entry.Key)
+            .ToArray())
+        {
+            _entries.Remove(token);
+        }
+    }
 }
 
 internal sealed record FeedbackCorrelation(string TraceParent, string ResponseId);
 
-internal sealed class FeedbackEntity : ITableEntity
-{
-    public required string PartitionKey { get; set; }
-    public required string RowKey { get; set; }
-    public required string TraceParent { get; set; }
-    public required string ResponseId { get; set; }
-    public DateTimeOffset ExpiresAt { get; set; }
-    public DateTimeOffset? Timestamp { get; set; }
-    public ETag ETag { get; set; }
-}
+internal sealed record FeedbackEntry(
+    string TraceParent,
+    string ResponseId,
+    DateTimeOffset ExpiresAt);

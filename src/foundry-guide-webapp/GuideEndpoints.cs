@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Security.Claims;
-using Azure;
 
 internal static class GuideEndpoints
 {
@@ -62,10 +61,7 @@ internal static class GuideEndpoints
             activity?.SetTag("foundry_guide.response.id", response.Id);
             var traceParent = activity?.Id
                 ?? throw new InvalidOperationException("Chat trace context was not created.");
-            var feedbackToken = await feedbackStore.SaveAsync(
-                traceParent,
-                response.Id,
-                cancellationToken);
+            var feedbackToken = feedbackStore.Save(traceParent, response.Id);
 
             return Results.Ok(new ChatResponse(response.Id, chatId, response.Text, feedbackToken));
         }
@@ -84,23 +80,13 @@ internal static class GuideEndpoints
                 new ErrorResponse("Foundry Guide did not respond in time."),
                 statusCode: StatusCodes.Status504GatewayTimeout);
         }
-        catch (RequestFailedException exception)
-        {
-            logger.LogError(
-                "Feedback correlation storage failed with status {StatusCode}.",
-                exception.Status);
-            return Results.Json(
-                new ErrorResponse("The response could not be prepared for feedback."),
-                statusCode: StatusCodes.Status503ServiceUnavailable);
-        }
     }
 
-    internal static async Task<IResult> FeedbackAsync(
+    internal static IResult Feedback(
         FeedbackRequest feedback,
         FeedbackStore feedbackStore,
         IConfiguration configuration,
-        ILoggerFactory loggerFactory,
-        CancellationToken cancellationToken)
+        ILoggerFactory loggerFactory)
     {
         if (feedback.Rating is < 1 or > 5
             || string.IsNullOrWhiteSpace(feedback.FeedbackToken)
@@ -111,22 +97,7 @@ internal static class GuideEndpoints
         }
 
         var logger = loggerFactory.CreateLogger("FoundryGuide.Feedback");
-        FeedbackCorrelation? correlation;
-        try
-        {
-            correlation = await feedbackStore.ConsumeAsync(
-                feedback.FeedbackToken,
-                cancellationToken);
-        }
-        catch (RequestFailedException exception)
-        {
-            logger.LogError(
-                "Feedback correlation lookup failed with status {StatusCode}.",
-                exception.Status);
-            return Results.Json(
-                new ErrorResponse("Feedback could not be recorded."),
-                statusCode: StatusCodes.Status503ServiceUnavailable);
-        }
+        var correlation = feedbackStore.Consume(feedback.FeedbackToken);
 
         if (correlation is null)
         {

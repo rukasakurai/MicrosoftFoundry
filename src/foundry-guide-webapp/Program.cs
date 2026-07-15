@@ -112,7 +112,7 @@ app.MapPost("/api/chat", GuideEndpoints.ChatAsync)
     .RequireAuthorization(WebAuthOptions.PolicyName)
     .RequireRateLimiting("authenticated-user");
 
-app.MapPost("/api/feedback", GuideEndpoints.FeedbackAsync)
+app.MapPost("/api/feedback", GuideEndpoints.Feedback)
     .RequireAuthorization(WebAuthOptions.PolicyName)
     .RequireRateLimiting("authenticated-user");
 
