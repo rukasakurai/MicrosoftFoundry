@@ -75,7 +75,7 @@ APP_INSIGHTS_ID_KQL="$(printf '%s' "$app_insights_id" | sed "s/'/''/g")"
 query="$(cat <<KQL
 let minNegative = ${MIN_NEGATIVE};
 let appInsightsResourceId = tolower('${APP_INSIGHTS_ID_KQL}');
-AppEvents
+union isfuzzy=true AppEvents, (datatable(TimeGenerated:datetime, _ResourceId:string, Name:string, Properties:dynamic)[])
 | where TimeGenerated > ago(${LOOKBACK})
 | where tolower(_ResourceId) == appInsightsResourceId
 | where Name == "foundry_guide.feedback"
