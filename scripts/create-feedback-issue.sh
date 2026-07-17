@@ -75,20 +75,16 @@ APP_INSIGHTS_ID_KQL="$(printf '%s' "$app_insights_id" | sed "s/'/''/g")"
 query="$(cat <<KQL
 let minNegative = ${MIN_NEGATIVE};
 let appInsightsResourceId = tolower('${APP_INSIGHTS_ID_KQL}');
-union isfuzzy=true customEvents, AppEvents, traces, AppTraces, dependencies, AppDependencies, requests, AppRequests
-| extend eventTime = todatetime(coalesce(column_ifexists("timestamp", datetime(null)), column_ifexists("TimeGenerated", datetime(null))))
-| where eventTime > ago(${LOOKBACK})
-| extend resourceId = tolower(tostring(column_ifexists("_ResourceId", "")))
-| where resourceId == appInsightsResourceId
-| extend itemName = tostring(coalesce(column_ifexists("name", ""), column_ifexists("Name", "")))
-| where itemName == "gen_ai.evaluation.result"
-| extend dimensions = todynamic(column_ifexists("customDimensions", column_ifexists("Properties", dynamic({}))))
-| extend agentName = tostring(dimensions["gen_ai.agent.name"])
-| extend rating = todouble(dimensions["gen_ai.evaluation.score"])
-| extend result = tostring(dimensions["gen_ai.evaluation.result"])
+union isfuzzy=true AppEvents, (datatable(TimeGenerated:datetime, _ResourceId:string, Name:string, Properties:dynamic)[])
+| where TimeGenerated > ago(${LOOKBACK})
+| where tolower(_ResourceId) == appInsightsResourceId
+| where Name == "foundry_guide.feedback"
+| extend agentName = tostring(Properties["foundry_guide.agent.name"])
+| extend rating = todouble(Properties["feedback.rating"])
+| extend result = tostring(Properties["feedback.outcome"])
 | where agentName == '${AGENT_NAME_KQL}'
 | where result == "negative" or rating <= 2
-| summarize negativeCount=count(), averageRating=avg(rating), firstSeen=min(eventTime), lastSeen=max(eventTime) by agentName
+| summarize negativeCount=count(), averageRating=avg(rating), firstSeen=min(TimeGenerated), lastSeen=max(TimeGenerated) by agentName
 | where negativeCount >= minNegative
 KQL
 )"

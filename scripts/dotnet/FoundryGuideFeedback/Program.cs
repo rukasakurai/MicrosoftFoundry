@@ -6,11 +6,14 @@ using Azure.Core;
 using Azure.Core.Diagnostics;
 using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.Exporter;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 const string ActivitySourceName = "MicrosoftFoundry.FoundryGuideFeedback";
+const string FeedbackEventName = "foundry_guide.feedback";
 
 var options = CliOptions.Parse(args);
 var projectEndpoint = Require(options.ProjectEndpoint ?? Environment.GetEnvironmentVariable("PROJECT_ENDPOINT"), "PROJECT_ENDPOINT");
@@ -43,10 +46,18 @@ using var azureDiagnostics = IsTrue(Environment.GetEnvironmentVariable("FOUNDRY_
     : null;
 
 using var activitySource = new ActivitySource(ActivitySourceName);
+using var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder.AddOpenTelemetry(logging =>
+    {
+        logging.SetResourceBuilder(CreateResourceBuilder());
+        logging.AddAzureMonitorLogExporter(o => o.ConnectionString = connectionString);
+    });
+});
+var logger = loggerFactory.CreateLogger(ActivitySourceName);
+
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-        serviceName: "foundry-guide-feedback",
-        serviceVersion: "1.0.0"))
+    .SetResourceBuilder(CreateResourceBuilder())
     .AddSource(ActivitySourceName)
     .SetSampler(new AlwaysOnSampler())
     .AddAzureMonitorTraceExporter(o =>
@@ -84,19 +95,15 @@ Console.WriteLine();
 var rating = options.Rating ?? ReadRating();
 var result = rating <= 2 ? "negative" : "positive";
 
-activity?.SetTag("gen_ai.evaluation.name", "user_feedback");
-activity?.SetTag("gen_ai.evaluation.score", rating);
-activity?.SetTag("gen_ai.evaluation.result", result);
+logger.LogInformation(
+    "{microsoft.custom_event.name} {feedback.rating} {feedback.outcome} {foundry_guide.agent.name} {foundry_guide.agent.version} {feedback.schema.version}",
+    FeedbackEventName,
+    rating,
+    result,
+    agentName,
+    agentVersion,
+    1);
 
-using var feedbackActivity = activitySource.StartActivity("gen_ai.evaluation.result", ActivityKind.Internal);
-feedbackActivity?.SetTag("gen_ai.system", "microsoft_foundry");
-feedbackActivity?.SetTag("gen_ai.agent.name", agentName);
-feedbackActivity?.SetTag("gen_ai.agent.version", agentVersion);
-feedbackActivity?.SetTag("gen_ai.evaluation.name", "user_feedback");
-feedbackActivity?.SetTag("gen_ai.evaluation.scale", "five_point");
-feedbackActivity?.SetTag("gen_ai.evaluation.score", rating);
-feedbackActivity?.SetTag("gen_ai.evaluation.result", result);
-feedbackActivity?.Stop();
 activity?.Stop();
 
 Console.WriteLine($"Recorded {result} feedback ({rating}/5).");
@@ -106,6 +113,11 @@ if (!tracerProvider.ForceFlush(30000))
 }
 
 tracerProvider.Dispose();
+
+static ResourceBuilder CreateResourceBuilder() =>
+    ResourceBuilder.CreateDefault().AddService(
+        serviceName: "foundry-guide-feedback",
+        serviceVersion: "1.0.0");
 
 static async Task<string> CreateConversationAsync(HttpClient httpClient, string endpoint, string prompt)
 {
