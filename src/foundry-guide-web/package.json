@@ -10,9 +10,9 @@
   },
   "devDependencies": {
     "typescript": "7.0.2",
-    "vite": "8.1.4"
+    "vite": "8.1.5"
   },
   "dependencies": {
-    "@azure/msal-browser": "5.17.0"
+    "@azure/msal-browser": "5.17.1"
   }
 }

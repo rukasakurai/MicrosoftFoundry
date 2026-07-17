@@ -15,7 +15,7 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 - Azure Developer CLI (azd) integration for streamlined deployment
 - Human and AI collaboration guidance (AGENTS.md)
 
-**Current Focus:** This repository is primarily focused on IaC for Microsoft Foundry infrastructure, but may evolve to encompass broader scope in the future, such as application code, automation, or additional Azure services.
+**Current Focus:** This repository primarily provides Microsoft Foundry IaC, with optional application samples and deployment automation.
 
 ## Getting Started
 

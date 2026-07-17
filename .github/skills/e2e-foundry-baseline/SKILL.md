@@ -283,7 +283,7 @@ GUI/Playwright and live provisioning are extra.
 
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
-| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~155s | ✅ |
+| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~58s | ✅ |
 | `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~73s | ✅ |
 | `docs/foundry-guide-web-app.md` | flow 16 + architecture/source checks | ~120s | ✅ |
 | `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~16s | ✅ |

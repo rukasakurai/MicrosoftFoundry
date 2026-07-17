@@ -346,7 +346,7 @@ resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundry
   }
 }
 
-resource foundryGuideWebFtpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2026-03-15' = if (deployFoundryGuideWebApp) {
+resource foundryGuideWebFtpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2025-03-01' = if (deployFoundryGuideWebApp) {
   parent: foundryGuideWebApp
   name: 'ftp'
   properties: {
@@ -354,7 +354,7 @@ resource foundryGuideWebFtpPolicy 'Microsoft.Web/sites/basicPublishingCredential
   }
 }
 
-resource foundryGuideWebScmPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2026-03-15' = if (deployFoundryGuideWebApp) {
+resource foundryGuideWebScmPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2025-03-01' = if (deployFoundryGuideWebApp) {
   parent: foundryGuideWebApp
   name: 'scm'
   properties: {
