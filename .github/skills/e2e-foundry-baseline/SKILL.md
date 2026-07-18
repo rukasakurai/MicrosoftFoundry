@@ -285,7 +285,7 @@ GUI/Playwright and live provisioning are extra.
 | --- | --- | --- | --- |
 | `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~58s | ✅ |
 | `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~73s | ✅ |
-| `docs/foundry-guide-web-app.md` | flow 16 + architecture/source checks | ~120s | ✅ |
+| `docs/foundry-guide-web-app.md` | flow 16 + architecture/source checks | ~131s | ✅ |
 | `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~16s | ✅ |
 | `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
 | `docs/entra-agent-identity.md` | flow 10 | ~4s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |

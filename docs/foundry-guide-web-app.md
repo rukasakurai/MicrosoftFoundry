@@ -90,7 +90,6 @@ Configure:
 | --- | --- |
 | Variable | `AZURE_CLIENT_ID` |
 | Variable | `FOUNDRY_GUIDE_WEB_APP_NAME` |
-| Variable | `FOUNDRY_GUIDE_WEB_APP_URL` |
 | Secret | `AZURE_TENANT_ID` |
 | Secret | `AZURE_SUBSCRIPTION_ID` |
 
@@ -136,6 +135,9 @@ Earlier preview deployments used a dedicated feedback storage account. After
 deploying this version, remove that account and the
 `FEEDBACK_STORAGE_TABLE_ENDPOINT` app setting; incremental ARM deployments don't
 delete resources omitted from a newer template.
+
+Disabling `ENABLE_FOUNDRY_GUIDE_WEB_APP` is not teardown. Incremental ARM
+deployments retain omitted resources, so removal requires explicit deletion.
 
 ## View feedback
 

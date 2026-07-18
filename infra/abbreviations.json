@@ -4,7 +4,6 @@
   "operationalInsightsWorkspaces": "log-",
   "insightsComponents": "appi-",
   "searchSearchServices": "srch-",
-  "storageStorageAccounts": "st",
   "webServerFarms": "plan-",
   "webSitesApp": "app-"
 }
