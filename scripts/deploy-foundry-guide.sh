@@ -49,22 +49,27 @@ request_with_retry() {
   local url="$2"
   local output_file="$3"
   local data_file="${4:-}"
+  local content_type="application/json"
   local http_code="000"
   local attempt
+
+  if [ "$method" = "PATCH" ]; then
+    content_type="application/merge-patch+json"
+  fi
 
   for attempt in $(seq 1 12); do
     if [ -n "$data_file" ]; then
       http_code="$(curl -sS -o "$output_file" -w '%{http_code}' \
         -X "$method" \
         -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-        -H "Content-Type: application/json" \
+        -H "Content-Type: ${content_type}" \
         --data @"$data_file" \
         "$url" || printf '000')"
     else
       http_code="$(curl -sS -o "$output_file" -w '%{http_code}' \
         -X "$method" \
         -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-        -H "Content-Type: application/json" \
+        -H "Content-Type: ${content_type}" \
         "$url" || printf '000')"
     fi
 
@@ -144,9 +149,33 @@ else
   echo "Created Foundry Guide agent '${AGENT_NAME}:${latest_version}'."
 fi
 
+if is_true "${ENABLE_FOUNDRY_GUIDE_WEB_APP:-false}"; then
+  endpoint_body="$tmp_dir/endpoint.json"
+  jq -n '{
+    agent_endpoint: {
+      authorization_schemes: [
+        {
+          type: "Entra",
+          isolation_key_source: {
+            kind: "Header"
+          }
+        }
+      ]
+    }
+  }' > "$endpoint_body"
+
+  endpoint_response="$tmp_dir/endpoint-response.json"
+  endpoint_code="$(request_with_retry PATCH "${PROJECT_ENDPOINT}/agents/${AGENT_NAME}?api-version=v1" "$endpoint_response" "$endpoint_body")"
+  if [ "$endpoint_code" -lt 200 ] || [ "$endpoint_code" -ge 300 ]; then
+    echo "Error: failed to configure Foundry Guide endpoint isolation (HTTP ${endpoint_code})." >&2
+    cat "$endpoint_response" >&2
+    exit 1
+  fi
+fi
+
 if command -v azd >/dev/null 2>&1 && [ -n "${AZURE_ENV_NAME:-}" ]; then
-  azd env set FOUNDRY_GUIDE_AGENT_NAME "$AGENT_NAME" >/dev/null
-  azd env set FOUNDRY_GUIDE_AGENT_VERSION "$latest_version" >/dev/null
+  azd env set --environment "$AZURE_ENV_NAME" FOUNDRY_GUIDE_AGENT_NAME "$AGENT_NAME" >/dev/null
+  azd env set --environment "$AZURE_ENV_NAME" FOUNDRY_GUIDE_AGENT_VERSION "$latest_version" >/dev/null
 fi
 
 echo "Foundry Guide agent ready: ${AGENT_NAME}:${latest_version}"

@@ -1,0 +1,159 @@
+name: Deploy Foundry Guide Web
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-foundry-guide-web.yml"
+      - "src/foundry-guide-web/**"
+      - "src/foundry-guide-webapp/**"
+
+permissions: {}
+
+concurrency:
+  group: foundry-guide-web
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "26"
+          cache: npm
+          cache-dependency-path: src/foundry-guide-web/package-lock.json
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build deployment artifact
+        run: |
+          npm ci --prefix src/foundry-guide-web
+          npm run build --prefix src/foundry-guide-web
+          npm audit --prefix src/foundry-guide-web --audit-level=high
+
+          dotnet publish src/foundry-guide-webapp/FoundryGuide.Web.csproj \
+            --configuration Release \
+            --output "$RUNNER_TEMP/foundry-guide-web"
+          dotnet list src/foundry-guide-webapp/FoundryGuide.Web.csproj \
+            package --vulnerable --include-transitive
+
+          mkdir -p \
+            "$RUNNER_TEMP/foundry-guide-artifact" \
+            "$RUNNER_TEMP/foundry-guide-web/wwwroot"
+          cp -R src/foundry-guide-web/dist/. \
+            "$RUNNER_TEMP/foundry-guide-web/wwwroot/"
+          (
+            cd "$RUNNER_TEMP/foundry-guide-web"
+            zip -q -r "$RUNNER_TEMP/foundry-guide-artifact/foundry-guide-web.zip" .
+          )
+          (
+            cd "$RUNNER_TEMP/foundry-guide-artifact"
+            sha256sum foundry-guide-web.zip > foundry-guide-web.zip.sha256
+          )
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: foundry-guide-web-${{ github.sha }}
+          path: ${{ runner.temp }}/foundry-guide-artifact
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    environment: foundry-guide
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      id-token: write
+
+    steps:
+      - name: Validate environment configuration
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          WEB_APP_NAME: ${{ vars.FOUNDRY_GUIDE_WEB_APP_NAME }}
+        run: |
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID WEB_APP_NAME; do
+            if [ -z "${!name}" ]; then
+              echo "Error: required GitHub Environment value '${name}' is not configured." >&2
+              exit 1
+            fi
+          done
+
+          guid='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [[ ! "${!name}" =~ $guid ]]; then
+              echo "Error: ${name} must be a GUID." >&2
+              exit 1
+            fi
+          done
+
+          if [[ ! "$WEB_APP_NAME" =~ ^[a-z0-9-]{2,60}$ ]]; then
+            echo "Error: FOUNDRY_GUIDE_WEB_APP_NAME is invalid." >&2
+            exit 1
+          fi
+
+          echo "::add-mask::$AZURE_CLIENT_ID"
+          echo "::add-mask::$WEB_APP_NAME"
+
+      - name: Download deployment artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: foundry-guide-web-${{ github.sha }}
+          path: ${{ runner.temp }}/foundry-guide-artifact
+
+      - name: Verify deployment artifact
+        run: |
+          cd "$RUNNER_TEMP/foundry-guide-artifact"
+          sha256sum --check foundry-guide-web.zip.sha256
+
+      - name: Azure login
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy web app
+        uses: Azure/webapps-deploy@02a81bead70021f5284939794bcec79c271ab383 # v3.0.8
+        with:
+          app-name: ${{ vars.FOUNDRY_GUIDE_WEB_APP_NAME }}
+          package: ${{ runner.temp }}/foundry-guide-artifact/foundry-guide-web.zip
+
+      - name: Verify deployment boundary
+        env:
+          WEB_APP_NAME: ${{ vars.FOUNDRY_GUIDE_WEB_APP_NAME }}
+        run: |
+          web_app_url="https://${WEB_APP_NAME}.azurewebsites.net"
+          curl --fail --silent --show-error \
+            --max-time 15 \
+            --retry 12 \
+            --retry-all-errors \
+            --retry-delay 10 \
+            "$web_app_url/health" >/dev/null
+          status="$(curl --max-time 15 --silent --output /dev/null --write-out '%{http_code}' \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --data '{"input":"boundary-check"}' \
+            "$web_app_url/api/chat")"
+          if [ "$status" != "401" ]; then
+            echo "Error: unauthenticated API request returned HTTP $status instead of 401." >&2
+            exit 1
+          fi

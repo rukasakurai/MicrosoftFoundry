@@ -132,6 +132,7 @@ Treat the minute figures as a **floor**, not an ETA.
 | 13 | Observability + agent-run tracing (`enableObservability`, default on) | App Insights connection attached; after a run, spans land in the Log Analytics workspace | ~+18s provision, then ~2–3 min ingestion lag | ✅ resolves #36. Verify deterministically by querying the workspace (see below), not the portal |
 | 14 | Foundry Guide feedback-loop sample (`ENABLE_FOUNDRY_GUIDE=true`) | `scripts/deploy-foundry-guide.sh` creates/reuses the prompt agent; `scripts/foundry-guide-chat.sh --rating <1-5>` runs the Entra-protected endpoint and emits the application-owned `foundry_guide.feedback` custom event; `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true scripts/create-feedback-issue.sh` proves threshold/dedup logic without writing GitHub issues | deploy reuse path **3s** observed; chat + feedback client **21s** observed; dry-run issue check **21s** observed | ✅ opt-in. Do **not** create real GitHub issues during routine E2E; real issue creation is noisy and should be a deliberate one-off validation only. The issue script is not time-sensitive: it uses a lookback window and can run manually at any time. |
 | 15 | Evaluation visibility | `scripts/evaluate-agent-response.sh` creates one synthetic response, evaluates it with `builtin.coherence`, and correlates the numeric score in workspace `AppEvents`; Playwright confirms the Trace **Evaluation** cell | evaluation ~20s, then ~2–3 min ingestion + portal review | 🧪 response-ID evaluation and `builtin.coherence` aren't marked Preview; the Trace **Evaluation** UI is Preview as of 2026-07-14 |
+| 16 | Foundry Guide authenticated web app (`ENABLE_FOUNDRY_GUIDE_WEB_APP=true`) | build the TypeScript client and ASP.NET API; provision with the resource-tenant owner; deploy manually for feature-branch validation or through the `main`-only `foundry-guide` GitHub Environment; sign in from desktop and mobile browser viewports; chat and submit feedback; confirm the event in `AppEvents` | clean provision **211s**; initial ZIP deployment **268s**; chat **1.4–12.7s**; feedback **<0.2s**; telemetry **264s** observed | ✅ opt-in. Desktop and 390x844 mobile flows, tenant access, data minimization, and trace-correlated feedback passed on 2026-07-15. Requires a single-tenant app registration and B1 quota. |
 
 The channel-publishing portion of flow 8, plus flows 9 and 11, are setup-dependent
 and don't fit an automated per-PR E2E; validate them out-of-band and note that in
@@ -178,6 +179,30 @@ The protected endpoint + feedback client run also took **21s** in the same warm
 environment. Re-running `scripts/deploy-foundry-guide.sh` against an existing
 `foundry-guide:1` reuse path took **3s**; first creation can take longer, especially
 while RBAC propagates.
+
+**Flow 16 — Foundry Guide authenticated web-app check.** Before provisioning,
+validate the application and IaC locally:
+
+```bash
+npm ci --prefix src/foundry-guide-web
+npm run build --prefix src/foundry-guide-web
+dotnet build src/foundry-guide-webapp/FoundryGuide.Web.csproj
+az bicep build --file infra/main.bicep
+```
+
+For pre-merge feature-branch validation, provision and ZIP-deploy with the
+resource-tenant owner because the protected deployment job intentionally accepts
+only `main`. After merge, routine ZIP deployments use the `foundry-guide` GitHub
+Environment described in `docs/foundry-guide-web-app.md`.
+
+Use Playwright with desktop and mobile viewports. Green = an unauthenticated request
+is denied; a resource-tenant user can sign in, receive a Foundry Guide response,
+submit one rating, and the trace-correlated `foundry_guide.feedback` row lands in
+`AppEvents`. Confirm the app registration doesn't require user assignment, the API
+authority is the resource subscription's tenant, no feedback storage account was
+created, and the app identity has only Foundry Agent Consumer. Never publish the app
+URL, tenant/user identifiers, auth screenshots, prompts, responses, or raw telemetry.
+Allow about five minutes for feedback ingestion before treating the event as missing.
 
 **Flow 15 — deterministic evaluation visibility check.** This flow uses
 response-ID evaluation (`azure_ai_responses`) and `builtin.coherence` through
@@ -258,8 +283,9 @@ GUI/Playwright and live provisioning are extra.
 
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
-| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~55s | ✅ every setup-order link resolves, the order runs, and the claims ("runnable out of the box", observability) match flows 1 / 2 / 13 |
-| `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~15s | ✅ |
+| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~58s | ✅ |
+| `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~73s | ✅ |
+| `docs/foundry-guide-web-app.md` | flow 16 + architecture/source checks | ~131s | ✅ |
 | `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~16s | ✅ |
 | `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
 | `docs/entra-agent-identity.md` | flow 10 | ~4s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |
@@ -369,6 +395,8 @@ azd config unset auth.useAzCliAuth           # revert the auth config change
 If you must run teardown synchronously (e.g. no background support), it still takes
 ~3 min; wait for `SUCCESS` before considering the run done. Either way, leave the
 workspace exactly as found: no leftover resource groups, azd envs, or config changes.
+An immediate `az group exists` can briefly return `true` after `azd down` reports
+`SUCCESS`; use a bounded retry before treating that as a teardown failure.
 
 ## Gotchas worth knowing
 
@@ -384,6 +412,10 @@ workspace exactly as found: no leftover resource groups, azd envs, or config cha
   can return 404.
 - **Provision creates the resource group before validating**, so a validation failure
   can still leave an empty RG — delete it during teardown.
+- **Quota increases may be irreversible through self-service.** Microsoft.Quota can
+  reject a decrease with `QuotaReductionNotSupported`. A higher quota limit is not
+  an allocation or billable resource; confirm the temporary App Service plan was
+  deleted instead of treating the remaining limit as a resource leak.
 - **Trailing `\r` from `az` output.** On Windows/WSL, `az ... -o tsv` can emit values
   with a trailing carriage return. Piped into a resource id or ARM parameter, it
   corrupts the path (e.g. `ParentResourceNotFound`). Strip it: `... -o tsv | tr -d '\r\n'`.

@@ -8,7 +8,7 @@ This repository includes Bicep infrastructure-as-code (IaC) files to provision A
 
 ## Prerequisites
 
-- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) installed
+- [Azure CLI](https://learn.microsoft.com/azure/cli/install-azure-cli) installed
 - [Azure Developer CLI (azd)](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd) installed
 - An active Azure subscription with appropriate permissions
 - Contributor role (or higher) on the target subscription
@@ -55,9 +55,9 @@ This command will:
 
 ## Configuration
 
-### Default Parameters
+### azd defaults
 
-| Parameter | Default Value | Description |
+| Parameter | azd default | Description |
 |-----------|---------------|-------------|
 | `location` | `japaneast` | Azure region for deployment |
 | `cognitiveServicesSku` | `S0` | SKU for Azure AI Services |
@@ -75,15 +75,19 @@ Or edit the `infra/main.parameters.json` file before deployment.
 
 ### Environment Variables
 
-After deployment, the following outputs are available as environment variables:
+After deployment, common outputs are available as environment variables:
 
 - `AZURE_LOCATION`: Deployment region
-- `AZURE_TENANT_ID`: Azure AD tenant ID
+- `AZURE_TENANT_ID`: Microsoft Entra tenant ID
 - `COGNITIVE_SERVICES_NAME`: AI Services account name
 - `COGNITIVE_SERVICES_ENDPOINT`: AI Services endpoint URL
+- `MODEL_DEPLOYMENT_NAME`: Deployed model name
 - `PROJECT_NAME`: Project name
 - `PROJECT_ENDPOINT`: Foundry project data-plane endpoint
 - `APPLICATION_INSIGHTS_NAME`: Application Insights component name when observability is enabled
+- `LOG_ANALYTICS_WORKSPACE_NAME`: Log Analytics workspace name when observability is enabled
+- `FOUNDRY_GUIDE_WEB_APP_NAME`: App Service app name when the browser client is enabled
+- `FOUNDRY_GUIDE_WEB_APP_URL`: App Service URL when the browser client is enabled
 
 Access these values with:
 
@@ -116,6 +120,11 @@ This template provisions **infrastructure only** (account, project, model deploy
 
 Set `ENABLE_FOUNDRY_GUIDE=true` to opt into the [Foundry Guide feedback-loop sample](foundry-guide-feedback-loop.md). The post-provision hook creates or reuses the prompt agent after infrastructure deployment.
 
+Set `ENABLE_FOUNDRY_GUIDE_WEB_APP=true` to add the opt-in
+[authenticated browser client](foundry-guide-web-app.md). It provisions one Linux
+Azure App Service web app, its plan, and its managed identity. The single-instance
+app keeps bounded, short-lived feedback correlations in process memory.
+
 ## Verifying Evaluation Visibility
 
 With observability enabled, run one synthetic response through
@@ -145,7 +154,7 @@ visual check is Preview as of that date.
 
 - [Azure Developer CLI Documentation](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/)
 - [Bicep Documentation](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/)
-- [Azure AI Services Documentation](https://learn.microsoft.com/en-us/azure/ai-services/)
+- [Azure AI Services Documentation](https://learn.microsoft.com/azure/ai-services/)
 - [Microsoft.CognitiveServices/accounts Bicep Reference](https://learn.microsoft.com/en-us/azure/templates/microsoft.cognitiveservices/accounts)
 
 ## Documentation Test History
@@ -171,3 +180,11 @@ visual check is Preview as of that date.
   - Response-ID evaluation produced a numeric `builtin.coherence` score and a correlated `scored_automated_evaluation` workspace event.
   - The matching Trace **Evaluation** cell displayed `coherence: 5`.
   - Clarified that response-ID evaluation and `builtin.coherence` are not marked Preview, while the Trace **Evaluation** column is Preview as of 2026-07-14.
+
+### 2026-07-15
+- Result: PASS with fixes
+- Platform/Context: WSL2, isolated `azd` environment
+- Tester: GitHub Copilot CLI with Playwright MCP
+- Notes:
+  - Clean Foundry Guide web infrastructure provisioned in 211 seconds.
+  - Confirmed the template creates App Service without feedback storage and grants its managed identity only Foundry Agent Consumer.

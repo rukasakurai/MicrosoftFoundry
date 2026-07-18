@@ -3,40 +3,48 @@ name: Azure OIDC Connectivity Check
 on:
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
+permissions: {}
 
 jobs:
   validate-azure-oidc:
-    runs-on: ubuntu-latest
-    
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      id-token: write
+
     steps:
       - name: Check required repo config
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
-          if [ -z "${{ vars.AZURE_CLIENT_ID }}" ]; then
-            echo "❌ AZURE_CLIENT_ID repository variable is not configured"
-            exit 1
-          fi
-          if [ -z "${{ secrets.AZURE_TENANT_ID }}" ]; then
-            echo "❌ AZURE_TENANT_ID secret is not configured"
-            exit 1
-          fi
-          if [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then
-            echo "❌ AZURE_SUBSCRIPTION_ID secret is not configured"
-            exit 1
-          fi
-          echo "✅ Required repo config is configured"
-      
-      - name: Azure Login via OIDC
-        uses: azure/login@v2
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [ -z "${!name}" ]; then
+              echo "Error: ${name} is not configured." >&2
+              exit 1
+            fi
+          done
+          echo "::add-mask::$AZURE_CLIENT_ID"
+          echo "Required repository configuration is present."
+
+      - name: Azure login via OIDC
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      
+
       - name: Verify Azure connectivity
+        env:
+          EXPECTED_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          EXPECTED_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
-          echo "Testing Azure CLI connectivity..."
-          az account show
-          echo "✅ Azure OIDC authentication successful"
+          actual_subscription_id="$(az account show --query id -o tsv | tr -d '\r\n')"
+          actual_tenant_id="$(az account show --query tenantId -o tsv | tr -d '\r\n')"
+          if [ "$actual_subscription_id" != "$EXPECTED_SUBSCRIPTION_ID" ] \
+            || [ "$actual_tenant_id" != "$EXPECTED_TENANT_ID" ]; then
+            echo "Error: Azure OIDC authenticated to an unexpected context." >&2
+            exit 1
+          fi
+          echo "Azure OIDC authentication succeeded in the expected context."

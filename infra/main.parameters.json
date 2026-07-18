@@ -29,6 +29,18 @@
     "foundryGuideFeedbackPrincipalId": {
       "value": "${FOUNDRY_GUIDE_FEEDBACK_PRINCIPAL_ID=}"
     },
+    "enableFoundryGuideWebApp": {
+      "value": "${ENABLE_FOUNDRY_GUIDE_WEB_APP=false}"
+    },
+    "foundryGuideAgentName": {
+      "value": "${FOUNDRY_GUIDE_AGENT_NAME=foundry-guide}"
+    },
+    "foundryGuideWebAuthClientId": {
+      "value": "${FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID=}"
+    },
+    "foundryGuideWebAppServiceSku": {
+      "value": "${FOUNDRY_GUIDE_WEB_APP_SERVICE_SKU=B1}"
+    },
     "enableFoundryIq": {
       "value": "${ENABLE_FOUNDRY_IQ=false}"
     }

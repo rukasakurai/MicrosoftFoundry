@@ -70,6 +70,24 @@ param environmentWorkstream string = ''
 @description('Optional service principal object ID for the GitHub Actions OIDC identity that queries aggregate Foundry Guide feedback. When set, observability must be enabled and this principal gets monitoring read roles on the telemetry resources.')
 param foundryGuideFeedbackPrincipalId string = ''
 
+@description('Enable the authenticated Foundry Guide browser client hosted as one Linux Azure App Service web app.')
+param enableFoundryGuideWebApp bool = false
+
+@minLength(1)
+@description('Name of the Foundry Guide prompt agent served by the web application.')
+param foundryGuideAgentName string = 'foundry-guide'
+
+@description('Microsoft Entra application client ID for the Foundry Guide web SPA/API.')
+param foundryGuideWebAuthClientId string = ''
+
+@allowed([
+  'B1'
+  'B2'
+  'B3'
+])
+@description('Dedicated Linux App Service plan SKU for the Foundry Guide web app.')
+param foundryGuideWebAppServiceSku string = 'B1'
+
 @description('Retention (days) for the Log Analytics workspace')
 @minValue(30)
 param logAnalyticsRetentionInDays int = 30
@@ -98,6 +116,7 @@ param knowledgeBaseConnectionName string = 'foundry-iq-kb'
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+var deployFoundryGuideWebApp = enableFoundryGuideWebApp && !empty(foundryGuideWebAuthClientId)
 var tags = union(
   {
     'azd-env-name': environmentName
@@ -251,6 +270,109 @@ resource feedbackLogAnalyticsReaderRoleAssignment 'Microsoft.Authorization/roleA
   }
 }
 
+// Optional authenticated browser client for Foundry Guide. One Linux App Service
+// serves both the SPA and API, validates tokens from the resource subscription's
+// tenant, and calls Foundry through its managed identity.
+resource foundryGuideWebPlan 'Microsoft.Web/serverfarms@2026-03-15' = if (deployFoundryGuideWebApp) {
+  name: '${abbrs.webServerFarms}${resourceToken}'
+  location: location
+  tags: tags
+  kind: 'linux'
+  sku: {
+    name: foundryGuideWebAppServiceSku
+    tier: 'Basic'
+  }
+  properties: {
+    reserved: true
+  }
+}
+
+resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundryGuideWebApp) {
+  name: '${abbrs.webSitesApp}${resourceToken}'
+  location: location
+  tags: tags
+  kind: 'app,linux'
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    clientAffinityEnabled: false
+    httpsOnly: true
+    publicNetworkAccess: 'Enabled'
+    serverFarmId: foundryGuideWebPlan.id
+    siteConfig: {
+      alwaysOn: true
+      appSettings: [
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: enableObservability ? applicationInsights!.properties.ConnectionString : ''
+        }
+        {
+          name: 'AUTH_CLIENT_ID'
+          value: foundryGuideWebAuthClientId
+        }
+        {
+          name: 'AUTH_TENANT_ID'
+          value: tenant().tenantId
+        }
+        {
+          name: 'FOUNDRY_GUIDE_AGENT_NAME'
+          value: foundryGuideAgentName
+        }
+        {
+          name: 'FOUNDRY_GUIDE_AGENT_VERSION'
+          value: 'active'
+        }
+        {
+          name: 'OTEL_SERVICE_NAME'
+          value: 'foundry-guide-web'
+        }
+        {
+          name: 'PROJECT_ENDPOINT'
+          value: 'https://${cognitiveServices.name}.services.ai.azure.com/api/projects/${cognitiveServicesProject.name}'
+        }
+        {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
+        }
+      ]
+      ftpsState: 'Disabled'
+      healthCheckPath: '/health'
+      http20Enabled: true
+      linuxFxVersion: 'DOTNETCORE|10.0'
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
+    }
+  }
+}
+
+resource foundryGuideWebFtpPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2025-03-01' = if (deployFoundryGuideWebApp) {
+  parent: foundryGuideWebApp
+  name: 'ftp'
+  properties: {
+    allow: false
+  }
+}
+
+resource foundryGuideWebScmPolicy 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2025-03-01' = if (deployFoundryGuideWebApp) {
+  parent: foundryGuideWebApp
+  name: 'scm'
+  properties: {
+    allow: false
+  }
+}
+
+// Role: Foundry Agent Consumer (eed3b665-ab3a-47b6-8f48-c9382fb1dad6)
+resource foundryGuideWebConsumerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployFoundryGuideWebApp) {
+  scope: cognitiveServicesProject
+  name: guid(cognitiveServicesProject.id, foundryGuideWebApp.id, 'eed3b665-ab3a-47b6-8f48-c9382fb1dad6')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eed3b665-ab3a-47b6-8f48-c9382fb1dad6')
+    principalId: foundryGuideWebApp!.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // Foundry IQ substrate (conditional). Bicep can provision the Azure AI Search
 // service, the RemoteTool connection the project uses to reach the knowledge
 // base's MCP endpoint, and the Search role the project's managed identity needs
@@ -371,3 +493,5 @@ output ENABLE_FOUNDRY_IQ bool = enableFoundryIq
 output KNOWLEDGE_BASE_NAME string = enableFoundryIq ? knowledgeBaseName : ''
 output KNOWLEDGE_BASE_CONNECTION_NAME string = enableFoundryIq ? knowledgeBaseConnectionName : ''
 output SEARCH_API_VERSION string = enableFoundryIq ? searchApiVersion : ''
+output FOUNDRY_GUIDE_WEB_APP_NAME string = deployFoundryGuideWebApp ? foundryGuideWebApp.name : ''
+output FOUNDRY_GUIDE_WEB_APP_URL string = deployFoundryGuideWebApp ? 'https://${foundryGuideWebApp!.properties.defaultHostName}' : ''
