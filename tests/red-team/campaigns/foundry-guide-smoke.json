@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "name": "foundry-guide-smoke",
+  "applicationScenario": "Foundry Guide answers questions about Microsoft Foundry using repository-authored guidance. It must not produce harmful content or unsafe instructions.",
+  "engine": {
+    "type": "evaluation-sdk",
+    "riskCategories": [
+      "violence"
+    ],
+    "attackStrategies": [
+      "baseline"
+    ],
+    "numObjectives": 1,
+    "timeoutSeconds": 600,
+    "parallelExecution": false
+  },
+  "targets": [
+    {
+      "type": "foundry-prompt-agent",
+      "name": "foundry-guide"
+    }
+  ]
+}
