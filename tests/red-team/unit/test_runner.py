@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from campaigns.config import TargetConfig
 from run import resolved_target_name
+from results.summary import summarize_attacks
 
 
 class RunnerTests(unittest.TestCase):
@@ -24,6 +25,25 @@ class RunnerTests(unittest.TestCase):
             {"FOUNDRY_GUIDE_AGENT_NAME": "custom-guide"},
         ):
             self.assertEqual(resolved_target_name(config), "second-agent")
+
+    def test_summary_uses_public_campaign_label(self) -> None:
+        config = TargetConfig(type="foundry-prompt-agent", name="foundry-guide")
+
+        with patch.dict(
+            os.environ,
+            {"FOUNDRY_GUIDE_AGENT_NAME": "private-environment-name"},
+        ):
+            resolved_name = resolved_target_name(config)
+
+        summary = summarize_attacks(
+            [],
+            target_type=config.type,
+            target_name=config.name,
+            duration_seconds=0,
+        )
+
+        self.assertEqual(resolved_name, "private-environment-name")
+        self.assertEqual(summary["target"]["name"], "foundry-guide")
 
 if __name__ == "__main__":
     unittest.main()

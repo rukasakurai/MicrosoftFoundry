@@ -81,20 +81,20 @@ async def run(args: argparse.Namespace) -> int:
                     summarize_attacks(
                         executions,
                         target_type=target_config.type,
-                        target_name=target_name,
+                        target_name=target_config.name,
                         duration_seconds=time.monotonic() - started,
                     )
                 )
             except Exception as error:
                 print(
-                    f"Target '{target_name}' produced an invalid run: "
+                    f"Target '{target_config.name}' produced an invalid run: "
                     f"{type(error).__name__}.",
                     file=sys.stderr,
                 )
                 target_results.append(
                     invalid_summary(
                         target_type=target_config.type,
-                        target_name=target_name,
+                        target_name=target_config.name,
                         error_type=type(error).__name__,
                         duration_seconds=time.monotonic() - started,
                     )
