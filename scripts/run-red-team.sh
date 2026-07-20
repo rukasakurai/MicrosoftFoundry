@@ -22,7 +22,8 @@ for command_name in az azd uv; do
   fi
 done
 
-unset PROJECT_ENDPOINT AZURE_LOCATION AZURE_SUBSCRIPTION_ID AZURE_TENANT_ID
+unset PROJECT_ENDPOINT MODEL_DEPLOYMENT_NAME
+unset AZURE_SUBSCRIPTION_ID AZURE_TENANT_ID
 unset FOUNDRY_GUIDE_AGENT_NAME
 if ! AZD_VALUES="$(azd env get-values "${environment_args[@]}")"; then
   echo "Error: unable to load the selected azd environment." >&2
@@ -33,7 +34,7 @@ eval "$AZD_VALUES"
 set +a
 
 : "${PROJECT_ENDPOINT:?load the selected azd environment}"
-: "${AZURE_LOCATION:?load the selected azd environment}"
+: "${MODEL_DEPLOYMENT_NAME:?load the selected azd environment}"
 : "${AZURE_SUBSCRIPTION_ID:?load the selected azd environment}"
 : "${AZURE_TENANT_ID:?load the selected azd environment}"
 

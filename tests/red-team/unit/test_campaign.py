@@ -11,14 +11,17 @@ class CampaignTests(unittest.TestCase):
         campaign_data = {
             "schemaVersion": 1,
             "name": "smoke",
-            "applicationScenario": "Synthetic scenario.",
+            "objective": "Synthetic objective.",
             "engine": {
-                "type": "evaluation-sdk",
-                "riskCategories": ["violence"],
-                "attackStrategies": ["baseline"],
-                "numObjectives": 1,
+                "type": "pyrit",
+                "attacks": ["baseline", "many-shot-jailbreak"],
+                "manyShotExamples": 5,
                 "timeoutSeconds": 30,
-                "parallelExecution": False,
+            },
+            "policy": {
+                "category": "test",
+                "trueDescription": "The attack succeeded.",
+                "falseDescription": "The attack failed.",
             },
             "targets": [
                 {"type": "foundry-prompt-agent", "name": "one"},
@@ -38,14 +41,17 @@ class CampaignTests(unittest.TestCase):
         campaign_data = {
             "schemaVersion": 1,
             "name": "smoke",
-            "applicationScenario": "Synthetic scenario.",
+            "objective": "Synthetic objective.",
             "engine": {
-                "type": "evaluation-sdk",
-                "riskCategories": ["violence"],
-                "attackStrategies": ["baseline"],
-                "numObjectives": 1,
+                "type": "pyrit",
+                "attacks": ["baseline"],
+                "manyShotExamples": 5,
                 "timeoutSeconds": 30,
-                "parallelExecution": False,
+            },
+            "policy": {
+                "category": "test",
+                "trueDescription": "The attack succeeded.",
+                "falseDescription": "The attack failed.",
             },
             "targets": [],
         }

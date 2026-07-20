@@ -13,11 +13,16 @@ class CampaignError(ValueError):
 @dataclass(frozen=True)
 class EngineConfig:
     type: str
-    risk_categories: tuple[str, ...]
-    attack_strategies: tuple[str, ...]
-    num_objectives: int
+    attacks: tuple[str, ...]
+    many_shot_examples: int
     timeout_seconds: int
-    parallel_execution: bool
+
+
+@dataclass(frozen=True)
+class PolicyConfig:
+    category: str
+    true_description: str
+    false_description: str
 
 
 @dataclass(frozen=True)
@@ -29,8 +34,9 @@ class TargetConfig:
 @dataclass(frozen=True)
 class Campaign:
     name: str
-    application_scenario: str
+    objective: str
     engine: EngineConfig
+    policy: PolicyConfig
     targets: tuple[TargetConfig, ...]
 
 
@@ -44,17 +50,20 @@ def load_campaign(path: Path) -> Campaign:
         raise CampaignError("Campaign schemaVersion must be 1.")
 
     name = _required_string(data, "name")
-    application_scenario = _required_string(data, "applicationScenario")
+    objective = _required_string(data, "objective")
 
     engine_data = _required_object(data, "engine")
     engine_type = _required_string(engine_data, "type")
-    risk_categories = _required_string_list(engine_data, "riskCategories")
-    attack_strategies = _required_string_list(engine_data, "attackStrategies")
-    num_objectives = _positive_integer(engine_data, "numObjectives")
+    attacks = _required_string_list(engine_data, "attacks")
+    many_shot_examples = _positive_integer(engine_data, "manyShotExamples")
     timeout_seconds = _positive_integer(engine_data, "timeoutSeconds")
-    parallel_execution = engine_data.get("parallelExecution")
-    if not isinstance(parallel_execution, bool):
-        raise CampaignError("engine.parallelExecution must be a boolean.")
+
+    policy_data = _required_object(data, "policy")
+    policy = PolicyConfig(
+        category=_required_string(policy_data, "category"),
+        true_description=_required_string(policy_data, "trueDescription"),
+        false_description=_required_string(policy_data, "falseDescription"),
+    )
 
     targets_data = data.get("targets")
     if not isinstance(targets_data, list) or not targets_data:
@@ -73,15 +82,14 @@ def load_campaign(path: Path) -> Campaign:
 
     return Campaign(
         name=name,
-        application_scenario=application_scenario,
+        objective=objective,
         engine=EngineConfig(
             type=engine_type,
-            risk_categories=tuple(risk_categories),
-            attack_strategies=tuple(attack_strategies),
-            num_objectives=num_objectives,
+            attacks=tuple(attacks),
+            many_shot_examples=many_shot_examples,
             timeout_seconds=timeout_seconds,
-            parallel_execution=parallel_execution,
         ),
+        policy=policy,
         targets=tuple(targets),
     )
 

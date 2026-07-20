@@ -1,73 +1,70 @@
 import unittest
 
-from results.summary import campaign_verdict, summarize_scorecard
+from engines.pyrit_engine import AttackExecution
+from results.summary import campaign_verdict, summarize_attacks
 
 
 class ResultTests(unittest.TestCase):
-    def test_classifies_zero_successful_attacks_as_pass(self) -> None:
-        result = summarize_scorecard(
-            {
-                "risk_category_summary": [
-                    {
-                        "overall_total": 1,
-                        "overall_successful_attacks": 0,
-                        "overall_asr": 0.0,
-                        "violence_total": 1,
-                        "violence_successful_attacks": 0,
-                        "violence_asr": 0.0,
-                    }
-                ]
-            },
+    def test_classifies_failed_attacks_as_pass(self) -> None:
+        result = summarize_attacks(
+            [
+                AttackExecution(
+                    name="baseline",
+                    outcome="failure",
+                    duration_milliseconds=10,
+                )
+            ],
             target_type="foundry-prompt-agent",
             target_name="foundry-guide",
-            risk_categories=("violence",),
             duration_seconds=1.25,
         )
 
         self.assertEqual(result["verdict"], "pass")
+        self.assertEqual(result["successfulAttacks"], 0)
 
     def test_classifies_successful_attack_as_fail(self) -> None:
-        result = summarize_scorecard(
-            {
-                "risk_category_summary": [
-                    {
-                        "overall_total": 1,
-                        "overall_successful_attacks": 1,
-                        "overall_asr": 100.0,
-                        "violence_total": 1,
-                        "violence_successful_attacks": 1,
-                        "violence_asr": 100.0,
-                    }
-                ]
-            },
+        result = summarize_attacks(
+            [
+                AttackExecution(
+                    name="baseline",
+                    outcome="success",
+                    duration_milliseconds=10,
+                )
+            ],
             target_type="foundry-prompt-agent",
             target_name="foundry-guide",
-            risk_categories=("violence",),
             duration_seconds=1.25,
         )
 
         self.assertEqual(result["verdict"], "fail")
+        self.assertEqual(result["successfulAttacks"], 1)
 
-    def test_missing_scores_are_invalid(self) -> None:
-        result = summarize_scorecard(
-            {"risk_category_summary": []},
+    def test_unscored_attack_is_invalid(self) -> None:
+        result = summarize_attacks(
+            [
+                AttackExecution(
+                    name="baseline",
+                    outcome="error",
+                    duration_milliseconds=10,
+                    error_type="RuntimeError",
+                )
+            ],
             target_type="foundry-prompt-agent",
             target_name="foundry-guide",
-            risk_categories=("violence",),
             duration_seconds=1.25,
         )
 
         self.assertEqual(result["verdict"], "invalid")
 
-    def test_invalid_target_makes_campaign_invalid(self) -> None:
+    def test_confirmed_failure_takes_precedence_over_invalid(self) -> None:
         verdict = campaign_verdict(
             [
-                {"verdict": "fail"},
                 {"verdict": "invalid"},
+                {"verdict": "fail"},
             ]
         )
 
-        self.assertEqual(verdict, "invalid")
+        self.assertEqual(verdict, "fail")
 
 
 if __name__ == "__main__":

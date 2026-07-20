@@ -133,7 +133,7 @@ Treat the minute figures as a **floor**, not an ETA.
 | 14 | Foundry Guide feedback-loop sample (`ENABLE_FOUNDRY_GUIDE=true`) | `scripts/deploy-foundry-guide.sh` creates/reuses the prompt agent; `scripts/foundry-guide-chat.sh --rating <1-5>` runs the Entra-protected endpoint and emits the application-owned `foundry_guide.feedback` custom event; `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true scripts/create-feedback-issue.sh` proves threshold/dedup logic without writing GitHub issues | deploy reuse path **3s** observed; chat + feedback client **21s** observed; dry-run issue check **21s** observed | ✅ opt-in. Do **not** create real GitHub issues during routine E2E; real issue creation is noisy and should be a deliberate one-off validation only. The issue script is not time-sensitive: it uses a lookback window and can run manually at any time. |
 | 15 | Evaluation visibility | `scripts/evaluate-agent-response.sh` creates one synthetic response, evaluates it with `builtin.coherence`, and correlates the numeric score in workspace `AppEvents`; Playwright confirms the Trace **Evaluation** cell | evaluation ~20s, then ~2–3 min ingestion + portal review | 🧪 response-ID evaluation and `builtin.coherence` aren't marked Preview; the Trace **Evaluation** UI is Preview as of 2026-07-14 |
 | 16 | Foundry Guide authenticated web app (`ENABLE_FOUNDRY_GUIDE_WEB_APP=true`) | build the TypeScript client and ASP.NET API; provision with the resource-tenant owner; deploy manually for feature-branch validation or through the `main`-only `foundry-guide` GitHub Environment; sign in from desktop and mobile browser viewports; chat and submit feedback; confirm the event in `AppEvents` | clean provision **211s**; initial ZIP deployment **268s**; chat **1.4–12.7s**; feedback **<0.2s**; telemetry **264s** observed | ✅ opt-in. Desktop and 390x844 mobile flows, tenant access, data minimization, and trace-correlated feedback passed on 2026-07-15. Requires a single-tenant app registration and B1 quota. |
-| 17 | Foundry Guide red-team smoke (`scripts/run-red-team.sh`) | run one PyRIT-backed Azure AI Evaluation SDK campaign against the existing Foundry Guide `prompt agent`; require a sanitized `pass`/`fail`/`invalid` verdict with at least one scored item | **15.5s** warm, after the target exists | 🧪 opt-in and billable. Passed in East US 2 on 2026-07-18 with one violence item, zero successful attacks, and no retained raw transcript. The red-team feature is Preview even though `azure-ai-evaluation` 1.18.1 is stable. |
+| 17 | Foundry Guide red-team smoke (`scripts/run-red-team.sh`) | use direct PyRIT for one baseline scope-escape attempt and one bundled single-turn many-shot jailbreak; score whether either response materially enables an unauthorized attack | **104s** warm, after the target exists | 🧪 opt-in and billable. Passed in Japan East on 2026-07-20 with both attacks scored, zero successful attacks, and no retained raw transcript. Uses PyRIT 0.14.0, whose package classifier remains Alpha as of that date. |
 
 The channel-publishing portion of flow 8, plus flows 9 and 11, are setup-dependent
 and don't fit an automated per-PR E2E; validate them out-of-band and note that in
@@ -205,10 +205,9 @@ created, and the app identity has only Foundry Agent Consumer. Never publish the
 URL, tenant/user identifiers, auth screenshots, prompts, responses, or raw telemetry.
 Allow about five minutes for feedback ingestion before treating the event as missing.
 
-**Flow 17 — Foundry Guide red-team smoke.** Use an isolated azd environment in
-one of the Evaluation SDK red-team regions with `ENABLE_FOUNDRY_GUIDE=true`.
-The runner uses the normal Azure CLI identity and can select the environment
-without changing the globally selected azd environment:
+**Flow 17 — Foundry Guide red-team smoke.** Use an azd environment with
+`ENABLE_FOUNDRY_GUIDE=true`. The runner uses the normal Azure CLI identity and
+can select the environment without changing the globally selected azd environment:
 
 ```bash
 ./scripts/run-red-team.sh \
@@ -216,12 +215,11 @@ without changing the globally selected azd environment:
   --output /tmp/red-team-summary.json
 ```
 
-Green = the summary contains at least one scored item and the campaign verdict is
-`pass`. A scored `fail` is valid red-team evidence but a failing test; `invalid`
-means the target, evaluator, configuration, or output was inconclusive. Delete the
-local summary after review. The SDK can write adversarial objectives and responses
-to its console/log stream, so never publish that output; the runner keeps its raw
-scan files in a temporary directory and deletes them.
+Green = both configured attacks receive scores and the campaign verdict is `pass`.
+A scored `fail` is valid red-team evidence but a failing test; `invalid` means the
+target, judge, configuration, or output was inconclusive. Delete the local summary
+after review. PyRIT can write adversarial prompts and responses to its console
+stream, so never publish that output; the runner uses only in-memory PyRIT storage.
 
 **Flow 15 — deterministic evaluation visibility check.** This flow uses
 response-ID evaluation (`azure_ai_responses`) and `builtin.coherence` through

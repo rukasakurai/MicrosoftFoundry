@@ -1,46 +1,60 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from campaigns.config import EngineConfig
-from engines.evaluation_sdk import EvaluationSdkEngine
+from pyrit.models import AttackOutcome
+
+from campaigns.config import EngineConfig, PolicyConfig
+from engines.pyrit_engine import PyritEngine
 
 
 class EngineTests(unittest.IsolatedAsyncioTestCase):
-    @patch("engines.evaluation_sdk.RedTeam")
-    async def test_runs_without_uploading_raw_results(self, red_team_type) -> None:
-        sdk_result = MagicMock()
-        sdk_result.to_scorecard.return_value = {
-            "risk_category_summary": [
-                {
-                    "overall_total": 1,
-                    "overall_successful_attacks": 0,
-                    "overall_asr": 0.0,
-                }
-            ]
-        }
-        red_team_type.return_value.scan = AsyncMock(return_value=sdk_result)
-        target = AsyncMock()
-        engine = EvaluationSdkEngine(
-            project_endpoint="https://example.invalid/api/projects/project",
-            credential=MagicMock(),
+    @patch("engines.pyrit_engine.SelfAskTrueFalseScorer")
+    @patch("engines.pyrit_engine.AttackScoringConfig")
+    @patch("engines.pyrit_engine.ManyShotJailbreakAttack")
+    @patch("engines.pyrit_engine.PromptSendingAttack")
+    async def test_runs_only_configured_attacks(
+        self,
+        prompt_attack_type,
+        jailbreak_attack_type,
+        _scoring_config_type,
+        _scorer_type,
+    ) -> None:
+        baseline_result = MagicMock(outcome=AttackOutcome.FAILURE)
+        jailbreak_result = MagicMock(outcome=AttackOutcome.SUCCESS)
+        prompt_attack_type.return_value.execute_async = AsyncMock(
+            return_value=baseline_result
+        )
+        jailbreak_attack_type.return_value.execute_async = AsyncMock(
+            return_value=jailbreak_result
+        )
+        memory = MagicMock()
+        engine = PyritEngine(
+            judge_target=MagicMock(),
             config=EngineConfig(
-                type="evaluation-sdk",
-                risk_categories=("violence",),
-                attack_strategies=("baseline",),
-                num_objectives=1,
+                type="pyrit",
+                attacks=("baseline", "many-shot-jailbreak"),
+                many_shot_examples=5,
                 timeout_seconds=30,
-                parallel_execution=False,
             ),
-            application_scenario="Synthetic scenario.",
+            objective="Synthetic objective.",
+            policy=PolicyConfig(
+                category="test",
+                true_description="The attack succeeded.",
+                false_description="The attack failed.",
+            ),
+            memory=memory,
         )
 
-        scorecard = await engine.run(target, scan_name="smoke")
+        executions = await engine.run(MagicMock())
+        engine.close()
 
-        self.assertEqual(scorecard, sdk_result.to_scorecard.return_value)
-        scan_arguments = red_team_type.return_value.scan.await_args.kwargs
-        self.assertTrue(scan_arguments["skip_upload"])
-        self.assertFalse(scan_arguments["parallel_execution"])
-        self.assertEqual(scan_arguments["timeout"], 30)
+        self.assertEqual(
+            [execution.outcome for execution in executions],
+            ["failure", "success"],
+        )
+        jailbreak_arguments = jailbreak_attack_type.call_args.kwargs
+        self.assertEqual(jailbreak_arguments["example_count"], 5)
+        memory.dispose_engine.assert_called_once()
 
 
 if __name__ == "__main__":

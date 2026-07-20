@@ -2,8 +2,8 @@ import os
 import unittest
 from unittest.mock import patch
 
-from campaigns.config import CampaignError, TargetConfig
-from run import resolved_target_name, validate_target_compatibility
+from campaigns.config import TargetConfig
+from run import resolved_target_name
 
 
 class RunnerTests(unittest.TestCase):
@@ -24,13 +24,6 @@ class RunnerTests(unittest.TestCase):
             {"FOUNDRY_GUIDE_AGENT_NAME": "custom-guide"},
         ):
             self.assertEqual(resolved_target_name(config), "second-agent")
-
-    def test_prompt_agent_rejects_multi_turn_strategy(self) -> None:
-        config = TargetConfig(type="foundry-prompt-agent", name="foundry-guide")
-
-        with self.assertRaises(CampaignError):
-            validate_target_compatibility(config, ("baseline", "crescendo"))
-
 
 if __name__ == "__main__":
     unittest.main()
