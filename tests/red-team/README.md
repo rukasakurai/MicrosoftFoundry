@@ -3,6 +3,17 @@
 This directory contains replaceable red-team campaigns, engines, targets, and
 sanitized result classification.
 
+## Threat model
+
+Common tutorial harms such as violence are not priority threats for this repo.
+The main concerns are the maintained deployment being repurposed to enable
+attacks and a fork or derivative using the repository as an attack platform.
+Runtime tests address the former; safe defaults and avoiding turnkey offensive
+features reduce the latter.
+
+## Design decisions
+
+Start with one target, one policy, and two single-turn attacks.
 The initial campaign uses PyRIT 0.14.0 against the existing Foundry Guide
 `prompt agent`. It tests one threat: whether a direct request or bundled
 single-turn jailbreak can turn the scoped guide into a source of actionable
