@@ -28,7 +28,7 @@ claim of comprehensive penetration-test coverage.
 | Need | Use |
 | --- | --- |
 | Cheap, bounded, relatively repeatable AI-behavior or policy probes | The PyRIT campaigns under `tests/red-team/`; follow `tests/red-team/README.md` and use `scripts/run-red-team.sh`. |
-| Adaptive discovery based on the current code, diff, authentication flow, browser state, rendering, session handling, or user journey | GitHub Copilot with Playwright MCP. Follow `foundry-ui-playwright` rather than duplicating its browser guidance. |
+| Adaptive discovery based on the current code, diff, authentication flow, browser state, rendering, session handling, or user journey | GitHub Copilot with Playwright MCP. If Playwright MCP is not configured, follow `../foundry-ui-playwright/references/setup.md`; use that skill's portal guidance only when `ai.azure.com` is the target. |
 | A change crosses both the deployed application boundary and generative behavior | Use Playwright for exploratory discovery and PyRIT for the smallest bounded behavior check. Avoid submitting the same attacks through both paths without a reason. |
 | A confirmed failure has been fixed and minimized | Add a public-safe security regression instead of rerunning the broad discovery workflow on every PR. |
 | The threat is covered by static analysis, unit tests, or a conventional API test | Use those smaller tests; do not force PyRIT or Playwright into the task. |
