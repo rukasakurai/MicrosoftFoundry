@@ -15,11 +15,14 @@ features reduce the latter.
 
 ### Target
 
-Target the authenticated web API because it is the maintained deployment's
-user-facing attack surface. The browser frontend adds little beyond token
-acquisition; use Playwright only when browser authentication itself needs testing.
-Keep direct `prompt agent` testing as a diagnostic comparison until the web target
-is proven, then decide whether it still adds value.
+The maintained deployment is the primary threat-model scope. The repository's
+`red-teaming` Agent Skill uses Copilot and Playwright MCP for adaptive testing of
+user-reachable browser and API behavior.
+
+The bounded PyRIT campaign targets the `prompt agent` to isolate generative
+behavior; it does not claim end-to-end deployment coverage. A web-API PyRIT target
+was evaluated, but the API's delegated `access_as_user` token is browser-bound and
+Azure CLI cannot acquire it without changing the authentication design.
 
 ### Execution mechanism
 
@@ -31,9 +34,8 @@ Red-team campaigns remain manual; when a fixed finding can be minimized into a
 public-safe, repeatable case, promote only that case to routine security
 regression testing.
 
-A well-designed Copilot prompt or Agent Skill could be leaner for human-attested
-runs, but would trade this portable implementation for model-dependent behavior
-and AI-credit consumption.
+The Agent Skill complements PyRIT with adaptive, human-attested exploration at the
+cost of model-dependent behavior and AI-credit consumption.
 
 As of 2026-07-20, the Azure AI Evaluation SDK's managed red-team path adds
 generic risk categories and regional service dependencies, while the
@@ -55,9 +57,9 @@ Use `--environment <name>` to avoid changing the globally selected environment.
 Use `--output <path>` to write the sanitized JSON summary.
 
 The process exits `0` for `pass`, `1` for a scored `fail`, and `2` for
-`invalid`. Raw attack prompts and target responses remain only in PyRIT's
-in-memory store. Console output can still contain adversarial content, so do not
-publish it.
+`invalid`. PyRIT's local cache is in memory, but prompts and responses are sent
+to the selected Azure target and judge and follow those services' data-handling
+behavior. Console output can contain adversarial content, so do not publish it.
 
 Run the local unit tests with:
 
