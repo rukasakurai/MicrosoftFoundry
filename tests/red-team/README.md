@@ -24,6 +24,10 @@ Red-team campaigns remain manual; when a fixed finding can be minimized into a
 public-safe, repeatable case, promote only that case to routine security
 regression testing.
 
+A well-designed Copilot prompt or Agent Skill could be leaner for human-attested
+runs, but would trade this portable implementation for model-dependent behavior
+and AI-credit consumption.
+
 As of 2026-07-20, the Azure AI Evaluation SDK's managed red-team path adds
 generic risk categories and regional service dependencies, while the
 `AI Red Teaming Agent` adds cloud-run lifecycle overhead and isn't available in
