@@ -13,12 +13,19 @@ features reduce the latter.
 
 ## Design decisions
 
-Start with one target, one policy, and two single-turn attacks.
-The initial campaign uses PyRIT 0.14.0 against the existing Foundry Guide
-`prompt agent`. It tests one threat: whether a direct request or bundled
-single-turn jailbreak can turn the scoped guide into a source of actionable
-assistance for an unauthorized attack. A separate call to the environment's model
-deployment judges each response against that binary policy.
+### Target
+
+Target the authenticated web API because it is the maintained deployment's
+user-facing attack surface. The browser frontend adds little beyond token
+acquisition; use Playwright only when browser authentication itself needs testing.
+Keep direct `prompt agent` testing as a diagnostic comparison until the web target
+is proven, then decide whether it still adds value.
+
+### Execution mechanism
+
+Start with one policy and two single-turn attacks. The current implementation
+uses PyRIT 0.14.0 for a direct request and bundled jailbreak, then uses the
+environment's model deployment to judge each response against the binary policy.
 
 Red-team campaigns remain manual; when a fixed finding can be minimized into a
 public-safe, repeatable case, promote only that case to routine security
