@@ -39,6 +39,8 @@ of duplicating their guidance:
   Calculator navigation).
 - `foundry-cost` — cost impact checks, pricing-meter mapping, Azure Pricing
   Calculator caveats, and Cost Management `ActualCost` observations.
+- `red-teaming` — choose between bounded PyRIT checks, adaptive Playwright testing,
+  both, or a smaller conventional security regression from the current threat model.
 The operator may also have adjacent user-scoped skills installed. Use them when
 available, but don't treat them as repo-baseline files unless they exist under
 `.github/skills/`.
