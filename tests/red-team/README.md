@@ -20,6 +20,10 @@ single-turn jailbreak can turn the scoped guide into a source of actionable
 assistance for an unauthorized attack. A separate call to the environment's model
 deployment judges each response against that binary policy.
 
+Red-team campaigns remain manual; when a fixed finding can be minimized into a
+public-safe, repeatable case, promote only that case to routine security
+regression testing.
+
 As of 2026-07-20, the Azure AI Evaluation SDK's managed red-team path adds
 generic risk categories and regional service dependencies, while the
 `AI Red Teaming Agent` adds cloud-run lifecycle overhead and isn't available in
