@@ -24,8 +24,9 @@ As of 2026-07-20, the Azure AI Evaluation SDK's managed red-team path adds
 generic risk categories and regional service dependencies, while the
 `AI Red Teaming Agent` adds cloud-run lifecycle overhead and isn't available in
 Japan East.
-Revisit this choice if either offers a stable, simple custom-policy workflow in
-Japan East or managed, durable evaluation evidence becomes necessary.
+Keep direct PyRIT unless scheduled or larger campaigns, durable shared evidence,
+or tool-aware agentic evaluation becomes necessary; availability alone isn't a
+reason to switch.
 
 ## Run
 
