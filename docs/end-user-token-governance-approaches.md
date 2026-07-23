@@ -250,6 +250,47 @@ Log Analytics choices, a trusted backend or APIM policy must scope results
 before showing them to ordinary users; Log Analytics does not provide row-level
 authorization by application user.
 
+### Illustrative monthly Azure cost
+
+The following estimates use public Japan East prices queried on
+2026-07-24 at 08:28 JST. They are marginal to the existing Foundry Guide:
+
+- 10,000 agent requests and 100 users per month;
+- 0.1 GB/month of new metadata-only telemetry;
+- the existing B1 App Service and Log Analytics workspace are reused; and
+- model tokens are excluded because they are common to all approaches.
+
+| Approach | Additional USD/month |
+| --- | ---: |
+| 1. Simple + App Service | **$48.40**, or **$62.20** with a separate B1 plan |
+| 2. APIM-only | **$48.40** |
+| 3. Strict ledger | **< $0.10** without APIM; **~$48.10** with APIM |
+| 4. FinOps framework | **$51.40** |
+| 5. APIM costing | **$48.40** |
+| 6. Landing-zone access contracts | **$48.40** for the access-contract pattern; **$990-$1,050** for the default enterprise landing zone |
+| 7. AI Gateway Dev Portal | **$48.40** embedded or free-hosted; **$57.40** with Static Web Apps Standard |
+| 8. AI Policy Engine | **~$15** integrated into the existing App Service; **~$69** with its Container App stack but no APIM; **~$769** for the sample's default deployment |
+
+The main meter assumptions are APIM Developer at $48.03/month, Linux App
+Service B1 at $13.87/month, Log Analytics ingestion at $3.34/GB, two
+five-minute FinOps log alerts at $3/month, and Static Web Apps Standard at
+$9/month. The default AI Policy Engine estimate includes approximately $700
+for APIM Standard v2, $34 for Container Apps, $14.60 for Managed Redis B0,
+and $20.28 for Container Registry Standard.
+
+APIM Consumption cannot replace Developer for these implementations: it does
+not provide APIM resource logs, and
+[`llm-token-limit`](https://learn.microsoft.com/azure/api-management/llm-token-limit-policy)
+does not support the Consumption tier as of 2026-07-24. Developer has no
+production SLA. Replacing it with Basic v2 raises the APIM component to about
+$150/month; Standard v2 is about $700/month.
+
+At 100 times the assumed traffic and 10 GB/month of telemetry, Log Analytics
+ingestion rises to about $33.40/month while fixed APIM cost remains dominant.
+Prices come from the
+[Azure Retail Prices API](https://prices.azure.com/api/retail/prices); these
+are scenario estimates, not actual billed costs.
+
 ## Selection guide
 
 | Requirement | Smallest fitting approach |
