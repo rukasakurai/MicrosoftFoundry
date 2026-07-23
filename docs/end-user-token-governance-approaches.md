@@ -291,6 +291,46 @@ Prices come from the
 [Azure Retail Prices API](https://prices.azure.com/api/retail/prices); these
 are scenario estimates, not actual billed costs.
 
+### Illustrative code review surface
+
+The estimates below count hand-maintained, nonblank application, test, IaC,
+policy, script, configuration, notebook, and documentation lines as of
+2026-07-24. Generated output, lockfiles, and transitive package source are
+excluded. OSS source is included when it would be copied or substantially
+adapted.
+
+All numeric columns use **k lines of code (LOC)** and are right-aligned.
+“Relevant sample” is the focused implementation subtree; “expanded reference”
+includes shared modules or the full repository where that materially changes
+the review surface.
+
+| Approach | Owned implementation (k LOC) | Relevant sample (k LOC) | Expanded reference (k LOC) |
+| --- | ---: | ---: | ---: |
+| 1. Simple + App Service | **0.7-1.1k** | — | — |
+| 2. APIM-only | **0.5-0.9k** | — | — |
+| 3. Strict ledger | **1.2-1.8k** | — | — |
+| 4. FinOps framework | **2.0-4.0k** | **9.8k** | **29.6k** |
+| 5. APIM costing | **0.5-1.0k** | **6.1k** | **6.1k** |
+| 6. Landing-zone access contracts | **0.8-1.5k** | **2.1k** | **173.2k** |
+| 7. AI Gateway Dev Portal | **3.0-6.0k** | **20.2k** | **20.2k** |
+| 8. AI Policy Engine | **8.0-15.0k** | **22.7k** | **76.8k** |
+
+The repository's combined implementation of approaches 1-3 is **3.1k LOC**:
+1.5k C#, 0.8k Bicep, 0.4k shell automation, 0.3k documentation, and less than
+0.1k project configuration. The individual estimates are not additive because
+the approaches share infrastructure, contracts, scripts, and documentation.
+
+By minimum code owned, the order is approximately: APIM-only, APIM costing,
+simple + App Service, landing-zone access contracts, strict ledger, FinOps,
+Dev Portal, then AI Policy Engine. By reference review surface, the full
+landing zone is the clear outlier.
+
+LOC is not proportional to risk. The strict ledger has fewer lines than several
+dashboard approaches, but its concurrency, settlement, expiry, and
+failure-charging logic is more correctness-critical per line. Workbook JSON is
+less algorithmically dense, while policy XML, KQL, and IaC can create large
+security or reliability effects in relatively few lines.
+
 ## Selection guide
 
 | Requirement | Smallest fitting approach |
