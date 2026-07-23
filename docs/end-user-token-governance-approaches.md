@@ -1,0 +1,242 @@
+# End-user token governance approaches
+
+Organizations that expose shared AI capacity need to attribute usage to a
+consumer, keep that consumer within an entitlement or budget, and show what was
+used without granting access to the underlying Azure resources.
+
+> As an AI platform owner, I want per-consumer usage reporting and limits so
+> teams can share a model deployment without losing cost accountability or
+> allowing one consumer to exhaust the available budget.
+
+This need includes several related but different problems:
+
+- **Showback or chargeback:** report usage by team, application, tenant, or user.
+- **Rate protection:** limit short-term tokens per minute.
+- **Budget enforcement:** cap tokens or cost over a day or month.
+- **Consumer self-service:** show a caller its own usage without exposing other
+  consumers' records.
+- **Strict entitlement:** prevent concurrent requests from spending more than
+  the remaining allowance.
+- **Operator governance:** alert, suspend, or reroute consumers when a threshold
+  is crossed.
+
+The eight approaches below address different combinations of those needs. The
+three repository implementations are deployable with
+[`ENABLE_TOKEN_USAGE_SAMPLE=true`](token-usage.md). The other five are public
+Microsoft-managed reference implementations reviewed as of 2026-07-23.
+
+Some external samples support Azure OpenAI or multiple model providers rather
+than the `Microsoft.CognitiveServices/accounts` Microsoft Foundry architecture
+used here. Their APIM and Azure Monitor patterns are relevant, but their
+infrastructure should not be treated as Microsoft Foundry IaC without checking
+the resource provider and endpoint.
+
+## Important variations
+
+| Decision | Variations |
+| --- | --- |
+| Consumer identity | APIM subscription, Entra user, application, tenant, product, or business unit |
+| Unit | Requests, tokens, cost, or a model-specific multiplier |
+| Time window | Per minute, hour, day, month, or billing period |
+| Result audience | Operator dashboard, consumer API, or automated policy |
+| Consistency | Delayed telemetry, pre-call check, or atomic reservation |
+| Concurrency guarantee | Possible overshoot, bounded overshoot, or no oversubscription |
+| Query trust | Caller has Azure Monitor RBAC, or a trusted layer fixes and scopes the query |
+| Runtime footprint | APIM only, APIM plus query API, or APIM plus a durable policy engine |
+
+## Comparison
+
+| # | Approach | Primary need | Enforcement guarantee | Usage interface |
+| ---: | --- | --- | --- | --- |
+| 1 | Repository: simple + App Service | Consumer quota and self-service history | APIM-native; telemetry is delayed | Consumer API backed by Log Analytics |
+| 2 | Repository: APIM-only | Same simple behavior without query compute | APIM-native; telemetry is delayed | APIM policy queries Log Analytics |
+| 3 | Repository: strict ledger | No concurrent oversubscription | Atomic pre-call reservation | Consumer API backed by the enforcement ledger |
+| 4 | Azure-Samples AI-Gateway FinOps framework | Product budgets and automated suspension | APIM quota plus delayed cost automation | Workbooks and alerts |
+| 5 | Azure-Samples APIM costing | Business-unit showback and chargeback | Reporting only | KQL and workbook |
+| 6 | Azure AI Gateway landing zone | Enterprise access-contract enforcement | APIM-native token quota | Response variables and telemetry |
+| 7 | Azure-Samples AI Gateway Dev Portal | Operator analytics and exploration | Reporting only | Browser queries Azure Monitor directly |
+| 8 | Azure-Samples AI Policy Engine | SaaS plans, routing, billing, and pre-checks | Pre-call check; not an atomic reservation | Custom API and dashboard |
+
+## Repository implementations
+
+### 1. Simple enforcement with an App Service usage API
+
+```text
+Chat:  Client -> APIM llm-token-limit -> Foundry
+Usage: Client -> APIM -> App Service -> Log Analytics
+```
+
+APIM identifies the consumer by `context.Subscription.Id`, enforces
+`llm-token-limit`, invokes Foundry with managed identity, and returns consumed
+and remaining token headers. APIM diagnostics asynchronously write token usage
+to `ApiManagementGatewayLlmLog`.
+
+The App Service exposes `GET /token-usage/simple/usage`. It receives the trusted
+APIM subscription ID and runs fixed KQL that joins the LLM and gateway tables by
+`CorrelationId`.
+
+**Use when:** consumers need a stable usage API and application code is
+acceptable.
+
+**Boundary:** enforcement is immediate, but history reflects Azure Monitor
+ingestion delay and concurrent APIM requests can overshoot.
+
+### 2. Simple enforcement with an APIM-only usage API
+
+```text
+Chat:  Client -> APIM llm-token-limit -> Foundry
+Usage: Client -> APIM send-request -> Log Analytics
+```
+
+This implementation preserves the simple enforcement model but removes App
+Service from the usage path. The APIM policy:
+
+1. obtains a Log Analytics token with APIM's managed identity;
+2. builds fixed KQL containing `context.Subscription.Id`;
+3. calls the Log Analytics Query API with `send-request`; and
+4. returns the normalized usage result.
+
+Callers cannot submit arbitrary KQL. APIM has Log Analytics Reader, while
+consumers receive no Azure Monitor RBAC.
+
+**Use when:** simple quota headers and consumer history are required, but a
+separate query service is not.
+
+**Boundary:** this reduces infrastructure, not telemetry delay or quota
+overshoot. Complex query transformation and error handling now live in APIM
+policy expressions.
+
+### 3. Strict authoritative reservation ledger
+
+```text
+Client -> APIM -> App Service -> reserve in Table Storage
+                            -> Foundry
+                            -> settle actual usage in Table Storage
+```
+
+The App Service atomically reserves a conservative maximum before invoking
+Foundry. Concurrent requests that cannot reserve the full amount are rejected.
+After a successful response, the service replaces the reservation with
+Foundry's reported usage. The same ledger serves
+`GET /token-usage/strict/usage`.
+
+Expired reservations and failures that may have reached Foundry are charged at
+the reserved maximum. This favors enforcement safety over exact billing during
+ambiguous failures.
+
+**Use when:** prepaid, contractual, or financial limits must not be exceeded
+under concurrency.
+
+**Boundary:** custom compute and a durable ledger add latency and operations.
+Conservative reservations can temporarily reject requests that would have fit
+after settlement.
+
+## Microsoft-managed reference implementations
+
+### 4. Azure-Samples AI-Gateway FinOps framework
+
+[`Azure-Samples/AI-Gateway/labs/finops-framework`](https://github.com/Azure-Samples/AI-Gateway/tree/main/labs/finops-framework)
+applies per-product `llm-token-limit` policies, emits token metrics, maintains
+pricing and subscription-quota custom tables, and provides Azure Monitor
+Workbooks. A scheduled query alert and Logic App can disable an APIM
+subscription after its calculated cost exceeds a budget.
+
+**Variation addressed:** operator-managed cost budgets and automated
+remediation across products.
+
+**Boundary:** budget automation depends on ingested telemetry. It is not an
+atomic per-request cost reservation and does not expose a consumer usage API.
+
+Relevant files:
+
+- [`main.bicep`](https://github.com/Azure-Samples/AI-Gateway/blob/main/labs/finops-framework/main.bicep)
+- [`policy.xml`](https://github.com/Azure-Samples/AI-Gateway/blob/main/labs/finops-framework/policy.xml)
+
+### 5. Azure-Samples APIM costing
+
+[`Azure-Samples/Apim-Samples/samples/costing`](https://github.com/Azure-Samples/Apim-Samples/tree/main/samples/costing)
+focuses on showback and chargeback. Its KQL joins
+`ApiManagementGatewayLlmLog` with `ApiManagementGatewayLogs` on
+`CorrelationId`, then uses `ApimSubscriptionId` as the business-unit key.
+
+**Variation addressed:** usage attribution and reporting where enforcement is
+handled elsewhere or is not required.
+
+**Boundary:** this is an analytics pattern, not a token quota implementation.
+
+Relevant file:
+
+- [`bu-token-usage.kql`](https://github.com/Azure-Samples/Apim-Samples/blob/main/samples/costing/queries/bu-token-usage.kql)
+
+### 6. Azure AI Gateway landing zone access contracts
+
+[`Azure/terraform-ai-gateway-landing-zone`](https://github.com/Azure/terraform-ai-gateway-landing-zone)
+includes a default AI product policy with per-subscription tokens-per-minute and
+monthly token quota settings. The policy is part of a broader access-contract
+model that also constrains allowed models.
+
+**Variation addressed:** standardized enterprise entitlements configured as
+APIM products and subscriptions.
+
+**Boundary:** it demonstrates enforcement policy, not a consumer-readable usage
+history API or an external authoritative ledger.
+
+Relevant file:
+
+- [`default-ai-product-policy.xml`](https://github.com/Azure/terraform-ai-gateway-landing-zone/blob/main/modules/access-contracts/policies/default-ai-product-policy.xml)
+
+### 7. Azure-Samples AI Gateway Dev Portal
+
+[`Azure-Samples/ai-gateway-dev-portal`](https://github.com/Azure-Samples/ai-gateway-dev-portal)
+is a browser portal for APIM operators. Its token analytics pages build KQL over
+`ApiManagementGatewayLlmLog` and `ApiManagementGatewayLogs`, then call the
+resource-scoped Azure Monitor logs endpoint using the signed-in user's Azure
+credential.
+
+**Variation addressed:** rich interactive analytics for trusted users who
+already have Azure RBAC.
+
+**Boundary:** Log Analytics has no per-row authorization by
+`ApimSubscriptionId`. This pattern is appropriate for operators, not isolated
+untrusted consumers unless Azure resource access is partitioned.
+
+Relevant files:
+
+- [`Tokens.tsx`](https://github.com/Azure-Samples/ai-gateway-dev-portal/blob/main/src/pages/Tokens.tsx)
+- [`azure.ts`](https://github.com/Azure-Samples/ai-gateway-dev-portal/blob/main/src/services/azure.ts)
+
+### 8. Azure-Samples AI Policy Engine
+
+[`Azure-Samples/ai-policy-engine`](https://github.com/Azure-Samples/ai-policy-engine)
+places a .NET policy engine behind APIM. Before forwarding a request, APIM calls
+`/api/precheck` to validate the client plan, model access, rate limits, and
+current quota. After the model response, APIM sends usage to `/api/log`
+asynchronously. Cosmos DB stores durable records and Redis provides a hot cache.
+
+**Variation addressed:** multi-tenant SaaS plans, model routing, billing,
+dashboards, and centralized policy decisions.
+
+**Boundary:** the pre-check reads current usage but does not atomically reserve
+the prospective request. Concurrent requests can pass before their usage is
+recorded, so this is not equivalent to the strict repository implementation.
+
+Relevant files:
+
+- [`entra-jwt-policy.xml`](https://github.com/Azure-Samples/ai-policy-engine/blob/main/policies/entra-jwt-policy.xml)
+- [`PrecheckEndpoints.cs`](https://github.com/Azure-Samples/ai-policy-engine/blob/main/src/AIPolicyEngine.Api/Endpoints/PrecheckEndpoints.cs)
+
+## Selection guide
+
+| Requirement | Smallest fitting approach |
+| --- | --- |
+| APIM quota headers only | APIM `llm-token-limit`, as in approach 6 |
+| Consumer history without separate compute | Approach 2 |
+| Consumer history behind an application API | Approach 1 |
+| Operator showback or chargeback | Approach 5 or 7 |
+| Product cost budgets and automated suspension | Approach 4 |
+| Rich SaaS plans, routing, and billing | Approach 8 |
+| No oversubscription under concurrent requests | Approach 3 |
+
+No Microsoft-managed sample found in this review implements either the
+APIM-managed-identity Log Analytics proxy in approach 2 or the atomic
+reserve-and-settle ledger in approach 3.

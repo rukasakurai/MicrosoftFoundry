@@ -43,6 +43,27 @@
     },
     "enableFoundryIq": {
       "value": "${ENABLE_FOUNDRY_IQ=false}"
+    },
+    "enableTokenUsageSample": {
+      "value": "${ENABLE_TOKEN_USAGE_SAMPLE=false}"
+    },
+    "tokenUsagePublisherEmail": {
+      "value": "${TOKEN_USAGE_PUBLISHER_EMAIL=noreply@contoso.com}"
+    },
+    "simpleTokenQuota": {
+      "value": "${SIMPLE_TOKEN_QUOTA=600}"
+    },
+    "strictTokenQuota": {
+      "value": "${STRICT_TOKEN_QUOTA=600}"
+    },
+    "strictReservationTokens": {
+      "value": "${STRICT_RESERVATION_TOKENS=256}"
+    },
+    "strictMaxOutputTokens": {
+      "value": "${STRICT_MAX_OUTPUT_TOKENS=64}"
+    },
+    "strictSafetyPaddingTokens": {
+      "value": "${STRICT_SAFETY_PADDING_TOKENS=64}"
     }
   }
 }

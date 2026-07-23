@@ -22,6 +22,7 @@ The deployment provisions:
 - **Cognitive Services Project**: Project for organizing AI solutions
 - **Model deployment**: Default model used by the agent creation examples
 - **Observability**: Optional Log Analytics + Application Insights, enabled by default
+- **End-user token usage**: Optional APIM, reporting API, and authoritative ledger
 
 ## Quick Start
 
@@ -88,6 +89,11 @@ After deployment, common outputs are available as environment variables:
 - `LOG_ANALYTICS_WORKSPACE_NAME`: Log Analytics workspace name when observability is enabled
 - `FOUNDRY_GUIDE_WEB_APP_NAME`: App Service app name when the browser client is enabled
 - `FOUNDRY_GUIDE_WEB_APP_URL`: App Service URL when the browser client is enabled
+- `API_MANAGEMENT_NAME`: APIM instance when the token usage sample is enabled
+- `APIM_GATEWAY_URL`: APIM gateway base URL
+- `TOKEN_USAGE_APIM_API_NAME`: APIM token usage API name
+- `TOKEN_USAGE_API_NAME`: Internal token usage App Service name
+- `TOKEN_USAGE_SUBSCRIPTION_NAME`: Test APIM subscription used by automation
 
 Access these values with:
 
@@ -124,6 +130,11 @@ Set `ENABLE_FOUNDRY_GUIDE_WEB_APP=true` to add the opt-in
 [authenticated browser client](foundry-guide-web-app.md). It provisions one Linux
 Azure App Service web app, its plan, and its managed identity. The single-instance
 app keeps bounded, short-lived feedback correlations in process memory.
+
+Set `ENABLE_TOKEN_USAGE_SAMPLE=true` to deploy the
+[end-user token usage sample](token-usage.md). It compares App Service and
+APIM-only eventually consistent reporting with an atomic authoritative ledger.
+It requires observability and provisions Developer-tier APIM.
 
 ## Verifying Evaluation Visibility
 

@@ -95,6 +95,32 @@ param logAnalyticsRetentionInDays int = 30
 @description('Enable the Foundry IQ substrate: an Azure AI Search service, a keyless (project managed identity) RemoteTool connection to the knowledge base MCP endpoint, and the Search role the project needs to run retrieval. The index, documents, knowledge source, knowledge base, and agent are Azure AI Search / Foundry data-plane objects created post-provisioning (see scripts/foundry-iq-setup.sh, wired as an azd postprovision hook). Off by default.')
 param enableFoundryIq bool = false
 
+@description('Enable the end-user token usage sample: Developer-tier APIM, an eventually consistent Azure Monitor view, and an authoritative Storage Table ledger. Observability must also be enabled.')
+param enableTokenUsageSample bool = false
+
+@description('Publisher email required by the optional API Management instance')
+param tokenUsagePublisherEmail string = 'noreply@contoso.com'
+
+@minValue(1)
+@description('Monthly token quota for the APIM-native eventually consistent approach')
+param simpleTokenQuota int = 600
+
+@minValue(1)
+@description('Monthly token quota for the authoritative ledger approach')
+param strictTokenQuota int = 600
+
+@minValue(1)
+@description('Worst-case token reservation for each authoritative request')
+param strictReservationTokens int = 256
+
+@minValue(1)
+@description('Maximum completion tokens accepted by the authoritative endpoint')
+param strictMaxOutputTokens int = 64
+
+@minValue(1)
+@description('Conservative allowance for provider framing tokens')
+param strictSafetyPaddingTokens int = 64
+
 @description('Name of the Azure AI Search service (only used when enableFoundryIq is true)')
 param searchServiceName string = ''
 
@@ -478,6 +504,25 @@ resource foundryUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022
   }
 }
 
+module tokenUsage 'token-usage.bicep' = if (enableTokenUsageSample && enableObservability) {
+  name: 'token-usage'
+  params: {
+    applicationInsightsName: applicationInsights!.name
+    cognitiveServicesName: cognitiveServices.name
+    location: location
+    logAnalyticsWorkspaceName: logAnalytics!.name
+    modelDeploymentName: modelDeployment.name
+    publisherEmail: tokenUsagePublisherEmail
+    resourceToken: resourceToken
+    simpleTokenQuota: simpleTokenQuota
+    strictMaxOutputTokens: strictMaxOutputTokens
+    strictReservationTokens: strictReservationTokens
+    strictSafetyPaddingTokens: strictSafetyPaddingTokens
+    strictTokenQuota: strictTokenQuota
+    tags: tags
+  }
+}
+
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output COGNITIVE_SERVICES_NAME string = cognitiveServices.name
@@ -495,3 +540,10 @@ output KNOWLEDGE_BASE_CONNECTION_NAME string = enableFoundryIq ? knowledgeBaseCo
 output SEARCH_API_VERSION string = enableFoundryIq ? searchApiVersion : ''
 output FOUNDRY_GUIDE_WEB_APP_NAME string = deployFoundryGuideWebApp ? foundryGuideWebApp.name : ''
 output FOUNDRY_GUIDE_WEB_APP_URL string = deployFoundryGuideWebApp ? 'https://${foundryGuideWebApp!.properties.defaultHostName}' : ''
+output API_MANAGEMENT_NAME string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.API_MANAGEMENT_NAME : ''
+output APIM_GATEWAY_URL string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.APIM_GATEWAY_URL : ''
+output TOKEN_USAGE_APIM_API_NAME string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_APIM_API_NAME : ''
+output TOKEN_USAGE_API_NAME string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_API_NAME : ''
+output TOKEN_USAGE_API_URL string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_API_URL : ''
+output TOKEN_USAGE_SUBSCRIPTION_NAME string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_SUBSCRIPTION_NAME : ''
+output TOKEN_USAGE_STRICT_RESERVATION_TOKENS int = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_STRICT_RESERVATION_TOKENS : 0

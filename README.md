@@ -12,6 +12,7 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 - A default model deployment so the baseline is runnable out of the box
 - Observability (Log Analytics + Application Insights) connected to the project so agent runs are traceable in the portal (optional, on by default via `enableObservability`)
 - Optional Foundry Guide feedback loop and authenticated browser client
+- Optional APIM end-user token quota samples
 - Azure Developer CLI (azd) integration for streamlined deployment
 - Human and AI collaboration guidance (AGENTS.md)
 
@@ -37,5 +38,6 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 | **6** *(optional)* | [entra-agent-identity.md](docs/entra-agent-identity.md) | Enable agents to authenticate as themselves |
 | **7** *(optional)* | [entra-agent-registry.md](docs/entra-agent-registry.md) | Register agents for visibility in Entra admin center |
 | **8** *(optional)* | [agent-mcp-oauth.md](docs/agent-mcp-oauth.md) | Connect an agent to an OAuth-authenticated remote MCP server |
+| **9** *(optional)* | [token-usage.md](docs/token-usage.md) | Compare eventual and authoritative consumer token quotas |
 
 > **Note:** Step 1 (OIDC) is optional if you only plan to deploy locally. It's recommended when using GitHub Actions for CI/CD.
