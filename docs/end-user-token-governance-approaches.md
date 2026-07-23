@@ -225,6 +225,31 @@ Relevant files:
 - [`entra-jwt-policy.xml`](https://github.com/Azure-Samples/ai-policy-engine/blob/main/policies/entra-jwt-policy.xml)
 - [`PrecheckEndpoints.cs`](https://github.com/Azure-Samples/ai-policy-engine/blob/main/src/AIPolicyEngine.Api/Endpoints/PrecheckEndpoints.cs)
 
+## Case study: showing usage in Foundry Guide
+
+Foundry Guide currently authenticates users in its web app, then its .NET
+backend calls the Foundry agent endpoint directly. The frontend receives the
+answer and feedback metadata, but no token usage. Any of the eight approaches
+could support a usage view; the best fit depends on the desired UX and
+operational tradeoffs.
+
+| Approach | Preference profile that makes it the best fit |
+| --- | --- |
+| 1. Simple + App Service | Prefer .NET and a frontend-specific `/api/usage` contract; reuse the existing App Service; require server-side user isolation and flexible history; accept Log Analytics delay and no atomic enforcement. |
+| 2. APIM-only | Minimize application code; already accept APIM cost; prefer managed services and policy expressions; accept eventual consistency and more policy complexity. Route agent traffic through APIM and attribute it to the authenticated user. |
+| 3. Strict ledger | Require immediate authoritative `used`, `reserved`, and `remaining` values; concurrent overspending is unacceptable; prefer .NET; accept ledger code, Storage cost, added latency, and conservative failure charging. |
+| 4. FinOps framework | Want an operator budget experience with cost-based alerts and automated suspension across teams or products; prefer Workbooks and Logic Apps over an in-chat meter; accept delayed remediation and threshold overshoot. |
+| 5. APIM costing | Need visualization, showback, or chargeback only; prefer KQL and Workbooks; want little new runtime infrastructure; accept telemetry delay and no enforcement. Add a trusted API only if ordinary users need isolated self-service data. |
+| 6. Landing-zone access contracts | Prefer Terraform and standardized enterprise APIM products, subscriptions, model allowlists, and quota policies; want quota headers and rejection messages more than detailed history; prioritize consistency across environments. |
+| 7. AI Gateway Dev Portal | Users are trusted Azure operators who may hold Azure Monitor RBAC; prefer React/TypeScript and a ready-made analytics UI; want rich token, request, latency, and log exploration rather than consumer isolation or enforcement. |
+| 8. AI Policy Engine | Token usage belongs in a broader multi-tenant SaaS control plane with plans, billing, routing, dashboards, and rate limits; prefer .NET; accept Cosmos DB, Redis, Container Apps, higher cost, and possible concurrent overshoot. |
+
+For APIM-based choices, Foundry Guide's agent calls must first pass through APIM,
+and APIM token accounting for that agent endpoint must be verified. For
+Log Analytics choices, a trusted backend or APIM policy must scope results
+before showing them to ordinary users; Log Analytics does not provide row-level
+authorization by application user.
+
 ## Selection guide
 
 | Requirement | Smallest fitting approach |
