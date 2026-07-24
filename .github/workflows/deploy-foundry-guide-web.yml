@@ -17,6 +17,55 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  tag-resource-group:
+    if: github.event_name == 'workflow_dispatch'
+    environment: foundry-guide
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Validate tag configuration
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          RG_TAG_NAME: ${{ secrets.RG_TAG_NAME }}
+          RG_TAG_VALUE: ${{ secrets.RG_TAG_VALUE }}
+          WEB_APP_NAME: ${{ vars.FOUNDRY_GUIDE_WEB_APP_NAME }}
+        run: |
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID RG_TAG_NAME RG_TAG_VALUE WEB_APP_NAME; do
+            if [ -z "${!name}" ]; then
+              echo "Error: required GitHub value '${name}' is not configured." >&2
+              exit 1
+            fi
+          done
+
+      - name: Azure login
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Apply resource group tag
+        env:
+          RG_TAG_NAME: ${{ secrets.RG_TAG_NAME }}
+          RG_TAG_VALUE: ${{ secrets.RG_TAG_VALUE }}
+          WEB_APP_NAME: ${{ vars.FOUNDRY_GUIDE_WEB_APP_NAME }}
+        run: |
+          resource_group_id="$(az webapp show \
+            --name "$WEB_APP_NAME" \
+            --query resourceGroup \
+            --output tsv |
+            xargs -I '{}' az group show --name '{}' --query id --output tsv)"
+          az tag update \
+            --resource-id "$resource_group_id" \
+            --operation Merge \
+            --tags "$RG_TAG_NAME=$RG_TAG_VALUE" \
+            --output none
+
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
