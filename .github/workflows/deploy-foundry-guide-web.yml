@@ -9,6 +9,8 @@ on:
       - ".github/workflows/deploy-foundry-guide-web.yml"
       - "src/foundry-guide-web/**"
       - "src/foundry-guide-webapp/**"
+      - "src/foundry-guide-quota/**"
+      - "tests/foundry-guide-webapp/**"
 
 permissions: {}
 
@@ -44,6 +46,8 @@ jobs:
           npm run build --prefix src/foundry-guide-web
           npm audit --prefix src/foundry-guide-web --audit-level=high
 
+          dotnet test tests/foundry-guide-webapp/FoundryGuide.Web.Tests.csproj \
+            --configuration Release
           dotnet publish src/foundry-guide-webapp/FoundryGuide.Web.csproj \
             --configuration Release \
             --output "$RUNNER_TEMP/foundry-guide-web"

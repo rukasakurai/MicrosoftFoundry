@@ -11,8 +11,8 @@ One Linux Azure App Service web app serves the TypeScript SPA and ASP.NET Core A
 Browser
   → Microsoft Entra access token
   → App Service SPA/API
-  → managed identity
-  → Foundry Guide stable endpoint
+      → managed identity → Foundry Guide stable endpoint
+      → managed identity → authoritative Azure Table Storage ledger
 ```
 
 Authentication uses the Microsoft Entra tenant associated with the Azure
@@ -20,13 +20,14 @@ subscription that contains the Foundry resources. The same tenant therefore owns
 the user identities, app registration, deployment identity, and Azure resources.
 
 The API emits the application-owned `foundry_guide.feedback` custom event and
-keeps short-lived feedback correlation records in bounded process memory. It
-doesn't store prompts, responses, user identifiers, secrets, or Azure deployment
-identifiers.
+keeps short-lived feedback correlation records in bounded process memory. The
+ledger stores token counters plus hashes of tenant/user, chat, and response
+identifiers. It doesn't store prompts, responses, raw user identifiers, secrets,
+or Azure deployment identifiers.
 
 ## Options considered
 
-Status is current as of 2026-07-15.
+Status is current as of 2026-07-24.
 
 | Option | Feasibility | Decision |
 | --- | --- | --- |
@@ -74,8 +75,40 @@ GitHub. The web app uses its system-assigned managed identity and receives only
 Foundry Agent Consumer on the Foundry project.
 
 The agent endpoint uses header-based isolation. The API derives an opaque per-user
-key from the authenticated token and creates a separate key for each chat. It
-doesn't log or persist the user identifier.
+key from tenant plus `oid`/`sub`, and creates a separate key for each chat. Only
+hashes of those keys are persisted.
+
+## End-user token quota
+
+Signed-in users see authoritative monthly used, remaining, and reset values above
+the chat. `GET /api/usage` reads the same ledger used by `POST /api/chat`; usage
+is also returned after each chat response or charged failure.
+
+Before calling Foundry, the API atomically reserves a conservative bound. The
+bound includes the server-recorded token context for the previous response, the
+new input's UTF-8 byte count, maximum output, and safety padding. Table-backed
+chat leases prevent concurrent replay or fabricated response chains. Successful
+calls replace the reservation with the exact `input_tokens`, `output_tokens`, and
+`total_tokens` from the prompt-agent response. Ambiguous timeouts or invalid
+responses charge the full reservation; definitive pre-execution 4xx responses
+charge zero.
+
+The period is a UTC calendar month. Starting a new chat resets conversation
+context, not monthly usage. These settings control the policy:
+
+| azd setting | Default |
+| --- | ---: |
+| `FOUNDRY_GUIDE_TOKEN_QUOTA` | 100,000 |
+| `FOUNDRY_GUIDE_MAX_OUTPUT_TOKENS` | 1,024 |
+| `FOUNDRY_GUIDE_SAFETY_PADDING_TOKENS` | 2,048 |
+| `FOUNDRY_GUIDE_MAX_RESERVATION_TOKENS` | 50,000 |
+| `FOUNDRY_GUIDE_RESERVATION_TTL_SECONDS` | 180 |
+
+The safety padding is a correctness boundary: it must cover fixed agent
+instructions and framing on the first turn. Re-run E2E after changing
+instructions, adding tools, or changing the agent type. If actual usage exceeds a
+reservation, the ledger still records the actual amount and emits a critical log,
+but that call can exceed its pre-call quota bound.
 
 ## GitHub Environment
 
@@ -118,6 +151,7 @@ azd env set ENABLE_FOUNDRY_GUIDE true
 azd env set ENABLE_FOUNDRY_GUIDE_WEB_APP true
 azd env set FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID <app-client-id>
 azd env set FOUNDRY_GUIDE_WEB_APP_SERVICE_SKU B1
+azd env set FOUNDRY_GUIDE_TOKEN_QUOTA 100000
 azd up
 ```
 
@@ -172,7 +206,8 @@ operational data.
 
 ## Verification
 
-Use Playwright MCP to verify sign-in, chat, feedback, and desktop/mobile layouts.
+Use Playwright MCP to verify sign-in, initial usage, exact post-chat usage,
+insufficient-quota behavior, feedback, and desktop/mobile layouts.
 Select and run regression coverage through
 `.github/skills/e2e-foundry-baseline/`, including Flow 16 and every affected flow.
 
