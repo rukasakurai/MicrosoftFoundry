@@ -20,10 +20,10 @@ This need includes several related but different problems:
 - **Operator governance:** alert, suspend, or reroute consumers when a threshold
   is crossed.
 
-The eight approaches below address different combinations of those needs. The
+The seven approaches below address different combinations of those needs. The
 first three have runnable implementations in the separate
 `azure-ai-token-governance` repository.
-The other five are public Microsoft-managed reference implementations reviewed
+The other four are public Microsoft-managed reference implementations reviewed
 as of 2026-07-23.
 
 Some external samples support Azure OpenAI or multiple model providers rather
@@ -55,8 +55,7 @@ the resource provider and endpoint.
 | 4 | Azure-Samples AI-Gateway FinOps framework | Product budgets and automated suspension | APIM quota plus delayed cost automation | Workbooks and alerts |
 | 5 | Azure-Samples APIM costing | Business-unit showback and chargeback | Reporting only | KQL and workbook |
 | 6 | Azure AI Gateway landing zone | Enterprise access-contract enforcement | APIM-native token quota | Response variables and telemetry |
-| 7 | Azure-Samples AI Gateway Dev Portal | Operator analytics and exploration | Reporting only | Browser queries Azure Monitor directly |
-| 8 | Azure-Samples AI Policy Engine | SaaS plans, routing, billing, and pre-checks | Pre-call check; not an atomic reservation | Custom API and dashboard |
+| 7 | Azure-Samples AI Policy Engine | SaaS plans, routing, billing, and pre-checks | Pre-call check; not an atomic reservation | Custom API and dashboard |
 
 ## Standalone sample implementations
 
@@ -186,27 +185,7 @@ Relevant file:
 
 - [`default-ai-product-policy.xml`](https://github.com/Azure/terraform-ai-gateway-landing-zone/blob/main/modules/access-contracts/policies/default-ai-product-policy.xml)
 
-### 7. Azure-Samples AI Gateway Dev Portal
-
-[`Azure-Samples/ai-gateway-dev-portal`](https://github.com/Azure-Samples/ai-gateway-dev-portal)
-is a browser portal for APIM operators. Its token analytics pages build KQL over
-`ApiManagementGatewayLlmLog` and `ApiManagementGatewayLogs`, then call the
-resource-scoped Azure Monitor logs endpoint using the signed-in user's Azure
-credential.
-
-**Variation addressed:** rich interactive analytics for trusted users who
-already have Azure RBAC.
-
-**Boundary:** Log Analytics has no per-row authorization by
-`ApimSubscriptionId`. This pattern is appropriate for operators, not isolated
-untrusted consumers unless Azure resource access is partitioned.
-
-Relevant files:
-
-- [`Tokens.tsx`](https://github.com/Azure-Samples/ai-gateway-dev-portal/blob/main/src/pages/Tokens.tsx)
-- [`azure.ts`](https://github.com/Azure-Samples/ai-gateway-dev-portal/blob/main/src/services/azure.ts)
-
-### 8. Azure-Samples AI Policy Engine
+### 7. Azure-Samples AI Policy Engine
 
 [`Azure-Samples/ai-policy-engine`](https://github.com/Azure-Samples/ai-policy-engine)
 places a .NET policy engine behind APIM. Before forwarding a request, APIM calls
@@ -242,8 +221,7 @@ when the desired UX or operational constraints differ.
 | 4. FinOps framework | Want an operator budget experience with cost-based alerts and automated suspension across teams or products; prefer Workbooks and Logic Apps over an in-chat meter; accept delayed remediation and threshold overshoot. |
 | 5. APIM costing | Need visualization, showback, or chargeback only; prefer KQL and Workbooks; want little new runtime infrastructure; accept telemetry delay and no enforcement. Add a trusted API only if ordinary users need isolated self-service data. |
 | 6. Landing-zone access contracts | Prefer Terraform and standardized enterprise APIM products, subscriptions, model allowlists, and quota policies; want quota headers and rejection messages more than detailed history; prioritize consistency across environments. |
-| 7. AI Gateway Dev Portal | Users are trusted Azure operators who may hold Azure Monitor RBAC; prefer React/TypeScript and a ready-made analytics UI; want rich token, request, latency, and log exploration rather than consumer isolation or enforcement. |
-| 8. AI Policy Engine | Token usage belongs in a broader multi-tenant SaaS control plane with plans, billing, routing, dashboards, and rate limits; prefer .NET; accept Cosmos DB, Redis, Container Apps, higher cost, and possible concurrent overshoot. |
+| 7. AI Policy Engine | Token usage belongs in a broader multi-tenant SaaS control plane with plans, billing, routing, dashboards, and rate limits; prefer .NET; accept Cosmos DB, Redis, Container Apps, higher cost, and possible concurrent overshoot. |
 
 For APIM-based choices, Foundry Guide's agent calls must first pass through APIM,
 and APIM token accounting for that agent endpoint must be verified. For
@@ -269,13 +247,12 @@ The following estimates use public Japan East prices queried on
 | 4. FinOps framework | **$51.40** |
 | 5. APIM costing | **$48.40** |
 | 6. Landing-zone access contracts | **$48.40** for the access-contract pattern; **$990-$1,050** for the default enterprise landing zone |
-| 7. AI Gateway Dev Portal | **$48.40** embedded or free-hosted; **$57.40** with Static Web Apps Standard |
-| 8. AI Policy Engine | **~$15** integrated into the existing App Service; **~$69** with its Container App stack but no APIM; **~$769** for the sample's default deployment |
+| 7. AI Policy Engine | **~$15** integrated into the existing App Service; **~$69** with its Container App stack but no APIM; **~$769** for the sample's default deployment |
 
 The main meter assumptions are APIM Developer at $48.03/month, Linux App
-Service B1 at $13.87/month, Log Analytics ingestion at $3.34/GB, two
-five-minute FinOps log alerts at $3/month, and Static Web Apps Standard at
-$9/month. The default AI Policy Engine estimate includes approximately $700
+Service B1 at $13.87/month, Log Analytics ingestion at $3.34/GB, and two
+five-minute FinOps log alerts at $3/month. The default AI Policy Engine
+estimate includes approximately $700
 for APIM Standard v2, $34 for Container Apps, $14.60 for Managed Redis B0,
 and $20.28 for Container Registry Standard.
 
@@ -313,8 +290,7 @@ the review surface.
 | 4. FinOps framework | **2.0-4.0k** | **9.8k** | **29.6k** |
 | 5. APIM costing | **0.5-1.0k** | **6.1k** | **6.1k** |
 | 6. Landing-zone access contracts | **0.8-1.5k** | **2.1k** | **173.2k** |
-| 7. AI Gateway Dev Portal | **3.0-6.0k** | **20.2k** | **20.2k** |
-| 8. AI Policy Engine | **8.0-15.0k** | **22.7k** | **76.8k** |
+| 7. AI Policy Engine | **8.0-15.0k** | **22.7k** | **76.8k** |
 
 The standalone repository's combined implementation of approaches 1-3 is **3.1k LOC**:
 1.5k C#, 0.8k Bicep, 0.4k shell automation, 0.3k documentation, and less than
@@ -323,8 +299,8 @@ the approaches share infrastructure, contracts, scripts, and documentation.
 
 By minimum code owned, the order is approximately: APIM-only, APIM costing,
 simple + App Service, landing-zone access contracts, strict ledger, FinOps,
-Dev Portal, then AI Policy Engine. By reference review surface, the full
-landing zone is the clear outlier.
+then AI Policy Engine. By reference review surface, the full landing zone is
+the clear outlier.
 
 LOC is not proportional to risk. The strict ledger has fewer lines than several
 dashboard approaches, but its concurrency, settlement, expiry, and
@@ -339,9 +315,9 @@ security or reliability effects in relatively few lines.
 | APIM quota headers only | APIM `llm-token-limit`, as in approach 6 |
 | Consumer history without separate compute | Approach 2 |
 | Consumer history behind an application API | Approach 1 |
-| Operator showback or chargeback | Approach 5 or 7 |
+| Operator showback or chargeback | Approach 5 |
 | Product cost budgets and automated suspension | Approach 4 |
-| Rich SaaS plans, routing, and billing | Approach 8 |
+| Rich SaaS plans, routing, and billing | Approach 7 |
 | No oversubscription under concurrent requests | Approach 3 |
 
 No Microsoft-managed sample found in this review implements either the
