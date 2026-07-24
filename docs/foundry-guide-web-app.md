@@ -226,6 +226,16 @@ general-purpose static-content surface.
 
 ## Documentation Test History
 
+### 2026-07-24 21:03 JST
+- Result: PASS on persistent environment; clean provisioning blocked
+- Platform/Context: WSL2, persistent `azd` environment, Playwright MCP
+- Notes:
+  - Clean throwaway attempts in Japan East and East US 2 were blocked by subscription App Service quota before deployment; the failed environment was removed.
+  - Incremental infrastructure provisioning completed in 85 seconds and the correctly packaged ZIP deployment took 139 seconds.
+  - After this environment's required resource-group policy tag was applied, authoritative usage, exact post-chat accounting, concurrent-chat rejection, insufficient-quota rejection, and zero residual reservations passed. The persistent quota was restored to 100,000.
+  - Desktop and 390x844 mobile layouts passed without horizontal overflow. Chat took 5.3 seconds; feedback returned HTTP 204 in 34 ms and its positive web event appeared in `AppEvents` after the normal ingestion delay.
+  - Confirmed resource-tenant authority, no user-assignment requirement, only Foundry Agent Consumer and Storage Table Data Contributor on the app identity, and no legacy feedback storage account.
+
 ### 2026-07-15
 - Result: PASS with fixes
 - Platform/Context: WSL2, isolated `azd` environment, Playwright MCP
