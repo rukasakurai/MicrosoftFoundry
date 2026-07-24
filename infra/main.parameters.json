@@ -41,8 +41,44 @@
     "foundryGuideWebAppServiceSku": {
       "value": "${FOUNDRY_GUIDE_WEB_APP_SERVICE_SKU=B1}"
     },
+    "foundryGuideTokenQuota": {
+      "value": "${FOUNDRY_GUIDE_TOKEN_QUOTA=100000}"
+    },
+    "foundryGuideMaxOutputTokens": {
+      "value": "${FOUNDRY_GUIDE_MAX_OUTPUT_TOKENS=1024}"
+    },
+    "foundryGuideSafetyPaddingTokens": {
+      "value": "${FOUNDRY_GUIDE_SAFETY_PADDING_TOKENS=2048}"
+    },
+    "foundryGuideMaxReservationTokens": {
+      "value": "${FOUNDRY_GUIDE_MAX_RESERVATION_TOKENS=50000}"
+    },
+    "foundryGuideReservationTtlSeconds": {
+      "value": "${FOUNDRY_GUIDE_RESERVATION_TTL_SECONDS=180}"
+    },
     "enableFoundryIq": {
       "value": "${ENABLE_FOUNDRY_IQ=false}"
+    },
+    "enableTokenUsageSample": {
+      "value": "${ENABLE_TOKEN_USAGE_SAMPLE=false}"
+    },
+    "tokenUsagePublisherEmail": {
+      "value": "${TOKEN_USAGE_PUBLISHER_EMAIL=noreply@contoso.com}"
+    },
+    "simpleTokenQuota": {
+      "value": "${SIMPLE_TOKEN_QUOTA=600}"
+    },
+    "strictTokenQuota": {
+      "value": "${STRICT_TOKEN_QUOTA=600}"
+    },
+    "strictReservationTokens": {
+      "value": "${STRICT_RESERVATION_TOKENS=256}"
+    },
+    "strictMaxOutputTokens": {
+      "value": "${STRICT_MAX_OUTPUT_TOKENS=64}"
+    },
+    "strictSafetyPaddingTokens": {
+      "value": "${STRICT_SAFETY_PADDING_TOKENS=64}"
     }
   }
 }

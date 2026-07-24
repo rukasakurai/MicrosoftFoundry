@@ -10,6 +10,6 @@ hooks:
   postprovision:
     posix:
       shell: sh
-      run: ./scripts/foundry-iq-setup.sh && ./scripts/deploy-foundry-guide.sh
+      run: ./scripts/foundry-iq-setup.sh && ./scripts/deploy-foundry-guide.sh && ./scripts/deploy-token-usage-api.sh
       interactive: false
       continueOnError: false

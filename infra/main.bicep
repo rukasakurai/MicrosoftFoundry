@@ -88,12 +88,58 @@ param foundryGuideWebAuthClientId string = ''
 @description('Dedicated Linux App Service plan SKU for the Foundry Guide web app.')
 param foundryGuideWebAppServiceSku string = 'B1'
 
+@minValue(1)
+@description('Monthly authoritative token quota for each authenticated Foundry Guide user.')
+param foundryGuideTokenQuota int = 100000
+
+@minValue(1)
+@description('Maximum output tokens requested from the Foundry Guide agent.')
+param foundryGuideMaxOutputTokens int = 1024
+
+@minValue(1)
+@description('Allowance for Foundry Guide agent instructions and response framing.')
+param foundryGuideSafetyPaddingTokens int = 2048
+
+@minValue(1)
+@description('Maximum reservation for one Foundry Guide turn; longer chats must start over.')
+param foundryGuideMaxReservationTokens int = 50000
+
+@minValue(71)
+@description('Seconds before an ambiguous Foundry Guide reservation is charged in full.')
+param foundryGuideReservationTtlSeconds int = 180
+
 @description('Retention (days) for the Log Analytics workspace')
 @minValue(30)
 param logAnalyticsRetentionInDays int = 30
 
 @description('Enable the Foundry IQ substrate: an Azure AI Search service, a keyless (project managed identity) RemoteTool connection to the knowledge base MCP endpoint, and the Search role the project needs to run retrieval. The index, documents, knowledge source, knowledge base, and agent are Azure AI Search / Foundry data-plane objects created post-provisioning (see scripts/foundry-iq-setup.sh, wired as an azd postprovision hook). Off by default.')
 param enableFoundryIq bool = false
+
+@description('Enable the end-user token usage sample: Developer-tier APIM, an eventually consistent Azure Monitor view, and an authoritative Storage Table ledger. Observability must also be enabled.')
+param enableTokenUsageSample bool = false
+
+@description('Publisher email required by the optional API Management instance')
+param tokenUsagePublisherEmail string = 'noreply@contoso.com'
+
+@minValue(1)
+@description('Monthly token quota for the APIM-native eventually consistent approach')
+param simpleTokenQuota int = 600
+
+@minValue(1)
+@description('Monthly token quota for the authoritative ledger approach')
+param strictTokenQuota int = 600
+
+@minValue(1)
+@description('Worst-case token reservation for each authoritative request')
+param strictReservationTokens int = 256
+
+@minValue(1)
+@description('Maximum completion tokens accepted by the authoritative endpoint')
+param strictMaxOutputTokens int = 64
+
+@minValue(1)
+@description('Conservative allowance for provider framing tokens')
+param strictSafetyPaddingTokens int = 64
 
 @description('Name of the Azure AI Search service (only used when enableFoundryIq is true)')
 param searchServiceName string = ''
@@ -273,7 +319,7 @@ resource feedbackLogAnalyticsReaderRoleAssignment 'Microsoft.Authorization/roleA
 // Optional authenticated browser client for Foundry Guide. One Linux App Service
 // serves both the SPA and API, validates tokens from the resource subscription's
 // tenant, and calls Foundry through its managed identity.
-resource foundryGuideWebPlan 'Microsoft.Web/serverfarms@2026-03-15' = if (deployFoundryGuideWebApp) {
+resource foundryGuideWebPlan 'Microsoft.Web/serverfarms@2026-03-15' = if (deployFoundryGuideWebApp && !(enableTokenUsageSample && enableObservability)) {
   name: '${abbrs.webServerFarms}${resourceToken}'
   location: location
   tags: tags
@@ -285,6 +331,35 @@ resource foundryGuideWebPlan 'Microsoft.Web/serverfarms@2026-03-15' = if (deploy
   properties: {
     reserved: true
   }
+}
+
+resource foundryGuideUsageStorage 'Microsoft.Storage/storageAccounts@2026-04-01' = if (deployFoundryGuideWebApp) {
+  name: '${abbrs.storageStorageAccounts}guide${resourceToken}'
+  location: location
+  tags: tags
+  kind: 'StorageV2'
+  sku: {
+    name: 'Standard_LRS'
+  }
+  properties: {
+    accessTier: 'Hot'
+    allowBlobPublicAccess: false
+    allowSharedKeyAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+resource foundryGuideUsageTableService 'Microsoft.Storage/storageAccounts/tableServices@2026-04-01' = if (deployFoundryGuideWebApp) {
+  parent: foundryGuideUsageStorage
+  name: 'default'
+  properties: {}
+}
+
+resource foundryGuideUsageTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2026-04-01' = if (deployFoundryGuideWebApp) {
+  parent: foundryGuideUsageTableService
+  name: 'FoundryGuideUsage'
+  properties: {}
 }
 
 resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundryGuideWebApp) {
@@ -299,7 +374,9 @@ resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundry
     clientAffinityEnabled: false
     httpsOnly: true
     publicNetworkAccess: 'Enabled'
-    serverFarmId: foundryGuideWebPlan.id
+    serverFarmId: enableTokenUsageSample && enableObservability
+      ? tokenUsage!.outputs.APP_SERVICE_PLAN_ID
+      : foundryGuideWebPlan!.id
     siteConfig: {
       alwaysOn: true
       appSettings: [
@@ -322,6 +399,34 @@ resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundry
         {
           name: 'FOUNDRY_GUIDE_AGENT_VERSION'
           value: 'active'
+        }
+        {
+          name: 'FOUNDRY_GUIDE_MAX_OUTPUT_TOKENS'
+          value: string(foundryGuideMaxOutputTokens)
+        }
+        {
+          name: 'FOUNDRY_GUIDE_MAX_RESERVATION_TOKENS'
+          value: string(foundryGuideMaxReservationTokens)
+        }
+        {
+          name: 'FOUNDRY_GUIDE_RESERVATION_TTL_SECONDS'
+          value: string(foundryGuideReservationTtlSeconds)
+        }
+        {
+          name: 'FOUNDRY_GUIDE_SAFETY_PADDING_TOKENS'
+          value: string(foundryGuideSafetyPaddingTokens)
+        }
+        {
+          name: 'FOUNDRY_GUIDE_TOKEN_QUOTA'
+          value: string(foundryGuideTokenQuota)
+        }
+        {
+          name: 'FOUNDRY_GUIDE_TOKEN_USAGE_TABLE_ENDPOINT'
+          value: 'https://${foundryGuideUsageStorage!.name}.table.${environment().suffixes.storage}'
+        }
+        {
+          name: 'FOUNDRY_GUIDE_TOKEN_USAGE_TABLE_NAME'
+          value: foundryGuideUsageTable!.name
         }
         {
           name: 'OTEL_SERVICE_NAME'
@@ -368,6 +473,17 @@ resource foundryGuideWebConsumerRoleAssignment 'Microsoft.Authorization/roleAssi
   name: guid(cognitiveServicesProject.id, foundryGuideWebApp.id, 'eed3b665-ab3a-47b6-8f48-c9382fb1dad6')
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eed3b665-ab3a-47b6-8f48-c9382fb1dad6')
+    principalId: foundryGuideWebApp!.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Role: Storage Table Data Contributor
+resource foundryGuideWebTableContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployFoundryGuideWebApp) {
+  scope: foundryGuideUsageStorage
+  name: guid(foundryGuideUsageStorage!.id, foundryGuideWebApp.id, '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
     principalId: foundryGuideWebApp!.identity.principalId
     principalType: 'ServicePrincipal'
   }
@@ -478,6 +594,25 @@ resource foundryUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022
   }
 }
 
+module tokenUsage 'token-usage.bicep' = if (enableTokenUsageSample && enableObservability) {
+  name: 'token-usage'
+  params: {
+    applicationInsightsName: applicationInsights!.name
+    cognitiveServicesName: cognitiveServices.name
+    location: location
+    logAnalyticsWorkspaceName: logAnalytics!.name
+    modelDeploymentName: modelDeployment.name
+    publisherEmail: tokenUsagePublisherEmail
+    resourceToken: resourceToken
+    simpleTokenQuota: simpleTokenQuota
+    strictMaxOutputTokens: strictMaxOutputTokens
+    strictReservationTokens: strictReservationTokens
+    strictSafetyPaddingTokens: strictSafetyPaddingTokens
+    strictTokenQuota: strictTokenQuota
+    tags: tags
+  }
+}
+
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output COGNITIVE_SERVICES_NAME string = cognitiveServices.name
@@ -495,3 +630,11 @@ output KNOWLEDGE_BASE_CONNECTION_NAME string = enableFoundryIq ? knowledgeBaseCo
 output SEARCH_API_VERSION string = enableFoundryIq ? searchApiVersion : ''
 output FOUNDRY_GUIDE_WEB_APP_NAME string = deployFoundryGuideWebApp ? foundryGuideWebApp.name : ''
 output FOUNDRY_GUIDE_WEB_APP_URL string = deployFoundryGuideWebApp ? 'https://${foundryGuideWebApp!.properties.defaultHostName}' : ''
+output FOUNDRY_GUIDE_TOKEN_USAGE_STORAGE_NAME string = deployFoundryGuideWebApp ? foundryGuideUsageStorage.name : ''
+output API_MANAGEMENT_NAME string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.API_MANAGEMENT_NAME : ''
+output APIM_GATEWAY_URL string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.APIM_GATEWAY_URL : ''
+output TOKEN_USAGE_APIM_API_NAME string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_APIM_API_NAME : ''
+output TOKEN_USAGE_API_NAME string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_API_NAME : ''
+output TOKEN_USAGE_API_URL string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_API_URL : ''
+output TOKEN_USAGE_SUBSCRIPTION_NAME string = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_SUBSCRIPTION_NAME : ''
+output TOKEN_USAGE_STRICT_RESERVATION_TOKENS int = enableTokenUsageSample && enableObservability ? tokenUsage!.outputs.TOKEN_USAGE_STRICT_RESERVATION_TOKENS : 0

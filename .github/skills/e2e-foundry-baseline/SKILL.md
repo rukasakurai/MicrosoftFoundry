@@ -189,7 +189,7 @@ validate the application and IaC locally:
 ```bash
 npm ci --prefix src/foundry-guide-web
 npm run build --prefix src/foundry-guide-web
-dotnet build src/foundry-guide-webapp/FoundryGuide.Web.csproj
+dotnet test tests/foundry-guide-webapp/FoundryGuide.Web.Tests.csproj
 az bicep build --file infra/main.bicep
 ```
 
@@ -203,8 +203,9 @@ is denied; a resource-tenant user can sign in, receive a Foundry Guide response,
 submit one rating, and the trace-correlated `foundry_guide.feedback` row lands in
 `AppEvents`. Confirm the app registration doesn't require user assignment, the API
 authority is the resource subscription's tenant, no feedback storage account was
-created, and the app identity has only Foundry Agent Consumer. Never publish the app
-URL, tenant/user identifiers, auth screenshots, prompts, responses, or raw telemetry.
+created, and the app identity has only Foundry Agent Consumer and Storage Table Data
+Contributor. Never publish the app URL, tenant/user identifiers, auth screenshots,
+prompts, responses, or raw telemetry.
 Allow about five minutes for feedback ingestion before treating the event as missing.
 
 **Flow 17 — Foundry Guide red-team smoke.** Use an azd environment with
