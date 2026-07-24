@@ -95,21 +95,8 @@ public sealed class InMemoryQuotaLedgerTests
         Assert.Equal(1_000, usage.Remaining);
     }
 
-    private static TokenUsageOptions CreateOptions() =>
-        new()
-        {
-            FoundryEndpoint = new Uri("https://contoso.openai.azure.com/"),
-            ModelDeploymentName = "model",
-            LogAnalyticsWorkspaceId = "00000000-0000-0000-0000-000000000000",
-            SimpleTokenQuota = 1_000,
-            StrictTokenQuota = 1_000,
-            StrictReservationTokens = 300,
-            StrictMaxOutputTokens = 50,
-            StrictSafetyPaddingTokens = 50,
-            ReservationTtl = TimeSpan.FromMinutes(3),
-            BackendTimeout = TimeSpan.FromSeconds(30),
-            UseInMemoryLedger = true,
-        };
+    private static QuotaLedgerOptions CreateOptions() =>
+        new(1_000, TimeSpan.FromMinutes(3));
 
     private sealed class TestTimeProvider(DateTimeOffset now) : TimeProvider
     {

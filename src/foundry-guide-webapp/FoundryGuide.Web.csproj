@@ -14,4 +14,9 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.17.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../token-usage-ledger/TokenUsage.Ledger.csproj" />
+    <InternalsVisibleTo Include="FoundryGuide.Web.Tests" />
+  </ItemGroup>
+
 </Project>

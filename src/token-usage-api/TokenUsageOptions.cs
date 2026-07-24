@@ -28,6 +28,9 @@ internal sealed class TokenUsageOptions
 
     public string StorageTableName { get; init; } = "TokenUsage";
 
+    public QuotaLedgerOptions LedgerOptions =>
+        new(StrictTokenQuota, ReservationTtl);
+
     internal static TokenUsageOptions FromConfiguration(IConfiguration configuration)
     {
         var foundryEndpoint = RequiredUri(configuration, "FOUNDRY_INFERENCE_ENDPOINT");

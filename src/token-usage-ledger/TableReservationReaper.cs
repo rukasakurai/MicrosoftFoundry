@@ -1,4 +1,7 @@
-internal sealed class TableReservationReaper(
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+public sealed class TableReservationReaper(
     TableQuotaLedger ledger,
     TimeProvider timeProvider,
     ILogger<TableReservationReaper> logger) : BackgroundService

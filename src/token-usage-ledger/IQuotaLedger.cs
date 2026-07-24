@@ -1,4 +1,4 @@
-internal interface IQuotaLedger
+public interface IQuotaLedger
 {
     Task<ReservationResult> TryReserveAsync(
         string subscriptionId,

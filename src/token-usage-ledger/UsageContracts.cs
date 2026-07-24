@@ -1,11 +1,11 @@
-internal sealed record UsageHistoryPoint(
+public sealed record UsageHistoryPoint(
     DateOnly Day,
     string Model,
     long PromptTokens,
     long CompletionTokens,
     long TotalTokens);
 
-internal sealed record UsageSnapshot(
+public sealed record UsageSnapshot(
     string Approach,
     string SubscriptionId,
     DateTimeOffset PeriodStart,
@@ -18,11 +18,11 @@ internal sealed record UsageSnapshot(
     string Consistency,
     IReadOnlyList<UsageHistoryPoint> History);
 
-internal sealed record ErrorResponse(string Error);
+public sealed record TokenUsageErrorResponse(string Error);
 
-internal sealed record QuotaPeriod(string Key, DateTimeOffset Start, DateTimeOffset End)
+public sealed record QuotaPeriod(string Key, DateTimeOffset Start, DateTimeOffset End)
 {
-    internal static QuotaPeriod Monthly(DateTimeOffset timestamp)
+    public static QuotaPeriod Monthly(DateTimeOffset timestamp)
     {
         var utc = timestamp.UtcDateTime;
         var start = new DateTimeOffset(
@@ -36,7 +36,7 @@ internal sealed record QuotaPeriod(string Key, DateTimeOffset Start, DateTimeOff
         return new QuotaPeriod(start.ToString("yyyyMM"), start, start.AddMonths(1));
     }
 
-    internal static QuotaPeriod FromKey(string key)
+    public static QuotaPeriod FromKey(string key)
     {
         if (key.Length != 6
             || !int.TryParse(key[..4], out var year)
@@ -51,14 +51,14 @@ internal sealed record QuotaPeriod(string Key, DateTimeOffset Start, DateTimeOff
     }
 }
 
-internal sealed record QuotaReservation(
+public sealed record QuotaReservation(
     string SubscriptionId,
     string ReservationId,
     long ReservedTokens,
     QuotaPeriod Period,
     DateTimeOffset ExpiresAt);
 
-internal sealed record ReservationResult(
+public sealed record ReservationResult(
     bool Accepted,
     QuotaReservation? Reservation,
     UsageSnapshot Usage);

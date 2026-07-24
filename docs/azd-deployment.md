@@ -89,6 +89,7 @@ After deployment, common outputs are available as environment variables:
 - `LOG_ANALYTICS_WORKSPACE_NAME`: Log Analytics workspace name when observability is enabled
 - `FOUNDRY_GUIDE_WEB_APP_NAME`: App Service app name when the browser client is enabled
 - `FOUNDRY_GUIDE_WEB_APP_URL`: App Service URL when the browser client is enabled
+- `FOUNDRY_GUIDE_TOKEN_USAGE_STORAGE_NAME`: authoritative end-user quota ledger storage when the browser client is enabled
 - `API_MANAGEMENT_NAME`: APIM instance when the token usage sample is enabled
 - `APIM_GATEWAY_URL`: APIM gateway base URL
 - `TOKEN_USAGE_APIM_API_NAME`: APIM token usage API name
@@ -128,8 +129,9 @@ Set `ENABLE_FOUNDRY_GUIDE=true` to opt into the [Foundry Guide feedback-loop sam
 
 Set `ENABLE_FOUNDRY_GUIDE_WEB_APP=true` to add the opt-in
 [authenticated browser client](foundry-guide-web-app.md). It provisions one Linux
-Azure App Service web app, its plan, and its managed identity. The single-instance
-app keeps bounded, short-lived feedback correlations in process memory.
+Azure App Service web app, its plan, managed identity, and an Azure Table Storage
+ledger for authoritative per-user monthly token quotas. The single-instance app
+keeps bounded, short-lived feedback correlations in process memory.
 
 Set `ENABLE_TOKEN_USAGE_SAMPLE=true` to deploy the
 [end-user token usage sample](token-usage.md). It compares App Service and

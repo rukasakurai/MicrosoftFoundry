@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 var options = TokenUsageOptions.FromConfiguration(builder.Configuration);
 
 builder.Services.AddSingleton(options);
+builder.Services.AddSingleton(options.LedgerOptions);
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<TokenCredential>(_ =>
     new DefaultAzureCredential(new DefaultAzureCredentialOptions

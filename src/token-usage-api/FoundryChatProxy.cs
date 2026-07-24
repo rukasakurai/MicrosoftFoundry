@@ -21,7 +21,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status401Unauthorized,
-                new ErrorResponse("A valid APIM subscription identity is required."));
+                new TokenUsageErrorResponse("A valid APIM subscription identity is required."));
             return;
         }
 
@@ -35,7 +35,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status413PayloadTooLarge,
-                new ErrorResponse(exception.Message));
+                new TokenUsageErrorResponse(exception.Message));
             return;
         }
 
@@ -50,7 +50,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status400BadRequest,
-                new ErrorResponse(exception.Message));
+                new TokenUsageErrorResponse(exception.Message));
             return;
         }
 
@@ -59,7 +59,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status400BadRequest,
-                new ErrorResponse("stream must be a boolean."));
+                new TokenUsageErrorResponse("stream must be a boolean."));
             return;
         }
 
@@ -68,7 +68,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status400BadRequest,
-                new ErrorResponse("The strict endpoint does not support streaming."));
+                new TokenUsageErrorResponse("The strict endpoint does not support streaming."));
             return;
         }
 
@@ -77,7 +77,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status400BadRequest,
-                new ErrorResponse(
+                new TokenUsageErrorResponse(
                     "The strict endpoint accepts exactly one text message with role user."));
             return;
         }
@@ -92,7 +92,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status400BadRequest,
-                new ErrorResponse(
+                new TokenUsageErrorResponse(
                     $"max_completion_tokens must be between 1 and "
                     + $"{options.StrictMaxOutputTokens}."));
             return;
@@ -121,7 +121,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status400BadRequest,
-                new ErrorResponse(
+                new TokenUsageErrorResponse(
                     "The request is too large for the configured strict reservation bound."));
             return;
         }
@@ -139,7 +139,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status503ServiceUnavailable,
-                new ErrorResponse("Foundry authentication is unavailable."));
+                new TokenUsageErrorResponse("Foundry authentication is unavailable."));
             return;
         }
 
@@ -159,7 +159,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status503ServiceUnavailable,
-                new ErrorResponse("Authoritative quota is temporarily unavailable."));
+                new TokenUsageErrorResponse("Authoritative quota is temporarily unavailable."));
             return;
         }
 
@@ -169,7 +169,7 @@ internal sealed class FoundryChatProxy(
             await WriteJsonAsync(
                 context,
                 StatusCodes.Status403Forbidden,
-                new ErrorResponse("The monthly authoritative token quota is exhausted."));
+                new TokenUsageErrorResponse("The monthly authoritative token quota is exhausted."));
             return;
         }
 
@@ -231,7 +231,7 @@ internal sealed class FoundryChatProxy(
             responseStatus = StatusCodes.Status502BadGateway;
             responseContentType = "application/json";
             responseBody = JsonSerializer.SerializeToUtf8Bytes(
-                new ErrorResponse("Foundry invocation failed."));
+                new TokenUsageErrorResponse("Foundry invocation failed."));
         }
 
         var usage = await ledger.CompleteAsync(

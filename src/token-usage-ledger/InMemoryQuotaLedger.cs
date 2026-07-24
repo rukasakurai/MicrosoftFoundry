@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 
-internal sealed class InMemoryQuotaLedger(
-    TokenUsageOptions options,
+public sealed class InMemoryQuotaLedger(
+    QuotaLedgerOptions options,
     TimeProvider timeProvider) : IQuotaLedger
 {
     private readonly ConcurrentDictionary<string, SubscriptionState> states = new();

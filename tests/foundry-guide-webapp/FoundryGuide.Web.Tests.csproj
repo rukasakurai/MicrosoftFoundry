@@ -5,10 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <AssemblyName>TokenUsage.Api.Tests</AssemblyName>
+    <AssemblyName>FoundryGuide.Web.Tests</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
@@ -18,8 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../src/token-usage-ledger/TokenUsage.Ledger.csproj" />
-    <ProjectReference Include="../../src/token-usage-api/TokenUsage.Api.csproj" />
+    <ProjectReference Include="../../src/foundry-guide-webapp/FoundryGuide.Web.csproj" />
   </ItemGroup>
 
 </Project>

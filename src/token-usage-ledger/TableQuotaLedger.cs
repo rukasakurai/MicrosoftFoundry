@@ -2,10 +2,11 @@ using System.Security.Cryptography;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
+using Microsoft.Extensions.Logging;
 
-internal sealed class TableQuotaLedger(
+public sealed class TableQuotaLedger(
     TableClient table,
-    TokenUsageOptions options,
+    QuotaLedgerOptions options,
     TimeProvider timeProvider,
     ILogger<TableQuotaLedger> logger) : IQuotaLedger
 {
@@ -240,7 +241,7 @@ internal sealed class TableQuotaLedger(
         }
     }
 
-    internal async Task ReapAllExpiredAsync(
+    public async Task ReapAllExpiredAsync(
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
@@ -339,32 +340,36 @@ internal sealed class TableQuotaLedger(
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        var filter = TableClient.CreateQueryFilter(
-            $"PartitionKey eq {summary.PartitionKey} and PeriodKey eq {period.Key} and State eq {ReservationEntity.CompletedState}");
-        var completed = new List<ReservationEntity>();
-        await foreach (var entity in table.QueryAsync<ReservationEntity>(
-                           filter,
-                           cancellationToken: cancellationToken))
+        IReadOnlyList<UsageHistoryPoint> history = [];
+        if (options.IncludeHistory)
         {
-            completed.Add(entity);
-        }
-
-        var history = completed
-            .Where(entity => entity.CompletedAt is not null)
-            .GroupBy(entity => new
+            var filter = TableClient.CreateQueryFilter(
+                $"PartitionKey eq {summary.PartitionKey} and PeriodKey eq {period.Key} and State eq {ReservationEntity.CompletedState}");
+            var completed = new List<ReservationEntity>();
+            await foreach (var entity in table.QueryAsync<ReservationEntity>(
+                               filter,
+                               cancellationToken: cancellationToken))
             {
-                Day = DateOnly.FromDateTime(entity.CompletedAt!.Value.UtcDateTime),
-                entity.Model,
-            })
-            .Select(group => new UsageHistoryPoint(
-                group.Key.Day,
-                group.Key.Model,
-                group.Sum(entity => entity.PromptTokens),
-                group.Sum(entity => entity.CompletionTokens),
-                group.Sum(entity => entity.ActualTokens)))
-            .OrderBy(item => item.Day)
-            .ThenBy(item => item.Model, StringComparer.Ordinal)
-            .ToArray();
+                completed.Add(entity);
+            }
+
+            history = completed
+                .Where(entity => entity.CompletedAt is not null)
+                .GroupBy(entity => new
+                {
+                    Day = DateOnly.FromDateTime(entity.CompletedAt!.Value.UtcDateTime),
+                    entity.Model,
+                })
+                .Select(group => new UsageHistoryPoint(
+                    group.Key.Day,
+                    group.Key.Model,
+                    group.Sum(entity => entity.PromptTokens),
+                    group.Sum(entity => entity.CompletionTokens),
+                    group.Sum(entity => entity.ActualTokens)))
+                .OrderBy(item => item.Day)
+                .ThenBy(item => item.Model, StringComparer.Ordinal)
+                .ToArray();
+        }
 
         return new UsageSnapshot(
             "strict",

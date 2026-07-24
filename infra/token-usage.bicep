@@ -864,3 +864,4 @@ output TOKEN_USAGE_API_NAME string = tokenUsageApp.name
 output TOKEN_USAGE_API_URL string = 'https://${tokenUsageApp.properties.defaultHostName}'
 output TOKEN_USAGE_SUBSCRIPTION_NAME string = tokenUsageSubscription.name
 output TOKEN_USAGE_STRICT_RESERVATION_TOKENS int = strictReservationTokens
+output APP_SERVICE_PLAN_ID string = appServicePlan.id
