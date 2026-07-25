@@ -16,10 +16,36 @@ type ChatResponse = {
   chatId: string
   text: string
   feedbackToken: string
+  usage: TokenUsage
+}
+
+type TokenUsage = {
+  limit: number
+  used: number
+  reserved: number
+  remaining: number
+  periodStart: string
+  periodEnd: string
+  observedAt: string
+  consistency: string
 }
 
 type ApiError = {
   error?: string
+  code?: string
+  usage?: TokenUsage
+}
+
+class ApiRequestError extends Error {
+  readonly code?: string
+  readonly usage?: TokenUsage
+
+  constructor(message: string, code?: string, usage?: TokenUsage) {
+    super(message)
+    this.name = 'ApiRequestError'
+    this.code = code
+    this.usage = usage
+  }
 }
 
 const app = document.querySelector<HTMLElement>('#app')
@@ -40,6 +66,15 @@ app.innerHTML = `
       <button id="sign-out" class="button secondary hidden" type="button">Sign out</button>
     </nav>
   </header>
+
+  <section id="usage-panel" class="usage-panel hidden" aria-label="Monthly token usage">
+    <div class="usage-summary">
+      <span class="usage-label">Monthly token usage</span>
+      <strong id="usage-value">Loading...</strong>
+      <span id="usage-reset" class="usage-reset"></span>
+    </div>
+    <progress id="usage-progress" max="100" value="0">0%</progress>
+  </section>
 
   <section class="chat-shell" aria-label="Foundry Guide chat">
     <div id="messages" class="messages" aria-live="polite">
@@ -74,12 +109,18 @@ const newChatButton = requireElement<HTMLButtonElement>('new-chat')
 const sessionStatus = requireElement<HTMLSpanElement>('session-status')
 const signInButton = requireElement<HTMLButtonElement>('sign-in')
 const signOutButton = requireElement<HTMLButtonElement>('sign-out')
+const usagePanel = requireElement<HTMLElement>('usage-panel')
+const usageValue = requireElement<HTMLElement>('usage-value')
+const usageReset = requireElement<HTMLElement>('usage-reset')
+const usageProgress = requireElement<HTMLProgressElement>('usage-progress')
 
 let authClient: PublicClientApplication
 let authScope: string
 let account: AccountInfo | undefined
 let previousResponseId: string | undefined
 let chatId: string | undefined
+let quotaExhausted = false
+let requestBusy = false
 
 chatForm.addEventListener('submit', async (event) => {
   event.preventDefault()
@@ -106,8 +147,12 @@ chatForm.addEventListener('submit', async (event) => {
 
     previousResponseId = response.responseId
     chatId = response.chatId
+    renderUsage(response.usage)
     appendAssistantMessage(response.text, response.feedbackToken)
   } catch (error) {
+    if (error instanceof ApiRequestError && error.usage) {
+      renderUsage(error.usage)
+    }
     appendMessage('error', error instanceof Error ? error.message : 'The request failed.')
   } finally {
     setBusy(false)
@@ -167,6 +212,9 @@ async function initialize(): Promise<void> {
   }
 
   updateSession()
+  if (account) {
+    void refreshUsage()
+  }
 }
 
 function updateSession(): void {
@@ -174,8 +222,48 @@ function updateSession(): void {
   sessionStatus.textContent = signedIn ? 'Signed in' : 'Sign in to chat'
   signInButton.classList.toggle('hidden', signedIn)
   signOutButton.classList.toggle('hidden', !signedIn)
-  promptInput.disabled = !signedIn
-  sendButton.disabled = !signedIn
+  usagePanel.classList.toggle('hidden', !signedIn)
+  setBusy(requestBusy)
+}
+
+async function refreshUsage(): Promise<void> {
+  try {
+    renderUsage(await authenticatedRequest<TokenUsage>('/api/usage'))
+  } catch (error) {
+    usageValue.textContent = 'Usage unavailable'
+    usageReset.textContent = error instanceof Error ? error.message : 'Try again later.'
+  }
+}
+
+function renderUsage(usage: TokenUsage): void {
+  const number = new Intl.NumberFormat()
+  quotaExhausted = usage.remaining <= 0
+  usageValue.textContent = `${number.format(usage.used)} of ${number.format(usage.limit)} tokens`
+  const reservation = usage.reserved > 0
+    ? `${number.format(usage.reserved)} reserved · `
+    : ''
+  usageReset.textContent = quotaExhausted
+    ? `Quota exhausted · resets ${formatDate(usage.periodEnd)}`
+    : `${reservation}${number.format(usage.remaining)} remaining · resets ${formatDate(usage.periodEnd)}`
+
+  const committedAndReserved = usage.used + usage.reserved
+  const percentage = usage.limit > 0
+    ? Math.min(100, (committedAndReserved / usage.limit) * 100)
+    : 0
+  usageProgress.value = percentage
+  usageProgress.textContent = `${Math.round(percentage)}%`
+  usageProgress.setAttribute(
+    'aria-label',
+    `${number.format(usage.used)} of ${number.format(usage.limit)} monthly tokens used`,
+  )
+  setBusy(requestBusy)
+}
+
+function formatDate(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(value))
 }
 
 function appendAssistantMessage(text: string, feedbackToken: string): void {
@@ -233,8 +321,9 @@ function appendMessage(kind: 'assistant' | 'user' | 'error', text: string): HTML
 }
 
 function setBusy(busy: boolean): void {
-  promptInput.disabled = busy || !account
-  sendButton.disabled = busy || !account
+  requestBusy = busy
+  promptInput.disabled = busy || !account || quotaExhausted
+  sendButton.disabled = busy || !account || quotaExhausted
   newChatButton.disabled = busy
   sendButton.textContent = busy ? 'Sending...' : 'Send'
 }
@@ -283,7 +372,11 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as ApiError
-    throw new Error(body.error ?? `Request failed (${response.status}).`)
+    throw new ApiRequestError(
+      body.error ?? `Request failed (${response.status}).`,
+      body.code,
+      body.usage,
+    )
   }
 
   if (response.status === 204) {

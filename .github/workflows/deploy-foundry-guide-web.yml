@@ -9,6 +9,8 @@ on:
       - ".github/workflows/deploy-foundry-guide-web.yml"
       - "src/foundry-guide-web/**"
       - "src/foundry-guide-webapp/**"
+      - "src/foundry-guide-quota/**"
+      - "tests/foundry-guide-webapp/**"
 
 permissions: {}
 
@@ -24,7 +26,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -44,6 +46,8 @@ jobs:
           npm run build --prefix src/foundry-guide-web
           npm audit --prefix src/foundry-guide-web --audit-level=high
 
+          dotnet test tests/foundry-guide-webapp/FoundryGuide.Web.Tests.csproj \
+            --configuration Release
           dotnet publish src/foundry-guide-webapp/FoundryGuide.Web.csproj \
             --configuration Release \
             --output "$RUNNER_TEMP/foundry-guide-web"

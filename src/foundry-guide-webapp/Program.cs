@@ -1,22 +1,39 @@
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Azure.Core;
+using Azure.Data.Tables;
 using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using FoundryGuide.Quota;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 var auth = WebAuthOptions.FromConfiguration(builder.Configuration);
+var quota = FoundryGuideQuotaOptions.FromConfiguration(builder.Configuration);
 
 builder.Services.AddSingleton(auth);
+builder.Services.AddSingleton(quota);
+builder.Services.AddSingleton(quota.LedgerOptions);
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<TokenCredential>(_ =>
     new DefaultAzureCredential(new DefaultAzureCredentialOptions
     {
         ManagedIdentityClientId = builder.Configuration["MANAGED_IDENTITY_CLIENT_ID"],
     }));
 builder.Services.AddSingleton<FeedbackStore>();
+builder.Services.AddSingleton(serviceProvider =>
+{
+    var credential = serviceProvider.GetRequiredService<TokenCredential>();
+    var service = new TableServiceClient(quota.TableEndpoint, credential);
+    return service.GetTableClient(quota.TableName);
+});
+builder.Services.AddSingleton<TableQuotaLedger>();
+builder.Services.AddSingleton<IQuotaLedger>(serviceProvider =>
+    serviceProvider.GetRequiredService<TableQuotaLedger>());
+builder.Services.AddSingleton<GuideConversationStore>();
+builder.Services.AddHostedService<TableReservationReaper>();
 builder.Services.AddHttpClient<FoundryGuideClient>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(40);
@@ -109,6 +126,10 @@ app.MapGet("/api/config", (WebAuthOptions options) => Results.Ok(new
 }));
 
 app.MapPost("/api/chat", GuideEndpoints.ChatAsync)
+    .RequireAuthorization(WebAuthOptions.PolicyName)
+    .RequireRateLimiting("authenticated-user");
+
+app.MapGet("/api/usage", GuideEndpoints.UsageAsync)
     .RequireAuthorization(WebAuthOptions.PolicyName)
     .RequireRateLimiting("authenticated-user");
 
