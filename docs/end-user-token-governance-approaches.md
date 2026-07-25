@@ -23,8 +23,8 @@ This need includes several related but different problems:
 The seven approaches below address different combinations of those needs. The
 first three have runnable implementations in the separate
 `azure-ai-token-governance` repository.
-The other four are public Microsoft-managed reference implementations reviewed
-as of 2026-07-23.
+The other four are public samples from Microsoft-owned GitHub organizations,
+reviewed as of 2026-07-23.
 
 Some external samples support Azure OpenAI or multiple model providers rather
 than the `Microsoft.CognitiveServices/accounts` Microsoft Foundry architecture
@@ -131,7 +131,7 @@ under concurrency.
 Conservative reservations can temporarily reject requests that would have fit
 after settlement.
 
-## Microsoft-managed reference implementations
+## Public reference samples
 
 ### 4. Azure-Samples AI-Gateway FinOps framework
 
@@ -196,9 +196,9 @@ asynchronously. Cosmos DB stores durable records and Redis provides a hot cache.
 **Variation addressed:** multi-tenant SaaS plans, model routing, billing,
 dashboards, and centralized policy decisions.
 
-**Boundary:** the pre-check reads current usage but does not atomically reserve
-the prospective request. Concurrent requests can pass before their usage is
-recorded, so this is not equivalent to the strict standalone implementation.
+**Boundary:** this targets a different consistency requirement from approach 3.
+The pre-check reads current usage but does not atomically reserve the prospective
+request, so concurrent requests may be admitted before usage is recorded.
 
 Relevant files:
 
@@ -246,22 +246,20 @@ The following estimates use public Japan East prices queried on
 | 3. Strict ledger | **< $0.10** without APIM; **~$48.10** with APIM |
 | 4. FinOps framework | **$51.40** |
 | 5. APIM costing | **$48.40** |
-| 6. Landing-zone access contracts | **$48.40** for the access-contract pattern; **$990-$1,050** for the default enterprise landing zone |
-| 7. AI Policy Engine | **~$15** integrated into the existing App Service; **~$69** with its Container App stack but no APIM; **~$769** for the sample's default deployment |
+| 6. Landing-zone access contracts | **$48.40** for the focused access-contract pattern; the full landing zone adds infrastructure outside this scenario |
+| 7. AI Policy Engine | **~$15** if adapted into the existing App Service; its full stack adds APIM Standard v2, Container Apps, Redis, and Container Registry |
 
 The main meter assumptions are APIM Developer at $48.03/month, Linux App
 Service B1 at $13.87/month, Log Analytics ingestion at $3.34/GB, and two
-five-minute FinOps log alerts at $3/month. The default AI Policy Engine
-estimate includes approximately $700
-for APIM Standard v2, $34 for Container Apps, $14.60 for Managed Redis B0,
-and $20.28 for Container Registry Standard.
+five-minute FinOps log alerts at $3/month. Full-sample totals are excluded when
+most deployed resources serve requirements beyond end-user token visibility.
 
 APIM Consumption cannot replace Developer for these implementations: it does
 not provide APIM resource logs, and
 [`llm-token-limit`](https://learn.microsoft.com/azure/api-management/llm-token-limit-policy)
 does not support the Consumption tier as of 2026-07-24. Developer has no
-production SLA. Replacing it with Basic v2 raises the APIM component to about
-$150/month; Standard v2 is about $700/month.
+production SLA as of 2026-07-24. Replacing it with Basic v2 raises the APIM
+component to about $150/month; Standard v2 is about $700/month.
 
 At 100 times the assumed traffic and 10 GB/month of telemetry, Log Analytics
 ingestion rises to about $33.40/month while fixed APIM cost remains dominant.
@@ -299,8 +297,8 @@ the approaches share infrastructure, contracts, scripts, and documentation.
 
 By minimum code owned, the order is approximately: APIM-only, APIM costing,
 simple + App Service, landing-zone access contracts, strict ledger, FinOps,
-then AI Policy Engine. By reference review surface, the full landing zone is
-the clear outlier.
+then AI Policy Engine. The full landing zone has the largest expanded review
+surface because it includes capabilities beyond token governance.
 
 LOC is not proportional to risk. The strict ledger has fewer lines than several
 dashboard approaches, but its concurrency, settlement, expiry, and
@@ -320,6 +318,6 @@ security or reliability effects in relatively few lines.
 | Rich SaaS plans, routing, and billing | Approach 7 |
 | No oversubscription under concurrent requests | Approach 3 |
 
-No Microsoft-managed sample found in this review implements either the
-APIM-managed-identity Log Analytics proxy in approach 2 or the atomic
-reserve-and-settle ledger in approach 3.
+The public samples reviewed here did not include the APIM-managed-identity Log
+Analytics proxy used in approach 2 or the atomic reserve-and-settle ledger used
+in approach 3.
