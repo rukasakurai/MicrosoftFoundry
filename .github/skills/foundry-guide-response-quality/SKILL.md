@@ -22,9 +22,7 @@ quality check, not a red-team campaign.
    - Select and record the baseline model ID for this run.
    - Ask a fresh subagent using that model to answer a technically difficult
      Microsoft Foundry question without tools or supplied references.
-   - Prefer precise product boundaries, resource types, API behavior, or
-     GA/preview distinctions. If the answer is correct, try another question;
-     never manufacture a failure.
+   - If the answer is correct, try another question; never manufacture a failure.
 3. **Establish ground truth independently.** Verify current API/resource
    definitions and, when needed, live behavior. Treat documentation as a claim,
    not proof. Date time-sensitive conclusions.
