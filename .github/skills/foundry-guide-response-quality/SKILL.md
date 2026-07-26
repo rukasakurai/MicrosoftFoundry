@@ -60,7 +60,9 @@ quality check, not a red-team campaign.
 
 ## Pass criteria
 
-- A baseline-model error was independently established.
+- The baseline answer was independently shown to be substantively incorrect,
+  incomplete, outdated, or misleading enough to justify negative feedback; style
+  preferences do not qualify.
 - Foundry Guide was tested through the authenticated UI.
 - Structured feedback and content-free correlation telemetry were stored.
 - After browser closure, an authorized reviewer recovered the exact question and
