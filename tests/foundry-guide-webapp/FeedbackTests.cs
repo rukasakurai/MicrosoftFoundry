@@ -60,7 +60,7 @@ public sealed class FeedbackTests
     }
 
     [Fact]
-    public async Task PersistsStructuredFeedbackAndReturnsReviewId()
+    public async Task PersistsStructuredNegativeFeedback()
     {
         var correlationStore = CreateCorrelationStore();
         var token = correlationStore.Save(
@@ -70,24 +70,18 @@ public sealed class FeedbackTests
             "chat-key",
             "question",
             "answer");
-        var records = new StubFeedbackRecordStore("feedback-id");
+        var records = new StubFeedbackRecordStore();
 
         var result = await GuideEndpoints.FeedbackAsync(
             new FeedbackRequest(token, 1, "incomplete"),
             correlationStore,
             records,
             Configuration(),
-            NullLoggerFactory.Instance,
-            TestContext.Current.CancellationToken);
+            NullLoggerFactory.Instance);
 
-        Assert.Equal(StatusCodes.Status200OK, Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
-        var response = Assert.IsType<FeedbackResponse>(
-            Assert.IsAssignableFrom<IValueHttpResult>(result).Value);
-        Assert.Equal("feedback-id", response.FeedbackId);
+        Assert.Equal(StatusCodes.Status204NoContent, Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
         Assert.Equal("incomplete", Assert.IsType<FeedbackRecord>(records.Record).Reason);
-        Assert.Equal("negative", records.Record.Outcome);
         Assert.Equal(token, records.RequestedFeedbackId);
-        Assert.False(records.CancellationCanBeCanceled);
     }
 
     [Fact]
@@ -101,19 +95,16 @@ public sealed class FeedbackTests
             "chat-key",
             "question",
             "answer");
-        var records = new StubFeedbackRecordStore("unexpected");
+        var records = new StubFeedbackRecordStore();
 
         var result = await GuideEndpoints.FeedbackAsync(
             new FeedbackRequest(token, 5, null),
             correlationStore,
             records,
             Configuration(),
-            NullLoggerFactory.Instance,
-            TestContext.Current.CancellationToken);
+            NullLoggerFactory.Instance);
 
-        var response = Assert.IsType<FeedbackResponse>(
-            Assert.IsAssignableFrom<IValueHttpResult>(result).Value);
-        Assert.Null(response.FeedbackId);
+        Assert.Equal(StatusCodes.Status204NoContent, Assert.IsAssignableFrom<IStatusCodeHttpResult>(result).StatusCode);
         Assert.Null(records.Record);
     }
 
@@ -136,8 +127,7 @@ public sealed class FeedbackTests
                 new StubFeedbackRecordStore(
                     new RequestFailedException(503, "storage unavailable")),
                 Configuration(),
-                NullLoggerFactory.Instance,
-                TestContext.Current.CancellationToken));
+                NullLoggerFactory.Instance));
 
         Assert.NotNull(correlationStore.Consume(token));
     }
@@ -156,12 +146,10 @@ public sealed class FeedbackTests
 
     private sealed class StubFeedbackRecordStore : IFeedbackRecordStore
     {
-        private readonly string? _feedbackId;
         private readonly RequestFailedException? _exception;
 
-        internal StubFeedbackRecordStore(string feedbackId)
+        internal StubFeedbackRecordStore()
         {
-            _feedbackId = feedbackId;
         }
 
         internal StubFeedbackRecordStore(RequestFailedException exception)
@@ -173,19 +161,15 @@ public sealed class FeedbackTests
 
         internal string? RequestedFeedbackId { get; private set; }
 
-        internal bool CancellationCanBeCanceled { get; private set; }
-
-        public Task<string> SaveAsync(
+        public Task SaveAsync(
             string feedbackId,
-            FeedbackRecord record,
-            CancellationToken cancellationToken)
+            FeedbackRecord record)
         {
             RequestedFeedbackId = feedbackId;
-            CancellationCanBeCanceled = cancellationToken.CanBeCanceled;
             Record = record;
             return _exception is null
-                ? Task.FromResult(_feedbackId ?? feedbackId)
-                : Task.FromException<string>(_exception);
+                ? Task.CompletedTask
+                : Task.FromException(_exception);
         }
     }
 }

@@ -317,8 +317,7 @@ internal static class GuideEndpoints
         FeedbackStore feedbackStore,
         IFeedbackRecordStore feedbackRecords,
         IConfiguration configuration,
-        ILoggerFactory loggerFactory,
-        CancellationToken cancellationToken)
+        ILoggerFactory loggerFactory)
     {
         if (feedback.Rating is < 1 or > 5
             || string.IsNullOrWhiteSpace(feedback.FeedbackToken)
@@ -358,26 +357,21 @@ internal static class GuideEndpoints
         activity?.SetTag("foundry_guide.response.id", correlation.ResponseId);
         activity?.SetTag("feedback.reason", reason);
 
-        string? feedbackId = null;
         if (outcome == "negative")
         {
             try
             {
-                feedbackId = await feedbackRecords.SaveAsync(
+                await feedbackRecords.SaveAsync(
                     feedback.FeedbackToken,
                     new FeedbackRecord(
-                        feedback.Rating,
-                        outcome,
                         reason,
                         agentName,
                         agentVersion,
-                        correlation.TraceParent,
                         correlation.ResponseId,
                         correlation.UserIsolationKey,
                         correlation.ChatIsolationKey,
                         correlation.InputSha256,
-                        correlation.DisplayedTextSha256),
-                    CancellationToken.None);
+                        correlation.DisplayedTextSha256));
             }
             catch (RequestFailedException)
             {
@@ -386,7 +380,10 @@ internal static class GuideEndpoints
             }
         }
 
-        if (feedbackId is not null)
+        var feedbackId = outcome == "negative"
+            ? feedback.FeedbackToken
+            : string.Empty;
+        if (feedbackId.Length > 0)
         {
             activity?.SetTag("foundry_guide.feedback.id", feedbackId);
         }
@@ -399,11 +396,11 @@ internal static class GuideEndpoints
             agentName,
             agentVersion,
             correlation.ResponseId,
-            feedbackId ?? string.Empty,
+            feedbackId,
             "web",
             2);
 
-        return Results.Ok(new FeedbackResponse(feedbackId));
+        return Results.NoContent();
     }
 
     private static bool IsDefinitiveZeroUsageStatus(int statusCode) =>

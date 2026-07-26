@@ -36,8 +36,6 @@ internal sealed record FeedbackRequest(
     int Rating,
     string? Reason);
 
-internal sealed record FeedbackResponse(string? FeedbackId);
-
 internal sealed record ErrorResponse(
     string Error,
     string? Code = null,

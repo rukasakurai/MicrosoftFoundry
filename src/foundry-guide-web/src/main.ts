@@ -19,10 +19,6 @@ type ChatResponse = {
   usage: TokenUsage
 }
 
-type FeedbackResponse = {
-  feedbackId: string | null
-}
-
 type TokenUsage = {
   limit: number
   used: number
@@ -343,7 +339,7 @@ function appendAssistantMessage(text: string, feedbackToken: string): void {
       }
       submit.disabled = true
       cancel.disabled = true
-      void submitFeedback(1, select.value, form)
+      void submitFeedback(1, select.value)
     })
     controls.replaceChildren(form)
     select.focus()
@@ -352,13 +348,12 @@ function appendAssistantMessage(text: string, feedbackToken: string): void {
   async function submitFeedback(
     rating: number,
     reason?: string,
-    form?: HTMLFormElement,
   ): Promise<void> {
     helpful.disabled = true
     unhelpful.disabled = true
 
     try {
-      await authenticatedRequest<FeedbackResponse>('/api/feedback', {
+      await authenticatedRequest<void>('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ feedbackToken, rating, reason }),
@@ -373,8 +368,6 @@ function appendAssistantMessage(text: string, feedbackToken: string): void {
           ` ${error instanceof Error ? error.message : 'Feedback failed.'}`,
         ),
       )
-      form?.querySelector<HTMLButtonElement>('.feedback-submit')?.removeAttribute('disabled')
-      form?.querySelector<HTMLButtonElement>('.feedback-cancel')?.removeAttribute('disabled')
     }
   }
 

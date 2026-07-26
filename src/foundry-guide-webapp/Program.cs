@@ -41,7 +41,7 @@ builder.Services.AddSingleton(serviceProvider =>
     new FeedbackRecordStore(
         serviceProvider
             .GetRequiredService<TableServiceClient>()
-            .GetTableClient(feedback.TableName),
+            .GetTableClient(FeedbackRecordStore.TableName),
         feedback,
         serviceProvider.GetRequiredService<TimeProvider>()));
 builder.Services.AddSingleton<IFeedbackRecordStore>(serviceProvider =>

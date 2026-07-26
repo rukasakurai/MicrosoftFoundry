@@ -2,12 +2,9 @@ using Azure;
 using Azure.Data.Tables;
 
 internal sealed record FeedbackRecord(
-    int Rating,
-    string Outcome,
     string Reason,
     string AgentName,
     string AgentVersion,
-    string TraceParent,
     string ResponseId,
     string UserIsolationKey,
     string ChatIsolationKey,
@@ -16,10 +13,9 @@ internal sealed record FeedbackRecord(
 
 internal interface IFeedbackRecordStore
 {
-    Task<string> SaveAsync(
+    Task SaveAsync(
         string feedbackId,
-        FeedbackRecord record,
-        CancellationToken cancellationToken);
+        FeedbackRecord record);
 }
 
 internal sealed class FeedbackRecordStore(
@@ -28,11 +24,11 @@ internal sealed class FeedbackRecordStore(
     TimeProvider timeProvider) : IFeedbackRecordStore
 {
     internal const string PartitionKey = "feedback";
+    internal const string TableName = "FoundryGuideFeedback";
 
-    public async Task<string> SaveAsync(
+    public async Task SaveAsync(
         string feedbackId,
-        FeedbackRecord record,
-        CancellationToken cancellationToken)
+        FeedbackRecord record)
     {
         var submittedAt = timeProvider.GetUtcNow();
         try
@@ -42,29 +38,22 @@ internal sealed class FeedbackRecordStore(
                 {
                     PartitionKey = PartitionKey,
                     RowKey = feedbackId,
-                    SubmittedAt = submittedAt,
                     ExpiresAt = submittedAt.Add(options.Retention),
-                    Rating = record.Rating,
-                    Outcome = record.Outcome,
                     Reason = record.Reason,
                     AgentName = record.AgentName,
                     AgentVersion = record.AgentVersion,
-                    TraceParent = record.TraceParent,
                     ResponseId = record.ResponseId,
                     UserIsolationKey = record.UserIsolationKey,
                     ChatIsolationKey = record.ChatIsolationKey,
                     InputSha256 = record.InputSha256,
                     DisplayedTextSha256 = record.DisplayedTextSha256,
-                    SchemaVersion = 2,
                 },
-                cancellationToken);
+                CancellationToken.None);
         }
         catch (RequestFailedException exception) when (exception.Status == 409)
         {
             // The one-time feedback token is also the durable idempotency key.
         }
-
-        return feedbackId;
     }
 
     internal async Task<int> DeleteExpiredAsync(
@@ -97,21 +86,13 @@ internal sealed class FeedbackRecordStore(
 
         public ETag ETag { get; set; }
 
-        public DateTimeOffset SubmittedAt { get; set; }
-
         public DateTimeOffset ExpiresAt { get; set; }
-
-        public int Rating { get; set; }
-
-        public string Outcome { get; set; } = string.Empty;
 
         public string Reason { get; set; } = string.Empty;
 
         public string AgentName { get; set; } = string.Empty;
 
         public string AgentVersion { get; set; } = string.Empty;
-
-        public string TraceParent { get; set; } = string.Empty;
 
         public string ResponseId { get; set; } = string.Empty;
 
@@ -122,7 +103,5 @@ internal sealed class FeedbackRecordStore(
         public string InputSha256 { get; set; } = string.Empty;
 
         public string DisplayedTextSha256 { get; set; } = string.Empty;
-
-        public int SchemaVersion { get; set; }
     }
 }

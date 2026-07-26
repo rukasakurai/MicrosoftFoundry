@@ -134,7 +134,7 @@ reason_rows="$(jq -r '
 body="$(cat <<EOF
 ## Problem
 
-Foundry Guide has received sustained aggregate negative feedback.
+Foundry Guide aggregate negative feedback has met the configured threshold.
 
 ## Signal
 

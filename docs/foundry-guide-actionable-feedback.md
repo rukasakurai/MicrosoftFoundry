@@ -15,7 +15,7 @@ Application Insights
   aggregate signal: rating, outcome, structured reason, correlation IDs
 
 FoundryGuideFeedback table
-  private retrieval handles, content hashes, agent revision, expiry
+  structured reason, private retrieval handles, content hashes, agent revision, expiry
 
 Microsoft Foundry managed response storage
   exact response input items and output
@@ -38,7 +38,7 @@ review tool rejects retrieved evidence unless both hashes match.
 | Store | Data | Content retention |
 | --- | --- | --- |
 | Application Insights | Rating, positive/negative outcome, structured reason, agent name/version, response ID, feedback ID, channel, schema version, trace correlation | No prompt, answer, explanation, user identifier, or isolation key |
-| `FoundryGuideFeedback` table | Rating/reason, agent revision, response ID, user/chat isolation keys, question/answer hashes, trace parent, submission/expiry times | No prompt or answer |
+| `FoundryGuideFeedback` table | Structured reason, agent revision, response ID, user/chat isolation keys, question/answer hashes, expiry | No prompt or answer |
 | Microsoft Foundry | Managed response input items and output | Exact interaction, retained by the managed service |
 | Aggregate GitHub issue | Counts, average rating, time range, reason-category counts | No individual correlation IDs or content |
 
@@ -65,8 +65,8 @@ storage account and **Foundry Agent Consumer** on the project.
 An optional reviewer principal receives:
 
 - **Storage Table Data Reader** scoped only to the `FoundryGuideFeedback` table; and
-- **Foundry Agent Consumer** on the Foundry project, unless the deploying principal
-  already has the broader Foundry User role.
+- **Foundry Agent Consumer** on the Foundry project. This assignment is omitted when
+  the reviewer is the deploying principal, which already receives Foundry User.
 
 Configure it before provisioning:
 
@@ -80,8 +80,9 @@ review endpoint backed by the app managed identity.
 
 ## Authorized review
 
-Find the private `foundry_guide.feedback` event in Log Analytics and copy its
-`foundry_guide.feedback.id` value. Then run:
+The one-time feedback token is also the durable review ID. Retain it privately
+while testing, or find the `foundry_guide.feedback` event in Log Analytics and copy
+its `foundry_guide.feedback.id` value. Then run:
 
 ```bash
 review_dir=$(mktemp -d)
@@ -145,12 +146,13 @@ through the authorized review tool.
 
 ## Documentation Test History
 
-### 2026-07-26 21:26 JST
+### 2026-07-26 22:57 JST
 - Result: PASS
 - Platform/Context: WSL2, persistent Foundry Guide environment, Playwright MCP
 - Notes:
-  - The fixed `gpt-5.6-sol` baseline and Foundry Guide both gave the wrong ARM/Bicep policy-boundary answer; the live policy definition targets `Microsoft.CognitiveServices.Data/accounts/deployments`, not the Bicep resource type.
+  - A no-tools `gpt-5.6-sol` baseline gave the wrong observed failure mode for the Foundry IQ RemoteTool audience trailing-slash boundary; Foundry Guide selected the correct no-slash value but truncated before explaining the failure.
   - Desktop and 393x852 mobile structured-reason UI passed without horizontal overflow.
-  - Negative feedback returned HTTP 200 with a private review ID; schema-v2 telemetry contained rating, outcome, reason, agent/version, response/feedback correlation, and no prompt, answer, user key, or chat key.
-  - After the browser closed, the authorized review script recovered the exact question and exact displayed answer with both SHA-256 integrity checks passing, wrote mode `600`, and the private output was deleted.
+  - Negative feedback returned HTTP 204 and reused its one-time token as the review ID. The private table contained only reason, agent revision, retrieval handles, hashes, and expiry.
+  - Schema-v2 telemetry contained only the documented rating/reason/correlation fields, with no prompt, answer, user key, or chat key.
+  - After the browser closed, authorized review recovered the exact interaction with both integrity checks passing and mode `600`; the private output was deleted.
   - The aggregate issue workflow passed in dry-run mode with a threshold of one.

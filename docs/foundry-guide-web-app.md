@@ -213,7 +213,9 @@ events as missing.
 The web app records `5` as helpful and `1` as not helpful. A negative rating
 requires a structured reason. `OperationId` links the event to its trace;
 `responseId` identifies the rated Foundry response, and `feedbackId` selects its
-private review metadata. The event doesn't contain the prompt, response text,
+private review metadata. The feedback endpoint returns HTTP 204; the one-time
+feedback token is reused as that private ID. The event doesn't contain the prompt,
+response text,
 explanation, user identifier, or isolation keys. Outstanding feedback tokens expire after 24 hours or become invalid if the
 single App Service instance restarts; submitted feedback remains in Application
 Insights.
@@ -263,15 +265,16 @@ general-purpose static-content surface.
 
 ## Documentation Test History
 
-### 2026-07-26 21:26 JST
+### 2026-07-26 22:57 JST
 - Result: PASS with fixes
 - Platform/Context: WSL2, persistent `azd` environment, Playwright MCP
 - Notes:
-  - Incremental provisioning completed in 107 seconds; the dedicated feedback table and reviewer RBAC were readable through Microsoft Entra authentication.
+  - Incremental provisioning completed in 113 seconds; ZIP deployment completed in 30 seconds with redundant Linux startup tracking disabled.
   - Frontend build, 16 backend tests, Bicep compilation, npm audit, and NuGet vulnerability scan passed with latest stable pinned dependencies.
   - Desktop and 393x852 mobile structured-reason feedback passed without horizontal overflow.
-  - A public-safe policy-boundary quality probe produced a wrong/truncated answer; negative feedback returned HTTP 200, schema-v2 telemetry was content-free, and post-browser authorized recovery matched the exact input and displayed output.
-  - Fixed documentation wording for negative-only private retention, the web app's two Azure roles, and the 24-hour in-memory feedback-token lifetime.
+  - A public-safe Foundry IQ configuration probe produced a baseline failure-mode error and a truncated Foundry Guide answer; negative feedback returned HTTP 204.
+  - The reduced private record, exact content-free telemetry schema, and post-browser hash-verified recovery all passed; aggregate issue generation passed in dry-run mode.
+  - Removed redundant response data, table fields, app settings, outputs, and in-memory types without changing the privacy or recovery boundaries.
 
 ### 2026-07-24 21:03 JST
 - Result: PASS on persistent environment; clean provisioning blocked

@@ -89,28 +89,28 @@ eval "$environment_values"
 set +a
 
 project_endpoint="${PROJECT_ENDPOINT:-}"
-agent_name="${FOUNDRY_GUIDE_AGENT_NAME:-foundry-guide}"
-storage_name="${FOUNDRY_GUIDE_FEEDBACK_STORAGE_NAME:-}"
-table_name="${FOUNDRY_GUIDE_FEEDBACK_TABLE_NAME:-FoundryGuideFeedback}"
+storage_name="${FOUNDRY_GUIDE_TOKEN_USAGE_STORAGE_NAME:-}"
+table_name="FoundryGuideFeedback"
 
-if [ -z "$project_endpoint" ] || [ -z "$storage_name" ]; then
-  echo "Error: PROJECT_ENDPOINT and FOUNDRY_GUIDE_FEEDBACK_STORAGE_NAME are required." >&2
+if [ -z "$project_endpoint" ] || [ -z "$storage_name" ] \
+  || [ -z "${AZURE_SUBSCRIPTION_ID:-}" ] || [ -z "${AZURE_TENANT_ID:-}" ]; then
+  echo "Error: PROJECT_ENDPOINT, FOUNDRY_GUIDE_TOKEN_USAGE_STORAGE_NAME, AZURE_SUBSCRIPTION_ID, and AZURE_TENANT_ID are required." >&2
   exit 1
 fi
 
 active_subscription="$(az account show --query id -o tsv | tr -d '\r\n')"
 active_tenant="$(az account show --query tenantId -o tsv | tr -d '\r\n')"
-if [ -n "${AZURE_SUBSCRIPTION_ID:-}" ] && [ "$active_subscription" != "$AZURE_SUBSCRIPTION_ID" ]; then
+if [ "$active_subscription" != "$AZURE_SUBSCRIPTION_ID" ]; then
   echo "Error: the active Azure subscription does not match the selected azd environment." >&2
   exit 1
 fi
-if [ -n "${AZURE_TENANT_ID:-}" ] && [ "$active_tenant" != "$AZURE_TENANT_ID" ]; then
+if [ "$active_tenant" != "$AZURE_TENANT_ID" ]; then
   echo "Error: the active Azure tenant does not match the selected azd environment." >&2
   exit 1
 fi
 
 umask 077
-tmp_dir="$(mktemp -d)"
+tmp_dir="$(mktemp -d --tmpdir="$output_dir" .foundry-guide-feedback-review.XXXXXX)"
 output_tmp="$(mktemp --tmpdir="$output_dir" .foundry-guide-feedback-review.XXXXXX)"
 cleanup() {
   rm -rf "$tmp_dir"
@@ -137,11 +137,8 @@ required_properties=(
   InputSha256
   DisplayedTextSha256
   Reason
-  Rating
-  Outcome
   AgentName
   AgentVersion
-  SubmittedAt
   ExpiresAt
 )
 for property in "${required_properties[@]}"; do
@@ -257,25 +254,17 @@ if [ "$input_hash_found" != "true" ]; then
 fi
 
 jq -n \
-  --arg feedbackId "$feedback_id" \
   --arg reason "$(jq -r '.Reason' "$record_file")" \
-  --arg outcome "$(jq -r '.Outcome' "$record_file")" \
-  --argjson rating "$(jq '.Rating' "$record_file")" \
   --arg agentName "$(jq -r '.AgentName' "$record_file")" \
   --arg agentVersion "$(jq -r '.AgentVersion' "$record_file")" \
-  --arg submittedAt "$(jq -r '.SubmittedAt' "$record_file")" \
   --arg expiresAt "$(jq -r '.ExpiresAt' "$record_file")" \
   --rawfile displayedText "$displayed_text_file" \
   --slurpfile conversation "$conversation_file" \
   '{
     feedback: {
-      id: $feedbackId,
-      rating: $rating,
-      outcome: $outcome,
       reason: $reason,
       agentName: $agentName,
       agentVersion: $agentVersion,
-      submittedAt: $submittedAt,
       expiresAt: $expiresAt
     },
     conversation: $conversation[0],

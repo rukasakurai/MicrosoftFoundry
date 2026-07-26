@@ -398,14 +398,6 @@ resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundry
           value: string(foundryGuideFeedbackRetentionDays)
         }
         {
-          name: 'FOUNDRY_GUIDE_FEEDBACK_TABLE_ENDPOINT'
-          value: 'https://${foundryGuideUsageStorage!.name}.table.${environment().suffixes.storage}'
-        }
-        {
-          name: 'FOUNDRY_GUIDE_FEEDBACK_TABLE_NAME'
-          value: foundryGuideFeedbackTable!.name
-        }
-        {
           name: 'FOUNDRY_GUIDE_MAX_OUTPUT_TOKENS'
           value: string(foundryGuideMaxOutputTokens)
         }
@@ -639,5 +631,3 @@ output SEARCH_API_VERSION string = enableFoundryIq ? searchApiVersion : ''
 output FOUNDRY_GUIDE_WEB_APP_NAME string = deployFoundryGuideWebApp ? foundryGuideWebApp.name : ''
 output FOUNDRY_GUIDE_WEB_APP_URL string = deployFoundryGuideWebApp ? 'https://${foundryGuideWebApp!.properties.defaultHostName}' : ''
 output FOUNDRY_GUIDE_TOKEN_USAGE_STORAGE_NAME string = deployFoundryGuideWebApp ? foundryGuideUsageStorage.name : ''
-output FOUNDRY_GUIDE_FEEDBACK_STORAGE_NAME string = deployFoundryGuideWebApp ? foundryGuideUsageStorage.name : ''
-output FOUNDRY_GUIDE_FEEDBACK_TABLE_NAME string = deployFoundryGuideWebApp ? foundryGuideFeedbackTable.name : ''

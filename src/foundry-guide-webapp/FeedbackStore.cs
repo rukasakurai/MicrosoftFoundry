@@ -2,7 +2,7 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
 {
     private const int MaximumEntries = 10_000;
     private static readonly TimeSpan Lifetime = TimeSpan.FromHours(24);
-    private readonly Dictionary<string, FeedbackEntry> _entries = [];
+    private readonly Dictionary<string, FeedbackCorrelation> _entries = [];
     private readonly object _gate = new();
 
     internal string Save(
@@ -33,7 +33,7 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
             }
             while (!_entries.TryAdd(
                 token,
-                new FeedbackEntry(
+                new FeedbackCorrelation(
                     traceParent,
                     responseId,
                     userIsolationKey,
@@ -56,14 +56,7 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
                 return null;
             }
 
-            return new FeedbackCorrelation(
-                entry.TraceParent,
-                entry.ResponseId,
-                entry.UserIsolationKey,
-                entry.ChatIsolationKey,
-                entry.InputSha256,
-                entry.DisplayedTextSha256,
-                entry.ExpiresAt);
+            return entry;
         }
     }
 
@@ -78,14 +71,7 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
 
             _entries.TryAdd(
                 token,
-                new FeedbackEntry(
-                    correlation.TraceParent,
-                    correlation.ResponseId,
-                    correlation.UserIsolationKey,
-                    correlation.ChatIsolationKey,
-                    correlation.InputSha256,
-                    correlation.DisplayedTextSha256,
-                    correlation.ExpiresAt));
+                correlation);
         }
     }
 
@@ -102,15 +88,6 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
 }
 
 internal sealed record FeedbackCorrelation(
-    string TraceParent,
-    string ResponseId,
-    string UserIsolationKey,
-    string ChatIsolationKey,
-    string InputSha256,
-    string DisplayedTextSha256,
-    DateTimeOffset ExpiresAt);
-
-internal sealed record FeedbackEntry(
     string TraceParent,
     string ResponseId,
     string UserIsolationKey,

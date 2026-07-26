@@ -29,8 +29,8 @@ quality check, not a red-team campaign.
 4. **Test the UI with Playwright MCP.**
    - Ask Foundry Guide exactly the selected question.
    - Classify the answer using the current feedback categories.
-   - Submit the corresponding feedback and privately capture its review ID from
-     the network response.
+   - Privately retain the feedback token from the chat response, then submit the
+     corresponding feedback. The token is the review ID.
 5. **Confirm telemetry.** Read the current event contract from the implementation
    and design document. Confirm the rating, reason, agent revision, and correlation
    fields were stored. Confirm telemetry contains no prompt, answer, free-text
