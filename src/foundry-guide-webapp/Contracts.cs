@@ -31,7 +31,10 @@ internal sealed record GuideUsage(
             usage.Consistency);
 }
 
-internal sealed record FeedbackRequest(string? FeedbackToken, int Rating);
+internal sealed record FeedbackRequest(
+    string? FeedbackToken,
+    int Rating,
+    string? Reason);
 
 internal sealed record ErrorResponse(
     string Error,

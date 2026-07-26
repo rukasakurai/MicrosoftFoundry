@@ -45,4 +45,11 @@ Optional variables: `FOUNDRY_GUIDE_AGENT_NAME`, `FOUNDRY_GUIDE_FEEDBACK_LOOKBACK
 
 The workflow uses OIDC for Azure and `GITHUB_TOKEN` for issues; no PAT is required. Set `FOUNDRY_GUIDE_FEEDBACK_PRINCIPAL_ID` before `azd up` to grant the workflow principal read-only monitoring access.
 
-If the aggregate negative-feedback threshold is met, `scripts/create-feedback-issue.sh` creates or updates one deduplicated issue.
+If the aggregate negative-feedback threshold is met,
+`scripts/create-feedback-issue.sh` creates or updates one deduplicated issue with
+reason-category counts. Legacy events without a reason are counted as
+`unspecified`.
+
+The authenticated web app adds structured reasons and an access-controlled path to
+the exact managed interaction without copying content into telemetry. See
+[Foundry Guide actionable feedback](foundry-guide-actionable-feedback.md).

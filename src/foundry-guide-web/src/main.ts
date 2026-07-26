@@ -272,39 +272,110 @@ function appendAssistantMessage(text: string, feedbackToken: string): void {
   controls.className = 'feedback'
   controls.setAttribute('aria-label', 'Rate this answer')
 
-  const helpful = feedbackButton('Helpful', '👍', 5)
-  const unhelpful = feedbackButton('Not helpful', '👎', 1)
+  const helpful = feedbackButton('Helpful', '👍', () => {
+    void submitFeedback(5)
+  })
+  const unhelpful = feedbackButton('Not helpful', '👎', showReasonForm)
   controls.append(helpful, unhelpful)
   article.append(controls)
 
-  function feedbackButton(label: string, glyph: string, rating: number): HTMLButtonElement {
+  function feedbackButton(
+    label: string,
+    glyph: string,
+    action: () => void,
+  ): HTMLButtonElement {
     const button = document.createElement('button')
     button.className = 'feedback-button'
     button.type = 'button'
     button.setAttribute('aria-label', label)
     button.textContent = glyph
-    button.addEventListener('click', async () => {
-      helpful.disabled = true
-      unhelpful.disabled = true
-
-      try {
-        await authenticatedRequest<void>('/api/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ feedbackToken, rating }),
-        })
-        controls.replaceChildren(document.createTextNode('Feedback recorded.'))
-      } catch (error) {
-        helpful.disabled = false
-        unhelpful.disabled = false
-        controls.append(
-          document.createTextNode(
-            ` ${error instanceof Error ? error.message : 'Feedback failed.'}`,
-          ),
-        )
-      }
-    })
+    button.addEventListener('click', action)
     return button
+  }
+
+  function showReasonForm(): void {
+    helpful.disabled = true
+    unhelpful.disabled = true
+
+    const form = document.createElement('form')
+    form.className = 'feedback-reason-form'
+
+    const label = document.createElement('label')
+    label.textContent = 'What went wrong?'
+
+    const select = document.createElement('select')
+    select.required = true
+    select.setAttribute('aria-label', 'Reason this answer was not helpful')
+    select.append(
+      option('', 'Select a reason'),
+      option('incorrect_or_misleading', 'Incorrect or misleading'),
+      option('incomplete', 'Incomplete'),
+      option('outdated', 'Outdated'),
+      option('unclear', 'Unclear'),
+      option('truncated', 'Truncated'),
+      option('other', 'Other'),
+    )
+
+    const submit = document.createElement('button')
+    submit.className = 'button primary feedback-submit'
+    submit.type = 'submit'
+    submit.textContent = 'Submit'
+
+    const cancel = document.createElement('button')
+    cancel.className = 'button secondary feedback-cancel'
+    cancel.type = 'button'
+    cancel.textContent = 'Cancel'
+    cancel.addEventListener('click', () => {
+      helpful.disabled = false
+      unhelpful.disabled = false
+      controls.replaceChildren(helpful, unhelpful)
+    })
+
+    form.append(label, select, submit, cancel)
+    form.addEventListener('submit', (event) => {
+      event.preventDefault()
+      if (!select.value) {
+        return
+      }
+      submit.disabled = true
+      cancel.disabled = true
+      void submitFeedback(1, select.value)
+    })
+    controls.replaceChildren(form)
+    select.focus()
+  }
+
+  async function submitFeedback(
+    rating: number,
+    reason?: string,
+  ): Promise<void> {
+    helpful.disabled = true
+    unhelpful.disabled = true
+
+    try {
+      await authenticatedRequest<void>('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedbackToken, rating, reason }),
+      })
+      controls.replaceChildren(document.createTextNode('Feedback recorded.'))
+    } catch (error) {
+      helpful.disabled = false
+      unhelpful.disabled = false
+      controls.replaceChildren(helpful, unhelpful)
+      controls.append(
+        document.createTextNode(
+          ` ${error instanceof Error ? error.message : 'Feedback failed.'}`,
+        ),
+      )
+    }
+  }
+
+  function option(value: string, label: string): HTMLOptionElement {
+    const item = document.createElement('option')
+    item.value = value
+    item.textContent = label
+    return item
   }
 }
 

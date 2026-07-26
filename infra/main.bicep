@@ -70,6 +70,16 @@ param environmentWorkstream string = ''
 @description('Optional service principal object ID for the GitHub Actions OIDC identity that queries aggregate Foundry Guide feedback. When set, observability must be enabled and this principal gets monitoring read roles on the telemetry resources.')
 param foundryGuideFeedbackPrincipalId string = ''
 
+@description('Optional object ID for an authorized maintainer who can read private actionable-feedback metadata and retrieve the correlated managed Foundry response.')
+param foundryGuideFeedbackReviewerPrincipalId string = ''
+
+@description('Type of the actionable-feedback reviewer principal.')
+@allowed([
+  'User'
+  'ServicePrincipal'
+])
+param foundryGuideFeedbackReviewerPrincipalType string = 'User'
+
 @description('Enable the authenticated Foundry Guide browser client hosted as one Linux Azure App Service web app.')
 param enableFoundryGuideWebApp bool = false
 
@@ -107,6 +117,11 @@ param foundryGuideMaxReservationTokens int = 50000
 @minValue(71)
 @description('Seconds before an ambiguous Foundry Guide reservation is charged in full.')
 param foundryGuideReservationTtlSeconds int = 180
+
+@minValue(1)
+@maxValue(30)
+@description('Days to retain private Foundry response retrieval handles after feedback submission. Managed responses are retained for 30 days by default.')
+param foundryGuideFeedbackRetentionDays int = 30
 
 @description('Retention (days) for the Log Analytics workspace')
 @minValue(30)
@@ -336,6 +351,12 @@ resource foundryGuideUsageTable 'Microsoft.Storage/storageAccounts/tableServices
   properties: {}
 }
 
+resource foundryGuideFeedbackTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2026-04-01' = if (deployFoundryGuideWebApp) {
+  parent: foundryGuideUsageTableService
+  name: 'FoundryGuideFeedback'
+  properties: {}
+}
+
 resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundryGuideWebApp) {
   name: '${abbrs.webSitesApp}${resourceToken}'
   location: location
@@ -371,6 +392,10 @@ resource foundryGuideWebApp 'Microsoft.Web/sites@2026-03-15' = if (deployFoundry
         {
           name: 'FOUNDRY_GUIDE_AGENT_VERSION'
           value: 'active'
+        }
+        {
+          name: 'FOUNDRY_GUIDE_FEEDBACK_RETENTION_DAYS'
+          value: string(foundryGuideFeedbackRetentionDays)
         }
         {
           name: 'FOUNDRY_GUIDE_MAX_OUTPUT_TOKENS'
@@ -458,6 +483,28 @@ resource foundryGuideWebTableContributorRoleAssignment 'Microsoft.Authorization/
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
     principalId: foundryGuideWebApp!.identity.principalId
     principalType: 'ServicePrincipal'
+  }
+}
+
+// Role: Storage Table Data Reader
+resource foundryGuideFeedbackReviewerTableRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployFoundryGuideWebApp && !empty(foundryGuideFeedbackReviewerPrincipalId)) {
+  scope: foundryGuideFeedbackTable
+  name: guid(foundryGuideFeedbackTable!.id, foundryGuideFeedbackReviewerPrincipalId, '76199698-9eea-4c19-bc75-cec21354c6b6')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '76199698-9eea-4c19-bc75-cec21354c6b6')
+    principalId: foundryGuideFeedbackReviewerPrincipalId
+    principalType: foundryGuideFeedbackReviewerPrincipalType
+  }
+}
+
+// Role: Foundry Agent Consumer
+resource foundryGuideFeedbackReviewerConsumerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (deployFoundryGuideWebApp && !empty(foundryGuideFeedbackReviewerPrincipalId) && toLower(foundryGuideFeedbackReviewerPrincipalId) != toLower(principalId)) {
+  scope: cognitiveServicesProject
+  name: guid(cognitiveServicesProject.id, foundryGuideFeedbackReviewerPrincipalId, 'eed3b665-ab3a-47b6-8f48-c9382fb1dad6')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'eed3b665-ab3a-47b6-8f48-c9382fb1dad6')
+    principalId: foundryGuideFeedbackReviewerPrincipalId
+    principalType: foundryGuideFeedbackReviewerPrincipalType
   }
 }
 

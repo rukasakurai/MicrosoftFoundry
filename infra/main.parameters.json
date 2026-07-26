@@ -29,6 +29,12 @@
     "foundryGuideFeedbackPrincipalId": {
       "value": "${FOUNDRY_GUIDE_FEEDBACK_PRINCIPAL_ID=}"
     },
+    "foundryGuideFeedbackReviewerPrincipalId": {
+      "value": "${FOUNDRY_GUIDE_FEEDBACK_REVIEWER_PRINCIPAL_ID=}"
+    },
+    "foundryGuideFeedbackReviewerPrincipalType": {
+      "value": "${FOUNDRY_GUIDE_FEEDBACK_REVIEWER_PRINCIPAL_TYPE=User}"
+    },
     "enableFoundryGuideWebApp": {
       "value": "${ENABLE_FOUNDRY_GUIDE_WEB_APP=false}"
     },
@@ -55,6 +61,9 @@
     },
     "foundryGuideReservationTtlSeconds": {
       "value": "${FOUNDRY_GUIDE_RESERVATION_TTL_SECONDS=180}"
+    },
+    "foundryGuideFeedbackRetentionDays": {
+      "value": "${FOUNDRY_GUIDE_FEEDBACK_RETENTION_DAYS=30}"
     },
     "enableFoundryIq": {
       "value": "${ENABLE_FOUNDRY_IQ=false}"

@@ -41,6 +41,9 @@ of duplicating their guidance:
   Calculator caveats, and Cost Management `ActualCost` observations.
 - `red-teaming` — choose between bounded PyRIT checks, adaptive Playwright testing,
   both, or a smaller conventional security regression from the current threat model.
+- `foundry-guide-response-quality` — find a grounded baseline-model miss, test the
+  authenticated Foundry Guide UI, submit structured feedback, and prove an
+  authorized reviewer can recover the exact interaction after browser closure.
 The operator may also have adjacent user-scoped skills installed. Use them when
 available, but don't treat them as repo-baseline files unless they exist under
 `.github/skills/`.
@@ -134,8 +137,9 @@ Treat the minute figures as a **floor**, not an ETA.
 | 13 | Observability + agent-run tracing (`enableObservability`, default on) | App Insights connection attached; after a run, spans land in the Log Analytics workspace | ~+18s provision, then ~2–3 min ingestion lag | ✅ resolves #36. Verify deterministically by querying the workspace (see below), not the portal |
 | 14 | Foundry Guide feedback-loop sample (`ENABLE_FOUNDRY_GUIDE=true`) | `scripts/deploy-foundry-guide.sh` creates/reuses the prompt agent; `scripts/foundry-guide-chat.sh --rating <1-5>` runs the Entra-protected endpoint and emits the application-owned `foundry_guide.feedback` custom event; `FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true scripts/create-feedback-issue.sh` proves threshold/dedup logic without writing GitHub issues | deploy reuse path **3s** observed; chat + feedback client **21s** observed; dry-run issue check **21s** observed | ✅ opt-in. Do **not** create real GitHub issues during routine E2E; real issue creation is noisy and should be a deliberate one-off validation only. The issue script is not time-sensitive: it uses a lookback window and can run manually at any time. |
 | 15 | Evaluation visibility | `scripts/evaluate-agent-response.sh` creates one synthetic response, evaluates it with `builtin.coherence`, and correlates the numeric score in workspace `AppEvents`; Playwright confirms the Trace **Evaluation** cell | evaluation ~20s, then ~2–3 min ingestion + portal review | 🧪 response-ID evaluation and `builtin.coherence` aren't marked Preview; the Trace **Evaluation** UI is Preview as of 2026-07-14 |
-| 16 | Foundry Guide authenticated web app (`ENABLE_FOUNDRY_GUIDE_WEB_APP=true`) | build the TypeScript client and ASP.NET API; provision with the resource-tenant owner; deploy manually for feature-branch validation or through the `main`-only `foundry-guide` GitHub Environment; sign in from desktop and mobile browser viewports; chat and submit feedback; confirm the event in `AppEvents` | clean provision **211s**; initial ZIP deployment **268s**; chat **1.4–13.8s**; feedback **<0.2s**; telemetry **264–300s** observed | ✅ opt-in. Authoritative usage, concurrent-chat rejection, insufficient-quota rejection, zero residual reservations, desktop and 390x844 mobile flows, and feedback ingestion passed on 2026-07-24. Tenant access, data minimization, and trace correlation were last verified on 2026-07-15. The quota branch's clean provision was blocked by subscription B1 quota, so its changed flow was verified against the persistent environment. Requires a single-tenant app registration and B1 quota. |
+| 16 | Foundry Guide authenticated web app (`ENABLE_FOUNDRY_GUIDE_WEB_APP=true`) | build the TypeScript client and ASP.NET API; provision with the resource-tenant owner; deploy manually for feature-branch validation or through the `main`-only `foundry-guide` GitHub Environment; sign in from desktop and mobile browser viewports; chat and submit feedback; confirm the event in `AppEvents` | clean provision **211s**; initial ZIP deployment **268s**; chat **1.4–13.8s**; feedback **<0.2s**; telemetry **264–300s** observed | ✅ opt-in. Authoritative usage, quota boundaries, desktop/mobile feedback, data minimization, and trace correlation have passed. The reduced actionable-feedback contract was last verified on 2026-07-26: incremental provision 113s and ZIP deployment 30s with redundant Linux startup tracking disabled. The quota branch's clean provision was blocked by subscription B1 quota, so its changed flow was verified against the persistent environment. Requires a single-tenant app registration and B1 quota. |
 | 17 | Foundry Guide red-team smoke (`scripts/run-red-team.sh`) | use direct PyRIT for one baseline scope-escape attempt and one bundled single-turn many-shot jailbreak; score whether either response materially enables an unauthorized attack | **104s** warm, after the target exists | 🧪 opt-in and billable. Passed in Japan East on 2026-07-20 with both attacks scored, zero successful attacks, and no retained raw transcript. Uses PyRIT 0.14.0, whose package classifier remains Alpha as of that date. |
+| 18 | Foundry Guide response quality + actionable feedback | use `.github/skills/foundry-guide-response-quality/` to find a grounded baseline-model miss, test the UI with Playwright, submit a structured reason, confirm schema-v2 telemetry, close the browser session, and retrieve exact hash-verified evidence through `scripts/review-foundry-guide-feedback.sh` | question-dependent; chat + feedback seconds, telemetry ingestion ~2–5 min | 🧪 opt-in and content-sensitive. Passed on 2026-07-26 with a no-tools baseline failure-mode error, a truncated UI answer, HTTP 204 feedback, the reduced private schema, exact content-free telemetry, and post-browser hash-verified recovery. Keep the feedback ID and recovered interaction private; delete the local mode-`600` review file after diagnosis. |
 
 The channel-publishing portion of flow 8, plus flows 9 and 11, are setup-dependent
 and don't fit an automated per-PR E2E; validate them out-of-band and note that in
@@ -200,12 +204,14 @@ Environment described in `docs/foundry-guide-web-app.md`.
 
 Use Playwright with desktop and mobile viewports. Green = an unauthenticated request
 is denied; a resource-tenant user can sign in, receive a Foundry Guide response,
-submit one rating, and the trace-correlated `foundry_guide.feedback` row lands in
-`AppEvents`. Confirm the app registration doesn't require user assignment, the API
-authority is the resource subscription's tenant, no feedback storage account was
-created, and the app identity has only Foundry Agent Consumer and Storage Table Data
-Contributor. Never publish the app URL, tenant/user identifiers, auth screenshots,
-prompts, responses, or raw telemetry.
+submit one structured rating, and the trace-correlated schema-v2
+`foundry_guide.feedback` row lands in `AppEvents`. Confirm the app registration
+doesn't require user assignment, the API authority is the resource subscription's
+tenant, no separate feedback storage account was created, and the app identity has
+only Foundry Agent Consumer and Storage Table Data Contributor. The dedicated
+`FoundryGuideFeedback` table must contain retrieval handles and hashes but no prompt
+or answer. Never publish the app URL, tenant/user identifiers, auth screenshots,
+prompts, responses, feedback IDs, isolation keys, or raw telemetry.
 Allow about five minutes for feedback ingestion before treating the event as missing.
 
 **Flow 17 — Foundry Guide red-team smoke.** Use an azd environment with
@@ -307,7 +313,8 @@ the table rather than mixing the measurements silently.
 | --- | --- | --- | --- |
 | `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~15s (Sonnet 4.6 fallback) | ✅ |
 | `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~90s (Sonnet 4.6 fallback) | ✅ |
-| `docs/foundry-guide-web-app.md` | flow 16 + architecture/source checks | ~289s (Sonnet 4.6 fallback) | ✅ |
+| `docs/foundry-guide-web-app.md` | flows 16, 18 + architecture/source checks | ~263s (Sonnet 4.6 fallback) | ✅ |
+| `docs/foundry-guide-actionable-feedback.md` | flow 18 + architecture/source checks | ~105s (Sonnet 4.6 fallback) | ✅ |
 | `docs/agent-creation.md` | flows 3, 4, 5, 6, 8 | ~16s | ✅ |
 | `docs/azure-oidc-setup.md` | flow 9 | ~30s | ⚠️ needs an Entra federated-identity credential set up out-of-band |
 | `docs/entra-agent-identity.md` | flow 10 | ~4s | ⚠️ *create* needs the **Agent ID Administrator** role + admin consent; read/list is verifiable |

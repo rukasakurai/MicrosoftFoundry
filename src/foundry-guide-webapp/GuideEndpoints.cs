@@ -202,7 +202,13 @@ internal static class GuideEndpoints
             activity?.SetTag("foundry_guide.response.id", response.Id);
             var traceParent = activity?.Id
                 ?? throw new InvalidOperationException("Chat trace context was not created.");
-            var feedbackToken = feedbackStore.Save(traceParent, response.Id);
+            var feedbackToken = feedbackStore.Save(
+                traceParent,
+                response.Id,
+                subject,
+                chatId,
+                input,
+                response.Text);
 
             return Results.Ok(
                 new ChatResponse(
@@ -306,16 +312,21 @@ internal static class GuideEndpoints
         return Results.Ok(GuideUsage.From(usage));
     }
 
-    internal static IResult Feedback(
+    internal static async Task<IResult> FeedbackAsync(
         FeedbackRequest feedback,
         FeedbackStore feedbackStore,
+        IFeedbackRecordStore feedbackRecords,
         IConfiguration configuration,
         ILoggerFactory loggerFactory)
     {
         if (feedback.Rating is < 1 or > 5
             || string.IsNullOrWhiteSpace(feedback.FeedbackToken)
             || feedback.FeedbackToken.Length != 32
-            || !Guid.TryParseExact(feedback.FeedbackToken, "N", out _))
+            || !Guid.TryParseExact(feedback.FeedbackToken, "N", out _)
+            || !FeedbackReason.TryNormalize(
+                feedback.Rating,
+                feedback.Reason,
+                out var reason))
         {
             return Results.BadRequest(new ErrorResponse("Feedback is invalid."));
         }
@@ -335,23 +346,59 @@ internal static class GuideEndpoints
             throw new InvalidOperationException("Stored feedback trace context was invalid.");
         }
 
+        var agentName = configuration["FOUNDRY_GUIDE_AGENT_NAME"] ?? "foundry-guide";
+        var agentVersion = configuration["FOUNDRY_GUIDE_AGENT_VERSION"] ?? "active";
+        var outcome = feedback.Rating <= 2 ? "negative" : "positive";
+
         using var activity = Telemetry.ActivitySource.StartActivity(
             "foundry-guide-feedback",
             ActivityKind.Internal,
             parentContext);
         activity?.SetTag("foundry_guide.response.id", correlation.ResponseId);
+        activity?.SetTag("feedback.reason", reason);
 
-        var outcome = feedback.Rating <= 2 ? "negative" : "positive";
+        if (outcome == "negative")
+        {
+            try
+            {
+                await feedbackRecords.SaveAsync(
+                    feedback.FeedbackToken,
+                    new FeedbackRecord(
+                        reason,
+                        agentName,
+                        agentVersion,
+                        correlation.ResponseId,
+                        correlation.UserIsolationKey,
+                        correlation.ChatIsolationKey,
+                        correlation.InputSha256,
+                        correlation.DisplayedTextSha256));
+            }
+            catch (RequestFailedException)
+            {
+                feedbackStore.Restore(feedback.FeedbackToken, correlation);
+                throw;
+            }
+        }
+
+        var feedbackId = outcome == "negative"
+            ? feedback.FeedbackToken
+            : string.Empty;
+        if (feedbackId.Length > 0)
+        {
+            activity?.SetTag("foundry_guide.feedback.id", feedbackId);
+        }
         logger.LogInformation(
-            "{microsoft.custom_event.name} {feedback.rating} {feedback.outcome} {foundry_guide.agent.name} {foundry_guide.agent.version} {foundry_guide.response.id} {feedback.channel} {feedback.schema.version}",
+            "{microsoft.custom_event.name} {feedback.rating} {feedback.outcome} {feedback.reason} {foundry_guide.agent.name} {foundry_guide.agent.version} {foundry_guide.response.id} {foundry_guide.feedback.id} {feedback.channel} {feedback.schema.version}",
             Telemetry.FeedbackEventName,
             feedback.Rating,
             outcome,
-            configuration["FOUNDRY_GUIDE_AGENT_NAME"] ?? "foundry-guide",
-            configuration["FOUNDRY_GUIDE_AGENT_VERSION"] ?? "active",
+            reason,
+            agentName,
+            agentVersion,
             correlation.ResponseId,
+            feedbackId,
             "web",
-            1);
+            2);
 
         return Results.NoContent();
     }

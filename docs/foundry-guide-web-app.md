@@ -20,10 +20,16 @@ subscription that contains the Foundry resources. The same tenant therefore owns
 the user identities, app registration, deployment identity, and Azure resources.
 
 The API emits the application-owned `foundry_guide.feedback` custom event and
-keeps short-lived feedback correlation records in bounded process memory. The
-ledger stores token counters plus hashes of tenant/user, chat, and response
-identifiers. It doesn't store prompts, responses, raw user identifiers, secrets,
-or Azure deployment identifiers.
+keeps unsubmitted feedback correlation records in bounded process memory. After
+negative feedback submission, a dedicated table stores private
+response-retrieval handles, content hashes, structured reason, agent revision,
+and expiry. Microsoft Foundry remains the only store containing the prompt and
+answer. See
+[actionable feedback](foundry-guide-actionable-feedback.md).
+
+The quota ledger stores token counters plus hashes of tenant/user, chat, and
+response identifiers. Neither table stores prompts, responses, raw user
+identifiers, secrets, or Azure deployment identifiers.
 
 ## Options considered
 
@@ -71,12 +77,16 @@ Cross-tenant access is out of scope.
 
 Use the repository owner's normal member account in this tenant for one-time setup,
 manual deployment, and interactive testing. Its credentials are never stored in
-GitHub. The web app uses its system-assigned managed identity and receives only
-Foundry Agent Consumer on the Foundry project.
+GitHub. The web app uses its system-assigned managed identity and receives Foundry Agent
+Consumer on the Foundry project plus Storage Table Data Contributor on the
+storage account.
 
 The agent endpoint uses header-based isolation. The API derives an opaque per-user
 key from tenant plus `oid`/`sub`, and creates a separate key for each chat. Only
-hashes of those keys are persisted.
+hashes are retained in the quota ledger. After feedback submission, the private
+feedback table retains both isolation keys for up to 30 days so an authorized
+reviewer can retrieve the managed response. Ordinary app users have no access to
+that table or review path.
 
 ## End-user token quota
 
@@ -103,6 +113,7 @@ context, not monthly usage. These settings control the policy:
 | `FOUNDRY_GUIDE_SAFETY_PADDING_TOKENS` | 2,048 |
 | `FOUNDRY_GUIDE_MAX_RESERVATION_TOKENS` | 50,000 |
 | `FOUNDRY_GUIDE_RESERVATION_TTL_SECONDS` | 180 |
+| `FOUNDRY_GUIDE_FEEDBACK_RETENTION_DAYS` | 30 |
 
 The safety padding is a correctness boundary: it must cover fixed agent
 instructions and framing on the first turn. Re-run E2E after changing
@@ -152,6 +163,8 @@ azd env set ENABLE_FOUNDRY_GUIDE_WEB_APP true
 azd env set FOUNDRY_GUIDE_WEB_AUTH_CLIENT_ID <app-client-id>
 azd env set FOUNDRY_GUIDE_WEB_APP_SERVICE_SKU B1
 azd env set FOUNDRY_GUIDE_TOKEN_QUOTA 100000
+azd env set FOUNDRY_GUIDE_FEEDBACK_REVIEWER_PRINCIPAL_ID <reviewer-object-id>
+azd env set FOUNDRY_GUIDE_FEEDBACK_REVIEWER_PRINCIPAL_TYPE User
 azd up
 ```
 
@@ -184,30 +197,56 @@ AppEvents
 | extend
     rating = toint(Properties["feedback.rating"]),
     outcome = tostring(Properties["feedback.outcome"]),
+    reason = tostring(Properties["feedback.reason"]),
+    feedbackId = tostring(Properties["foundry_guide.feedback.id"]),
     responseId = tostring(Properties["foundry_guide.response.id"]),
     agentName = tostring(Properties["foundry_guide.agent.name"]),
-    channel = tostring(Properties["feedback.channel"])
-| project TimeGenerated, rating, outcome, agentName, responseId, channel, OperationId
+    channel = tostring(Properties["feedback.channel"]),
+    schemaVersion = toint(Properties["feedback.schema.version"])
+| project TimeGenerated, rating, outcome, reason, agentName, feedbackId, responseId, channel, schemaVersion, OperationId
 | order by TimeGenerated desc
 ```
 
 Allow approximately five minutes for telemetry ingestion before treating feedback
 events as missing.
 
-The web app records `5` as helpful and `1` as not helpful. `OperationId` links the
-event to its trace; `responseId` identifies the rated Foundry response. The event
-doesn't contain the prompt, response text, explanation, or user identifier.
-Outstanding feedback tokens become invalid if the single App Service instance
-restarts; submitted feedback remains in Application Insights.
+The web app records `5` as helpful and `1` as not helpful. A negative rating
+requires a structured reason. `OperationId` links the event to its trace;
+`responseId` identifies the rated Foundry response, and `feedbackId` selects its
+private review metadata. The feedback endpoint returns HTTP 204; the one-time
+feedback token is reused as that private ID. The event doesn't contain the prompt,
+response text,
+explanation, user identifier, or isolation keys. Outstanding feedback tokens expire after 24 hours or become invalid if the
+single App Service instance restarts; submitted feedback remains in Application
+Insights.
 
 This application-owned event doesn't appear as a Foundry trace annotation as of
-2026-07-15. Keep query results private because correlation identifiers are
+2026-07-26. Keep query results private because correlation identifiers are
 operational data.
+
+An authorized reviewer can retrieve the exact interaction while the managed
+response and private metadata remain available:
+
+```bash
+review_dir=$(mktemp -d)
+./scripts/review-foundry-guide-feedback.sh \
+  --id <feedback-id> \
+  --output "$review_dir/review.json"
+rm -rf "$review_dir"
+```
+
+The output contains user content and must remain private. See
+[actionable feedback](foundry-guide-actionable-feedback.md) for the RBAC,
+retention, integrity, and deletion boundaries.
 
 ## Verification
 
 Use Playwright MCP to verify sign-in, initial usage, exact post-chat usage,
-insufficient-quota behavior, feedback, and desktop/mobile layouts.
+insufficient-quota behavior, structured feedback, and desktop/mobile layouts.
+Use the
+[`foundry-guide-response-quality`](../.github/skills/foundry-guide-response-quality/SKILL.md)
+skill to prove that a negative result remains actionable after the browser session
+closes.
 Select and run regression coverage through
 `.github/skills/e2e-foundry-baseline/`, including Flow 16 and every affected flow.
 
@@ -225,6 +264,17 @@ The static frontend would still need a web host unless Foundry adds a documented
 general-purpose static-content surface.
 
 ## Documentation Test History
+
+### 2026-07-26 22:57 JST
+- Result: PASS with fixes
+- Platform/Context: WSL2, persistent `azd` environment, Playwright MCP
+- Notes:
+  - Incremental provisioning completed in 113 seconds; ZIP deployment completed in 30 seconds with redundant Linux startup tracking disabled.
+  - Frontend build, 16 backend tests, Bicep compilation, npm audit, and NuGet vulnerability scan passed with latest stable pinned dependencies.
+  - Desktop and 393x852 mobile structured-reason feedback passed without horizontal overflow.
+  - A public-safe Foundry IQ configuration probe produced a baseline failure-mode error and a truncated Foundry Guide answer; negative feedback returned HTTP 204.
+  - The reduced private record, exact content-free telemetry schema, and post-browser hash-verified recovery all passed; aggregate issue generation passed in dry-run mode.
+  - Removed redundant response data, table fields, app settings, outputs, and in-memory types without changing the privacy or recovery boundaries.
 
 ### 2026-07-24 21:03 JST
 - Result: PASS on persistent environment; clean provisioning blocked
