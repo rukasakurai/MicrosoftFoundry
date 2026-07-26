@@ -7,7 +7,11 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
 
     internal string Save(
         string traceParent,
-        string responseId)
+        string responseId,
+        string userIsolationKey,
+        string chatIsolationKey,
+        string input,
+        string displayedText)
     {
         lock (_gate)
         {
@@ -29,7 +33,14 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
             }
             while (!_entries.TryAdd(
                 token,
-                new FeedbackEntry(traceParent, responseId, now.Add(Lifetime))));
+                new FeedbackEntry(
+                    traceParent,
+                    responseId,
+                    userIsolationKey,
+                    chatIsolationKey,
+                    GuideIdentity.Hash(input),
+                    GuideIdentity.Hash(displayedText),
+                    now.Add(Lifetime))));
 
             return token;
         }
@@ -45,7 +56,36 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
                 return null;
             }
 
-            return new FeedbackCorrelation(entry.TraceParent, entry.ResponseId);
+            return new FeedbackCorrelation(
+                entry.TraceParent,
+                entry.ResponseId,
+                entry.UserIsolationKey,
+                entry.ChatIsolationKey,
+                entry.InputSha256,
+                entry.DisplayedTextSha256,
+                entry.ExpiresAt);
+        }
+    }
+
+    internal void Restore(string token, FeedbackCorrelation correlation)
+    {
+        lock (_gate)
+        {
+            if (correlation.ExpiresAt <= DateTimeOffset.UtcNow)
+            {
+                return;
+            }
+
+            _entries.TryAdd(
+                token,
+                new FeedbackEntry(
+                    correlation.TraceParent,
+                    correlation.ResponseId,
+                    correlation.UserIsolationKey,
+                    correlation.ChatIsolationKey,
+                    correlation.InputSha256,
+                    correlation.DisplayedTextSha256,
+                    correlation.ExpiresAt));
         }
     }
 
@@ -61,9 +101,20 @@ internal sealed class FeedbackStore(ILogger<FeedbackStore> logger)
     }
 }
 
-internal sealed record FeedbackCorrelation(string TraceParent, string ResponseId);
+internal sealed record FeedbackCorrelation(
+    string TraceParent,
+    string ResponseId,
+    string UserIsolationKey,
+    string ChatIsolationKey,
+    string InputSha256,
+    string DisplayedTextSha256,
+    DateTimeOffset ExpiresAt);
 
 internal sealed record FeedbackEntry(
     string TraceParent,
     string ResponseId,
+    string UserIsolationKey,
+    string ChatIsolationKey,
+    string InputSha256,
+    string DisplayedTextSha256,
     DateTimeOffset ExpiresAt);

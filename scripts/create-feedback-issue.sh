@@ -75,17 +75,26 @@ APP_INSIGHTS_ID_KQL="$(printf '%s' "$app_insights_id" | sed "s/'/''/g")"
 query="$(cat <<KQL
 let minNegative = ${MIN_NEGATIVE};
 let appInsightsResourceId = tolower('${APP_INSIGHTS_ID_KQL}');
-union isfuzzy=true AppEvents, (datatable(TimeGenerated:datetime, _ResourceId:string, Name:string, Properties:dynamic)[])
+let negativeFeedback = union isfuzzy=true AppEvents, (datatable(TimeGenerated:datetime, _ResourceId:string, Name:string, Properties:dynamic)[])
 | where TimeGenerated > ago(${LOOKBACK})
 | where tolower(_ResourceId) == appInsightsResourceId
 | where Name == "foundry_guide.feedback"
 | extend agentName = tostring(Properties["foundry_guide.agent.name"])
 | extend rating = todouble(Properties["feedback.rating"])
 | extend result = tostring(Properties["feedback.outcome"])
+| extend reason = tostring(Properties["feedback.reason"])
 | where agentName == '${AGENT_NAME_KQL}'
 | where result == "negative" or rating <= 2
+| extend reason = iff(isempty(reason), "unspecified", reason);
+let summary = negativeFeedback
 | summarize negativeCount=count(), averageRating=avg(rating), firstSeen=min(TimeGenerated), lastSeen=max(TimeGenerated) by agentName
-| where negativeCount >= minNegative
+| where negativeCount >= minNegative;
+let reasons = negativeFeedback
+| summarize reasonCount=count() by agentName, reason
+| summarize reasonCounts=make_bag(pack(reason, reasonCount)) by agentName;
+summary
+| join kind=leftouter reasons on agentName
+| project agentName, negativeCount, averageRating, firstSeen, lastSeen, reasonCounts
 KQL
 )"
 
@@ -105,12 +114,22 @@ if jq -e 'type == "array"' >/dev/null <<<"$response"; then
   average_rating="$(jq -r '.[0].averageRating' <<<"$response")"
   first_seen="$(jq -r '.[0].firstSeen' <<<"$response")"
   last_seen="$(jq -r '.[0].lastSeen' <<<"$response")"
+  reason_counts="$(jq -c '.[0].reasonCounts // {}' <<<"$response")"
 else
   negative_count="$(jq -r '.tables[0].rows[0][1]' <<<"$response")"
   average_rating="$(jq -r '.tables[0].rows[0][2]' <<<"$response")"
   first_seen="$(jq -r '.tables[0].rows[0][3]' <<<"$response")"
   last_seen="$(jq -r '.tables[0].rows[0][4]' <<<"$response")"
+  reason_counts="$(jq -c '.tables[0].rows[0][5] // {}' <<<"$response")"
 fi
+
+reason_rows="$(jq -r '
+  if type == "string" then fromjson else . end
+  | to_entries
+  | sort_by(.key)
+  | .[]
+  | "| `\(.key)` | \(.value) |"
+' <<<"$reason_counts")"
 
 body="$(cat <<EOF
 ## Problem
@@ -127,6 +146,12 @@ Foundry Guide has received sustained aggregate negative feedback.
 | Average rating | ${average_rating} |
 | First signal | ${first_seen} |
 | Last signal | ${last_seen} |
+
+## Reasons
+
+| Reason | Count |
+| --- | ---: |
+${reason_rows}
 
 ## Constraints
 

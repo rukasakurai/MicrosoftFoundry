@@ -17,6 +17,7 @@ body {
 }
 
 button,
+select,
 textarea {
   font: inherit;
 }
@@ -170,6 +171,29 @@ h1 {
   opacity: 0.55;
 }
 
+.feedback-reason-form {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.feedback-reason-form select {
+  min-height: 34px;
+  padding: 5px 8px;
+  border: 1px solid #8a8886;
+  border-radius: 7px;
+  color: inherit;
+  background: #fff;
+}
+
+.feedback-submit,
+.feedback-cancel {
+  min-height: 34px;
+  padding: 5px 10px;
+  font-size: 0.85rem;
+}
+
 .composer {
   padding: 18px;
   border-top: 1px solid #d1d1d1;
@@ -275,6 +299,15 @@ h1 {
 
   .message {
     max-width: 92%;
+  }
+
+  .feedback-reason-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .feedback-reason-form label,
+  .feedback-reason-form select {
+    grid-column: 1 / -1;
   }
 
   .composer {
