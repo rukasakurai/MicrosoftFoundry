@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import io
 import json
 import time
@@ -51,18 +52,31 @@ class TargetTests(unittest.TestCase):
             "https://example.invalid/api/projects/project/agents/"
             "foundry-guide/endpoint/protocols/openai/responses?api-version=v1",
         )
-        self.assertEqual(
-            json.loads(request.data)["input"],
-            "synthetic prompt",
+        payload = json.loads(request.data)
+        self.assertEqual(payload["input"], "synthetic prompt")
+        self.assertEqual(payload["max_output_tokens"], 1200)
+        credential.get_token.assert_called_once_with(
+            "https://ai.azure.com/.default"
         )
         self.assertEqual(request.get_header("Authorization"), "Bearer token")
 
+        headers = {name.lower(): value for name, value in request.header_items()}
+        self.assertEqual(
+            headers["x-ms-user-isolation-key"],
+            hashlib.sha256(b"red-team:foundry-guide").hexdigest(),
+        )
+        self.assertEqual(
+            headers["x-ms-chat-isolation-key"],
+            message.get_piece(0).conversation_id.replace("-", ""),
+        )
+
     def test_model_target_sends_conversation_to_responses_api(self) -> None:
         response = response_mock({"output_text": "FALSE"})
+        credential = credential_mock()
         target = FoundryModelTarget(
             project_endpoint="https://example.invalid/api/projects/project",
             model_name="model",
-            credential=credential_mock(),
+            credential=credential,
         )
         messages = [
             Message.from_prompt(prompt="policy", role="system"),
@@ -77,8 +91,12 @@ class TargetTests(unittest.TestCase):
             )
 
         self.assertEqual(result[0].get_piece(0).converted_value, "FALSE")
+        credential.get_token.assert_called_once_with(
+            "https://ai.azure.com/.default"
+        )
         payload = json.loads(urlopen.call_args.args[0].data)
         self.assertEqual(payload["model"], "model")
+        self.assertEqual(payload["max_output_tokens"], 256)
         self.assertEqual(len(payload["input"]), 1)
         self.assertEqual(payload["input"][0]["role"], "user")
         self.assertEqual(payload["instructions"], "policy")
@@ -151,6 +169,23 @@ class TargetTests(unittest.TestCase):
         )
 
         self.assertEqual(text, "FOUND")
+
+    def test_prompt_agent_rejects_multiple_user_messages(self) -> None:
+        target = FoundryPromptAgentTarget(
+            project_endpoint="https://example.invalid/api/projects/project",
+            agent_name="foundry-guide",
+            credential=credential_mock(),
+        )
+
+        with self.assertRaises(ValueError):
+            asyncio.run(
+                target._send_prompt_to_target_async(
+                    normalized_conversation=[
+                        Message.from_prompt(prompt="first", role="user"),
+                        Message.from_prompt(prompt="second", role="user"),
+                    ]
+                )
+            )
 
 
 def credential_mock():

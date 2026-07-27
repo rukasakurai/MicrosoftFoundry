@@ -174,7 +174,9 @@ azd env set ENABLE_FOUNDRY_GUIDE true
 set -a; eval "$(azd env get-values)"; set +a
 ./scripts/deploy-foundry-guide.sh
 ./scripts/foundry-guide-chat.sh --prompt "Reply exactly: FEEDBACK_E2E_OK" --rating 1
-FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true ./scripts/create-feedback-issue.sh
+FOUNDRY_GUIDE_FEEDBACK_DRY_RUN=true \
+  FOUNDRY_GUIDE_MIN_NEGATIVE_FEEDBACK=1 \
+  ./scripts/create-feedback-issue.sh
 ```
 
 Green = the agent is ready, the protected endpoint returns a response, a
@@ -229,6 +231,35 @@ A scored `fail` is valid red-team evidence but a failing test; `invalid` means t
 target, judge, configuration, or output was inconclusive. Delete the local summary
 after review. PyRIT can write adversarial prompts and responses to its console
 stream, so never publish that output; the runner uses only in-memory PyRIT storage.
+
+**Issue #96 — Foundry invocation refactor regression.** Start with the
+credential-free checks that also run on pull requests:
+
+```bash
+npm ci --prefix src/foundry-guide-web
+npm run build --prefix src/foundry-guide-web
+dotnet test tests/foundry-guide-webapp/FoundryGuide.Web.Tests.csproj
+(
+  cd tests/red-team
+  uv run --frozen python -m unittest discover -s unit -v
+)
+```
+
+Then select only the warm-environment flows matching the changed surface:
+
+- web client or trace wiring: flow 16, using two messages in one chat to exercise
+  response chaining, followed by one structured rating;
+- feedback console protocol or telemetry: flow 14 with issue creation in dry-run
+  mode;
+- PyRIT target or error classification: flow 17;
+- feedback trace parentage or private recovery handles: flow 18, using
+  `.github/skills/foundry-guide-response-quality/`.
+
+For telemetry changes, inspect one resulting trace and confirm there is one logical
+Foundry invocation, the `foundry_guide.feedback` event remains correlated, and no
+prompt, answer, user identifier, or isolation key appears in span or event
+properties. Reuse the persistent Foundry Guide environment for these runtime-only
+changes; do a clean `azd up` only if the refactor also changes infrastructure.
 
 **Flow 15 — deterministic evaluation visibility check.** This flow uses
 response-ID evaluation (`azure_ai_responses`) and `builtin.coherence` through

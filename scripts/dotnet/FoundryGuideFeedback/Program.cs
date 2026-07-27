@@ -1,7 +1,4 @@
 using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 using Azure.Core;
 using Azure.Core.Diagnostics;
 using Azure.Identity;
@@ -9,11 +6,7 @@ using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-
-const string ActivitySourceName = "MicrosoftFoundry.FoundryGuideFeedback";
-const string FeedbackEventName = "foundry_guide.feedback";
 
 var options = CliOptions.Parse(args);
 var projectEndpoint = Require(options.ProjectEndpoint ?? Environment.GetEnvironmentVariable("PROJECT_ENDPOINT"), "PROJECT_ENDPOINT");
@@ -45,48 +38,62 @@ using var azureDiagnostics = IsTrue(Environment.GetEnvironmentVariable("FOUNDRY_
     ? AzureEventSourceListener.CreateConsoleLogger()
     : null;
 
-using var activitySource = new ActivitySource(ActivitySourceName);
+using var activitySource = new ActivitySource(
+    FoundryGuideFeedbackTelemetry.ActivitySourceName);
 using var loggerFactory = LoggerFactory.Create(builder =>
 {
     builder.AddOpenTelemetry(logging =>
     {
-        logging.SetResourceBuilder(CreateResourceBuilder());
-        logging.AddAzureMonitorLogExporter(o => o.ConnectionString = connectionString);
+        logging.SetResourceBuilder(
+            FoundryGuideFeedbackTelemetry.CreateResourceBuilder());
+        logging.AddAzureMonitorLogExporter(options =>
+            FoundryGuideFeedbackTelemetry.ConfigureLogExporter(
+                options,
+                connectionString));
     });
 });
-var logger = loggerFactory.CreateLogger(ActivitySourceName);
+var logger = loggerFactory.CreateLogger(
+    FoundryGuideFeedbackTelemetry.ActivitySourceName);
 
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetResourceBuilder(CreateResourceBuilder())
-    .AddSource(ActivitySourceName)
+    .SetResourceBuilder(FoundryGuideFeedbackTelemetry.CreateResourceBuilder())
+    .AddSource(FoundryGuideFeedbackTelemetry.ActivitySourceName)
     .SetSampler(new AlwaysOnSampler())
-    .AddAzureMonitorTraceExporter(o =>
-    {
-        o.ConnectionString = connectionString;
-        o.SamplingRatio = 1.0F;
-        o.TracesPerSecond = null;
-    })
+    .AddAzureMonitorTraceExporter(options =>
+        FoundryGuideFeedbackTelemetry.ConfigureTraceExporter(
+            options,
+            connectionString))
     .Build();
 
-using var activity = activitySource.StartActivity("foundry-guide-interaction", ActivityKind.Client);
-activity?.SetTag("gen_ai.system", "microsoft_foundry");
-activity?.SetTag("gen_ai.operation.name", "agent_run");
-activity?.SetTag("gen_ai.agent.name", agentName);
-activity?.SetTag("gen_ai.agent.version", agentVersion);
+using var activity = FoundryGuideFeedbackTelemetry.StartInteraction(
+    activitySource,
+    agentName,
+    agentVersion);
 
 var credential = new AzureCliCredential();
 var token = await credential.GetTokenAsync(
-    new TokenRequestContext(["https://ai.azure.com/.default"]),
+    FoundryGuideFeedbackProtocol.TokenContext,
     CancellationToken.None);
 
 using var httpClient = new HttpClient();
-httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
+FoundryGuideFeedbackProtocol.ConfigureAuthorization(httpClient, token);
 
 var endpoint = projectEndpoint.TrimEnd('/');
-var conversationId = await CreateConversationAsync(httpClient, endpoint, prompt);
+var conversationId =
+    await FoundryGuideFeedbackProtocol.CreateConversationAsync(
+        httpClient,
+        endpoint,
+        prompt);
 
-var responseJson = await CreateAgentResponseAsync(httpClient, endpoint, conversationId, agentName, agentVersion);
-var responseText = ExtractResponseText(responseJson);
+using var responseJson =
+    await FoundryGuideFeedbackProtocol.CreateAgentResponseAsync(
+        httpClient,
+        endpoint,
+        conversationId,
+        agentName,
+        agentVersion);
+var responseText =
+    FoundryGuideFeedbackProtocol.ExtractResponseText(responseJson);
 
 Console.WriteLine();
 Console.WriteLine(responseText);
@@ -95,14 +102,12 @@ Console.WriteLine();
 var rating = options.Rating ?? ReadRating();
 var result = rating <= 2 ? "negative" : "positive";
 
-logger.LogInformation(
-    "{microsoft.custom_event.name} {feedback.rating} {feedback.outcome} {foundry_guide.agent.name} {foundry_guide.agent.version} {feedback.schema.version}",
-    FeedbackEventName,
+FoundryGuideFeedbackTelemetry.RecordFeedback(
+    logger,
     rating,
     result,
     agentName,
-    agentVersion,
-    1);
+    agentVersion);
 
 activity?.Stop();
 
@@ -113,114 +118,6 @@ if (!tracerProvider.ForceFlush(30000))
 }
 
 tracerProvider.Dispose();
-
-static ResourceBuilder CreateResourceBuilder() =>
-    ResourceBuilder.CreateDefault().AddService(
-        serviceName: "foundry-guide-feedback",
-        serviceVersion: "1.0.0");
-
-static async Task<string> CreateConversationAsync(HttpClient httpClient, string endpoint, string prompt)
-{
-    var body = JsonSerializer.Serialize(new
-    {
-        items = new[]
-        {
-            new
-            {
-                type = "message",
-                role = "user",
-                content = prompt
-            }
-        }
-    });
-
-    using var response = await httpClient.PostAsync(
-        $"{endpoint}/conversations?api-version=v1",
-        new StringContent(body, Encoding.UTF8, "application/json"));
-
-    var content = await response.Content.ReadAsStringAsync();
-    EnsureSuccess(response, content, "create conversation");
-
-    using var document = JsonDocument.Parse(content);
-    if (document.RootElement.TryGetProperty("id", out var id))
-    {
-        return id.GetString() ?? throw new InvalidOperationException("Conversation id was empty.");
-    }
-
-    throw new InvalidOperationException("Conversation response did not include an id.");
-}
-
-static async Task<JsonDocument> CreateAgentResponseAsync(
-    HttpClient httpClient,
-    string endpoint,
-    string conversationId,
-    string agentName,
-    string agentVersion)
-{
-    var body = JsonSerializer.Serialize(new
-    {
-        conversation = conversationId,
-        agent_reference = new
-        {
-            type = "agent_reference",
-            name = agentName,
-            version = agentVersion
-        }
-    });
-
-    using var response = await httpClient.PostAsync(
-        $"{endpoint}/openai/v1/responses",
-        new StringContent(body, Encoding.UTF8, "application/json"));
-
-    var content = await response.Content.ReadAsStringAsync();
-    EnsureSuccess(response, content, "create agent response");
-    return JsonDocument.Parse(content);
-}
-
-static string ExtractResponseText(JsonDocument document)
-{
-    if (document.RootElement.TryGetProperty("output_text", out var outputText)
-        && outputText.ValueKind == JsonValueKind.String)
-    {
-        return outputText.GetString() ?? string.Empty;
-    }
-
-    var texts = new List<string>();
-    CollectMessageText(document.RootElement, texts);
-    return texts.Count > 0
-        ? string.Join(Environment.NewLine, texts.Distinct())
-        : document.RootElement.GetRawText();
-}
-
-static void CollectMessageText(JsonElement element, List<string> texts)
-{
-    if (element.ValueKind == JsonValueKind.Object)
-    {
-        if (element.TryGetProperty("type", out var type)
-            && type.GetString() is "output_text" or "text"
-            && element.TryGetProperty("text", out var text)
-            && text.ValueKind == JsonValueKind.String)
-        {
-            var value = text.GetString();
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                texts.Add(value);
-            }
-        }
-
-        foreach (var property in element.EnumerateObject())
-        {
-            CollectMessageText(property.Value, texts);
-        }
-    }
-    else if (element.ValueKind == JsonValueKind.Array)
-    {
-        foreach (var item in element.EnumerateArray())
-        {
-            CollectMessageText(item, texts);
-        }
-    }
-}
 
 static int ReadRating()
 {
@@ -235,17 +132,6 @@ static int ReadRating()
 
         Console.WriteLine("Enter a number from 1 to 5.");
     }
-}
-
-static void EnsureSuccess(HttpResponseMessage response, string content, string action)
-{
-    if (response.IsSuccessStatusCode)
-    {
-        return;
-    }
-
-    throw new InvalidOperationException(
-        $"Failed to {action}. HTTP {(int)response.StatusCode} {response.ReasonPhrase}: {content}");
 }
 
 static string Require(string? value, string name)

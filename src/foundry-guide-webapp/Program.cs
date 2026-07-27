@@ -47,10 +47,8 @@ builder.Services.AddSingleton(serviceProvider =>
 builder.Services.AddSingleton<IFeedbackRecordStore>(serviceProvider =>
     serviceProvider.GetRequiredService<FeedbackRecordStore>());
 builder.Services.AddHostedService<FeedbackRecordReaper>();
-builder.Services.AddHttpClient<FoundryGuideClient>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(40);
-});
+builder.Services.AddHttpClient<FoundryGuideClient>(
+    FoundryGuideClient.ConfigureHttpClient);
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -102,11 +100,7 @@ var openTelemetry = builder.Services
 
 if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
 {
-    openTelemetry.UseAzureMonitor(options =>
-    {
-        options.SamplingRatio = 1.0F;
-        options.TracesPerSecond = null;
-    });
+    openTelemetry.UseAzureMonitor(Telemetry.ConfigureAzureMonitor);
 }
 
 var app = builder.Build();

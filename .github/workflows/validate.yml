@@ -1,0 +1,70 @@
+name: Validate
+
+on:
+  pull_request:
+    paths:
+      - ".github/skills/e2e-foundry-baseline/**"
+      - ".github/workflows/validate.yml"
+      - "scripts/dotnet/**"
+      - "src/foundry-guide-quota/**"
+      - "src/foundry-guide-web/**"
+      - "src/foundry-guide-webapp/**"
+      - "tests/foundry-guide-webapp/**"
+      - "tests/red-team/**"
+
+permissions:
+  contents: read
+
+jobs:
+  foundry-guide:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "26"
+          cache: npm
+          cache-dependency-path: src/foundry-guide-web/package-lock.json
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build frontend
+        run: |
+          npm ci --prefix src/foundry-guide-web
+          npm run build --prefix src/foundry-guide-web
+          npm audit --prefix src/foundry-guide-web --audit-level=high
+
+      - name: Test backend and console client
+        run: |
+          dotnet test tests/foundry-guide-webapp/FoundryGuide.Web.Tests.csproj \
+            --configuration Release
+          dotnet list src/foundry-guide-webapp/FoundryGuide.Web.csproj \
+            package --vulnerable --include-transitive
+          dotnet list scripts/dotnet/FoundryGuideFeedback/FoundryGuideFeedback.csproj \
+            package --vulnerable --include-transitive
+
+  red-team:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.11.32"
+          enable-cache: true
+          cache-dependency-glob: tests/red-team/uv.lock
+
+      - name: Test red-team harness
+        working-directory: tests/red-team
+        run: uv run --frozen python -m unittest discover -s unit -v

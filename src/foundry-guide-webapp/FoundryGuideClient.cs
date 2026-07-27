@@ -13,6 +13,11 @@ internal sealed class FoundryGuideClient(
     private readonly string _projectEndpoint = Require(configuration["PROJECT_ENDPOINT"], "PROJECT_ENDPOINT").TrimEnd('/');
     private readonly string _agentName = configuration["FOUNDRY_GUIDE_AGENT_NAME"] ?? "foundry-guide";
 
+    internal static void ConfigureHttpClient(HttpClient client)
+    {
+        client.Timeout = TimeSpan.FromSeconds(40);
+    }
+
     internal async Task<FoundryResponse> SendAsync(
         string input,
         string? previousResponseId,
