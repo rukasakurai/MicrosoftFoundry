@@ -1,8 +1,10 @@
 using System.Diagnostics;
-using Azure.Core;
+using Azure.AI.Projects;
 using Azure.Core.Diagnostics;
 using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.Exporter;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
@@ -71,29 +73,25 @@ using var activity = FoundryGuideFeedbackTelemetry.StartInteraction(
     agentVersion);
 
 var credential = new AzureCliCredential();
-var token = await credential.GetTokenAsync(
-    FoundryGuideFeedbackProtocol.TokenContext,
-    CancellationToken.None);
+var projectClient = new AIProjectClient(
+    new Uri(projectEndpoint),
+    credential);
+var version = (await projectClient.AgentAdministrationClient.GetAgentVersionAsync(
+    agentName,
+    agentVersion)).Value;
+var agent = projectClient.AsAIAgent(version);
+var session = await agent.CreateConversationSessionAsync();
+var response = await agent.RunAsync(prompt, session);
+if (response.FinishReason == ChatFinishReason.ContentFilter)
+{
+    throw new InvalidDataException(
+        "Foundry response was blocked by content filtering.");
+}
 
-using var httpClient = new HttpClient();
-FoundryGuideFeedbackProtocol.ConfigureAuthorization(httpClient, token);
-
-var endpoint = projectEndpoint.TrimEnd('/');
-var conversationId =
-    await FoundryGuideFeedbackProtocol.CreateConversationAsync(
-        httpClient,
-        endpoint,
-        prompt);
-
-using var responseJson =
-    await FoundryGuideFeedbackProtocol.CreateAgentResponseAsync(
-        httpClient,
-        endpoint,
-        conversationId,
-        agentName,
-        agentVersion);
-var responseText =
-    FoundryGuideFeedbackProtocol.ExtractResponseText(responseJson);
+var responseText = string.IsNullOrWhiteSpace(response.Text)
+    ? throw new InvalidDataException(
+        "Foundry response did not include output text.")
+    : response.Text;
 
 Console.WriteLine();
 Console.WriteLine(responseText);
