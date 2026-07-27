@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../scripts/dotnet/FoundryGuideFeedback/FoundryGuideFeedback.csproj" />
     <ProjectReference Include="../../src/foundry-guide-webapp/FoundryGuide.Web.csproj" />
   </ItemGroup>
 
