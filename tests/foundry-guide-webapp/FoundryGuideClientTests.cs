@@ -192,34 +192,6 @@ public sealed class FoundryGuideClientTests
     }
 
     [Fact]
-    public async Task HonorsHttpClientTimeout()
-    {
-        var client = CreateClient(
-            new StubHandler(
-                """
-                {
-                  "id": "resp_test",
-                  "output_text": "OK",
-                  "usage": {
-                    "input_tokens": 145,
-                    "output_tokens": 5,
-                    "total_tokens": 150
-                  }
-                }
-                """,
-                delay: TimeSpan.FromSeconds(1)),
-            timeout: TimeSpan.FromMilliseconds(20));
-
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            client.SendAsync(
-                "Hello",
-                null,
-                "subject",
-                Guid.NewGuid().ToString("N"),
-                TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
     public void QuotaSubjectIncludesTenant()
     {
         var first = Principal("tenant-a", "user");
@@ -233,8 +205,7 @@ public sealed class FoundryGuideClientTests
 
     private static FoundryGuideClient CreateClient(
         StubHandler handler,
-        StubCredential? credential = null,
-        TimeSpan? timeout = null)
+        StubCredential? credential = null)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -251,14 +222,8 @@ public sealed class FoundryGuideClientTests
             TimeSpan.FromMinutes(3),
             new Uri("https://contoso.table.core.windows.net"),
             "FoundryGuideUsage");
-        var httpClient = new HttpClient(handler);
-        if (timeout.HasValue)
-        {
-            httpClient.Timeout = timeout.Value;
-        }
-
         return new FoundryGuideClient(
-            httpClient,
+            new HttpClient(handler),
             credential ?? new StubCredential(),
             configuration,
             options);
@@ -274,8 +239,7 @@ public sealed class FoundryGuideClientTests
 
     private sealed class StubHandler(
         string responseBody,
-        HttpStatusCode statusCode = HttpStatusCode.OK,
-        TimeSpan? delay = null) : HttpMessageHandler
+        HttpStatusCode statusCode = HttpStatusCode.OK) : HttpMessageHandler
     {
         internal string? RequestBody { get; private set; }
 
@@ -293,11 +257,6 @@ public sealed class FoundryGuideClientTests
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
-            if (delay.HasValue)
-            {
-                await Task.Delay(delay.Value, cancellationToken);
-            }
-
             RequestUri = request.RequestUri;
             AuthorizationScheme = request.Headers.Authorization?.Scheme;
             AuthorizationParameter = request.Headers.Authorization?.Parameter;

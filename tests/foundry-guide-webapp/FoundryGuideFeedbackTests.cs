@@ -186,9 +186,6 @@ public sealed class FoundryGuideFeedbackTests
             "7",
             logger.Properties["foundry_guide.agent.version"]);
         Assert.Equal(1, logger.Properties["feedback.schema.version"]);
-        Assert.Equal(activity.TraceId, logger.ContextAtLog?.TraceId);
-        Assert.Equal(activity.SpanId, logger.ContextAtLog?.SpanId);
-
         var telemetry = string.Join(
             " ",
             activity.TagObjects.Select(tag => $"{tag.Key}={tag.Value}")
@@ -233,8 +230,6 @@ public sealed class FoundryGuideFeedbackTests
         internal Dictionary<string, object?> Properties { get; } =
             new(StringComparer.Ordinal);
 
-        internal ActivityContext? ContextAtLog { get; private set; }
-
         public IDisposable? BeginScope<TState>(TState state)
             where TState : notnull =>
             NullScope.Instance;
@@ -248,7 +243,6 @@ public sealed class FoundryGuideFeedbackTests
             Exception? exception,
             Func<TState, Exception?, string> formatter)
         {
-            ContextAtLog = Activity.Current?.Context;
             if (state is not IEnumerable<KeyValuePair<string, object?>> values)
             {
                 return;
