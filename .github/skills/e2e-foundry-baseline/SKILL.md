@@ -342,7 +342,7 @@ the table rather than mixing the measurements silently.
 
 | Doc | Covered by | Content-verify time | AI-verifiable now? |
 | --- | --- | --- | --- |
-| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~15s (Sonnet 4.6 fallback) | ✅ |
+| `README.md` (setup order + "What This Is") | link/claims check, then the linked docs below | ~127s (Sonnet 5 fallback) | ✅ |
 | `docs/azd-deployment.md` | flows 1, 2, 12, 13, 15 | ~90s (Sonnet 4.6 fallback) | ✅ |
 | `docs/foundry-guide-web-app.md` | flows 16, 18 + architecture/source checks | ~263s (Sonnet 4.6 fallback) | ✅ |
 | `docs/foundry-guide-actionable-feedback.md` | flow 18 + architecture/source checks | ~105s (Sonnet 4.6 fallback) | ✅ |
