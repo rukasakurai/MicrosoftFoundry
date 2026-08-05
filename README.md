@@ -17,6 +17,8 @@ This repository provides **Infrastructure-as-Code** for Microsoft Foundry, which
 
 **Current Focus:** This repository primarily provides Microsoft Foundry IaC, with optional application samples and deployment automation.
 
+> **Adjacent enterprise integration:** The [Microsoft Agent 365 SDK](https://learn.microsoft.com/microsoft-agent-365/developer/) can optionally extend a Foundry-backed application with Entra-backed agent identity, OpenTelemetry, notifications, and governed Work IQ/MCP access. It does not create or host Foundry agents, is not required by this baseline, and is not provisioned by the current Bicep. See [SDK Boundaries](AGENTS.md#sdk-boundaries).
+
 ## Getting Started
 
 ### Prerequisites

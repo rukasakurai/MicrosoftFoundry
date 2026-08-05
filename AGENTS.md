@@ -77,8 +77,22 @@ The Microsoft AI ecosystem evolves rapidly, and terminology can be confusing. Th
 | **Azure AI Foundry (Hub)** | `Microsoft.MachineLearningServices/workspaces` (kind: `Hub`) |
 | **Azure AI Foundry (Project)** | `Microsoft.MachineLearningServices/workspaces` (kind: `Project`) |
 | **Azure Machine Learning** | `Microsoft.MachineLearningServices/workspaces` (kind: `Default`) |
-| **Microsoft Agent SDK (.NET)** | NuGet: `Microsoft.Agents.AI.*` |
+| **Microsoft Agent Framework (.NET)** | NuGet: `Microsoft.Agents.AI.*`; application-side agent orchestration with Foundry integrations |
+| **Microsoft 365 Agents SDK** | Optional application-side channel, activity, and conversation-state framework; not a Foundry ARM resource |
+| **Microsoft Agent 365 SDK** | Optional enterprise extension layer for Entra-backed agent identity, OpenTelemetry, notifications, and governed Work IQ/MCP access; not a Foundry ARM resource |
 | **Foundry IQ (knowledge base / RAG)** | Azure AI Search agentic retrieval (`Microsoft.Search`), data-plane; reached from Foundry via a connection |
+
+### SDK Boundaries
+
+These similarly named SDKs occupy different layers and can be used together:
+
+- **Microsoft Agent Framework** supplies application-side model invocation, tools, workflows, and agent orchestration. This repository uses its Foundry integration in the optional .NET feedback sample.
+- **Microsoft 365 Agents SDK** supplies channel, activity-protocol, authentication, and conversation-state plumbing. It is optional when a self-hosted application needs channels such as Teams, web chat, or Slack; it is not required to create a Foundry Agent Service record.
+- **Microsoft Agent 365 SDK** extends an existing agentic application, regardless of its framework or hosting platform, with Agent 365 capabilities. It does not create or host the application and does not replace Microsoft Agent Framework or the Microsoft 365 Agents SDK.
+
+Microsoft Agent 365 SDK awareness is relevant to this repository's security architecture because a Foundry-backed application can opt into Entra-backed agent identity, OpenTelemetry evidence, notifications, and governed Work IQ/MCP access. It is **not a baseline dependency**, and the current Bicep does not provision Agent 365. Organization-wide inventory, lifecycle controls, data protection, and threat detection are broader Microsoft Agent 365 platform capabilities delivered through the Microsoft 365 admin center, Microsoft Entra, Microsoft Purview, and Microsoft Defender; installing the SDK alone does not enable them.
+
+References: [Microsoft Agent 365 SDK and CLI](https://learn.microsoft.com/microsoft-agent-365/developer/), [Microsoft Agent 365 overview](https://learn.microsoft.com/microsoft-agent-365/overview), and [Microsoft 365 Agents SDK overview](https://learn.microsoft.com/microsoft-365/agents-sdk/agents-sdk-overview).
 
 ### Agent Terminology
 
