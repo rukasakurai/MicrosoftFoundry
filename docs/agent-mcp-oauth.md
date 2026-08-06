@@ -255,6 +255,70 @@ exists, but each provider decides whether it *issues* one, and its own rotation,
 expiry, and re-consent policies still apply — so a result verified for one provider
 does not guarantee the same for another.
 
+### Reproduce refresh with Salesforce Hosted MCP
+
+Use an isolated Salesforce Developer Edition org and synthetic data only. Follow
+Salesforce's [SObject Reads](https://developer.salesforce.com/docs/platform/hosted-mcp-servers/references/reference/sobject-reads.html)
+and [External Client App](https://developer.salesforce.com/docs/platform/hosted-mcp-servers/guide/create-external-client-app.html)
+guidance.
+
+Keep the owning surface explicit:
+
+| Path | Purpose | Coverage here |
+| --- | --- | --- |
+| Foundry-managed OAuth + Responses API | Underlying token lifecycle | `verify-salesforce-mcp-refresh.sh` |
+| Foundry-managed OAuth + Playground | Portal consent and chat/tool UX | Separate browser pass with the same agent version and connection |
+| Broker-managed refresh | Positive/workaround control | Out of scope; success does not validate Foundry-managed OAuth |
+
+1. Create a dedicated External Client App using Authorization Code flow with
+   `mcp_api`, refresh/offline access, and named-user JWT access tokens. Record the
+   timeout and OAuth policies; use enough time to finish consent and T0.
+2. Create a new OAuth Identity Passthrough connection to `platform/sobject-reads`
+   and a `prompt agent` restricted to `soqlQuery`. Register only the connection's
+   generated redirect URL.
+3. Before T0, privately record the exact agent version, connection and External
+   Client App hashes, OAuth user and policies, JWT timeout, and synthetic Account
+   ID. Consent is setup—not T0.
+4. Submit a fresh Responses API request pinned to that agent version using the
+   exact query:
+   `SELECT Id, Name FROM Account WHERE Name = 'Contoso Refresh Probe' ORDER BY Name LIMIT 1`.
+   Save the raw response and validate it:
+
+   ```bash
+   ./scripts/verify-salesforce-mcp-refresh.sh \
+     --phase t0 \
+     --expected-record-id <synthetic-record-id> < t0-response.json
+   ```
+
+   T0 exists only when the expected record appears in the exact `mcp_call`.
+5. After JWT expiry plus a small buffer, re-read the recorded values. Without
+   editing or recreating anything, submit the identical request and validate it
+   with `--phase t1`.
+
+Evidence is classified from raw response items, never assistant prose:
+
+- **pass** — T1 contains the exact `mcp_call` and expected synthetic record without
+  renewed consent.
+- **fail** — T1 contains a top-level 401/403 or OAuth/token error with no tool
+  call, an auth error from the exact expected tool call, or an
+  `oauth_consent_request`.
+- **invalid** — no proven tool result exists, the expected synthetic record is
+  absent, T1 is early, or the Salesforce app, connection, or agent configuration
+  changed.
+
+**Observed 2026-07-17:** the Responses API path returned one verified
+`soqlQuery` at T0, then `401 Unauthorized` / `Invalid token` after a five-minute
+Salesforce JWT lifetime plus a two-minute buffer, with the Salesforce app,
+Foundry connection, agent version, user, and synthetic record unchanged. A
+delayed Playground invocation through the same expired binding returned the same
+error while the connection remained attached; a separate clean Playground
+T0/T1 pair was not completed. Salesforce refresh-grant telemetry was unavailable,
+so whether Foundry attempted the configured refresh grant is unproven.
+
+The live server used argument key `q`, not the documented `query`, as of
+2026-07-17. A prior GitHub App test refreshed successfully, so this is not evidence
+of a universal OAuth defect. Root-cause ownership remains unresolved.
+
 ## Gotchas
 
 - **"Cannot pass Microsoft token to untrusted MCP endpoint."** Foundry blocks
@@ -290,3 +354,8 @@ anyone. In an enterprise/production setting, expect additional friction:
   **not** `api.githubcopilot.com`; use your tenant's data-residency host, and the
   OAuth authorization server changes accordingly.
 - Prefer least-privilege scopes, rotate credentials, and audit tool calls.
+
+## Documentation Test History
+
+- **2026-07-17 — PASS:** links, current API guidance, and the Responses API
+  evidence were verified; the clean Playground T0/T1 pair remains incomplete.
